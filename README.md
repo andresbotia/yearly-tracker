@@ -39,9 +39,7 @@ Everything works **fully offline**.
 
 If you need help, have questions, or want to report an issue:
 
-📧 **Email:** your@email.com
-
-(Replace this with your real support email)
+📧 **Email:** andresfbotia@email.com
 
 ---
 
