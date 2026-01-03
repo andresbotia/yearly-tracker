@@ -61,7 +61,7 @@ Data never leaves your phone.
 If you delete the app, all stored data is permanently removed.
 
 Contact:
-your@email.com
+📧 **Email:** andresfbotia@email.com
 
 
 ##
