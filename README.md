@@ -43,4 +43,25 @@ If you need help, have questions, or want to report an issue:
 
 ---
 
+---
+
+## 🔐 Privacy Policy
+
+Yearly Tracker does not collect, store, transmit, or share any personal data.
+
+- No accounts
+- No analytics
+- No tracking
+- No ads
+- No network requests
+
+All data is stored locally on your device using system storage.
+Data never leaves your phone.
+
+If you delete the app, all stored data is permanently removed.
+
+Contact:
+your@email.com
+
+
 ##
