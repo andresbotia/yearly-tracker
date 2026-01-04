@@ -5,13 +5,14 @@ import {
   SafeAreaView,
   View,
   Text,
-  FlatList,
   Modal,
   TextInput,
   Pressable,
   StyleSheet,
   Platform,
 } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import DraggableFlatList from "react-native-draggable-flatlist";
 
 import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
@@ -37,6 +38,25 @@ function goalPercent(goal) {
   if (goal.type === "boolean") return goal.progress === 1 ? 100 : 0;
   if (!goal.target || goal.target <= 0) return 0;
   return clamp((goal.progress / goal.target) * 100, 0, 100);
+}
+
+function isGoalComplete(goal) {
+  return goalPercent(goal) >= 100;
+}
+
+function sortGoals(goals) {
+  const inProgress = [];
+  const completed = [];
+
+  goals.forEach((goal) => {
+    if (isGoalComplete(goal)) {
+      completed.push(goal);
+    } else {
+      inProgress.push(goal);
+    }
+  });
+
+  return [...inProgress, ...completed];
 }
 
 function makeStarterGoals() {
@@ -117,10 +137,11 @@ export default function App() {
       // First run: seed starter goals
       if (!hasStoredValue) {
         const seeded = makeStarterGoals();
-        setGoals(seeded);
-        await saveGoals(seeded);
+        const ordered = sortGoals(seeded);
+        setGoals(ordered);
+        await saveGoals(ordered);
       } else {
-        setGoals(storedGoals);
+        setGoals(sortGoals(storedGoals));
       }
 
       if (typeof storedHue === "number") setHue(storedHue);
@@ -137,8 +158,9 @@ export default function App() {
   }, []);
 
   async function persistGoals(nextGoals) {
-    setGoals(nextGoals);
-    await saveGoals(nextGoals);
+    const ordered = sortGoals(nextGoals);
+    setGoals(ordered);
+    await saveGoals(ordered);
   }
 
   async function closeWelcome() {
@@ -301,8 +323,10 @@ export default function App() {
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
-      <FlatList
+    <GestureHandlerRootView style={styles.safe}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
+        <DraggableFlatList
+        activationDistance={12}
         data={goals}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
@@ -323,12 +347,17 @@ export default function App() {
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
+        onDragEnd={({ data }) => {
+          persistGoals(data);
+        }}
+        renderItem={({ item, drag, isActive }) => (
           <GoalItem
             goal={item}
             theme={theme}
             onEdit={openEdit}
             onDelete={handleDeleteGoal}
+            onDrag={drag}
+            dragging={isActive}
           />
         )}
       />
@@ -819,7 +848,8 @@ export default function App() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 

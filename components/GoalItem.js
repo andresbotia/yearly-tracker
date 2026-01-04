@@ -13,7 +13,14 @@ function goalPercent(goal) {
   return clamp((goal.progress / goal.target) * 100, 0, 100);
 }
 
-export default function GoalItem({ goal, theme, onEdit, onDelete }) {
+export default function GoalItem({
+  goal,
+  theme,
+  onEdit,
+  onDelete,
+  onDrag,
+  dragging = false,
+}) {
   const percent = useMemo(() => goalPercent(goal), [goal]);
   const pct = Math.round(percent);
   const isComplete = pct >= 100;
@@ -27,13 +34,40 @@ export default function GoalItem({ goal, theme, onEdit, onDelete }) {
       : "Not yet";
 
   return (
-    <View
-      style={[
+    <Pressable
+      onLongPress={onDrag}
+      delayLongPress={120}
+      disabled={!onDrag}
+      style={({ pressed }) => [
         styles.card,
         { backgroundColor: theme.card, borderColor: theme.border },
+        (pressed || dragging) && { opacity: 0.95, transform: [{ scale: 0.99 }] },
       ]}
     >
       <View style={styles.rowTop}>
+        <Pressable
+          onLongPress={onDrag}
+          delayLongPress={120}
+          disabled={!onDrag}
+          hitSlop={8}
+          style={[
+            styles.dragHandle,
+            { borderColor: theme.border, backgroundColor: theme.bg },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`Drag to reorder ${goal.title}`}
+        >
+          <View
+            style={[styles.dragDot, { backgroundColor: theme.mutedText }]}
+          />
+          <View
+            style={[
+              styles.dragDot,
+              { backgroundColor: theme.mutedText, marginTop: 4 },
+            ]}
+          />
+        </Pressable>
+
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
             {goal.title}
@@ -136,7 +170,7 @@ export default function GoalItem({ goal, theme, onEdit, onDelete }) {
           </Text>
         </Pressable>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -151,6 +185,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     alignItems: "flex-start",
+  },
+  dragHandle: {
+    width: 32,
+    height: 44,
+    borderWidth: 1,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dragDot: {
+    width: 10,
+    height: 3,
+    borderRadius: 3,
   },
   title: {
     fontSize: 16,
