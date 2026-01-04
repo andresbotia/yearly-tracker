@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Platform,
   Animated,
-  FlatList,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import DraggableFlatList from "react-native-draggable-flatlist";
@@ -144,7 +143,9 @@ function lastNDays(n) {
 export default function App() {
   const year = new Date().getFullYear();
 
-  const [activeTab, setActiveTab] = useState("goals"); // "goals" | "habits"
+  const [ready, setReady] = useState(false);
+
+  const [activeTab, setActiveTab] = useState("habits"); // "goals" | "habits"
 
   const [goals, setGoals] = useState([]);
   const [themeChoice, setThemeChoice] = useState("bright-blue");
@@ -153,7 +154,7 @@ export default function App() {
   const [addOpen, setAddOpen] = useState(false);
   const [customizeOpen, setCustomizeOpen] = useState(false);
 
-  // One-time habits welcome
+  // One-time habits welcome (kept for upgrades; first-run welcome covers habits now)
   const [habitsWelcomeOpen, setHabitsWelcomeOpen] = useState(false);
   const [habitsWelcomeSeen, setHabitsWelcomeSeen] = useState(true); // default true until loaded
 
@@ -174,8 +175,10 @@ export default function App() {
   const [habitTitle, setHabitTitle] = useState("");
 
   const theme = useMemo(() => makeTheme(themeChoice), [themeChoice]);
-
   const dates = useMemo(() => lastNDays(5), [activeTab]);
+
+  const [goalDragging, setGoalDragging] = useState(false);
+  const [habitDragging, setHabitDragging] = useState(false);
 
   const yearlyPercent = useMemo(() => {
     if (!goals.length) return 0;
@@ -202,6 +205,12 @@ export default function App() {
   async function hapticSuccess() {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {}
+  }
+
+  async function hapticDragStart() {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {}
   }
 
@@ -239,49 +248,64 @@ export default function App() {
     } catch {}
   }
 
+  // Boot
   useEffect(() => {
     let mounted = true;
 
     (async () => {
-      const [
-        { goals: storedGoals, hasStoredValue: hasGoalStorage },
-        storedHue,
-        welcomeSeen,
-        { habits: storedHabits, hasStoredValue: hasHabitStorage },
-        habitsSeenFlag,
-      ] = await Promise.all([
-        loadGoalsWithMeta(),
-        loadHue(),
-        loadWelcomeSeen(),
-        loadHabits(),
-        loadHabitsWelcomeSeen(),
-      ]);
+      try {
+        const [
+          { goals: storedGoals, hasStoredValue: hasGoalStorage },
+          storedHue,
+          welcomeSeen,
+          { habits: storedHabits, hasStoredValue: hasHabitStorage },
+          habitsSeenFlag,
+        ] = await Promise.all([
+          loadGoalsWithMeta(),
+          loadHue(),
+          loadWelcomeSeen(),
+          loadHabits(),
+          loadHabitsWelcomeSeen(),
+        ]);
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      if (!hasGoalStorage) {
-        const seeded = makeStarterGoals();
-        const ordered = sortGoals(seeded);
-        setGoals(ordered);
-        await saveGoals(ordered);
-      } else {
-        setGoals(sortGoals(storedGoals));
+        // Goals
+        if (!hasGoalStorage) {
+          const seeded = makeStarterGoals();
+          const ordered = sortGoals(seeded);
+          setGoals(ordered);
+          await saveGoals(ordered);
+        } else {
+          setGoals(sortGoals(storedGoals));
+        }
+
+        // Theme
+        if (typeof storedHue === "number" || typeof storedHue === "string") {
+          setThemeChoice(storedHue);
+        }
+
+        // Habits
+        if (!hasHabitStorage) {
+          const seededHabits = makeStarterHabits();
+          setHabits(seededHabits);
+          try {
+            await AsyncStorage.setItem(
+              HABITS_KEY,
+              JSON.stringify(seededHabits)
+            );
+          } catch {}
+        } else {
+          setHabits(storedHabits);
+        }
+
+        setHabitsWelcomeSeen(habitsSeenFlag);
+
+        // Main welcome
+        if (!welcomeSeen) setWelcomeOpen(true);
+      } finally {
+        if (mounted) setReady(true);
       }
-
-      if (typeof storedHue === "number" || typeof storedHue === "string") {
-        setThemeChoice(storedHue);
-      }
-
-      if (!hasHabitStorage) {
-        const seededHabits = makeStarterHabits();
-        await saveHabits(seededHabits);
-      } else {
-        setHabits(storedHabits);
-      }
-
-      setHabitsWelcomeSeen(habitsSeenFlag);
-
-      if (!welcomeSeen) setWelcomeOpen(true);
     })();
 
     return () => {
@@ -289,16 +313,17 @@ export default function App() {
     };
   }, []);
 
-  // When they enter Habits tab, show the one-time popup if not seen
+  // When they enter Habits tab, show the one-time popup if not seen (for upgrades).
+  // If main welcome is open, don't show this (welcome already includes habits info).
   useEffect(() => {
     if (activeTab !== "habits") return;
     if (habitsWelcomeSeen) return;
+    if (welcomeOpen) return;
 
     setHabitsWelcomeOpen(true);
-    // mark as seen immediately so it only ever happens once
     setHabitsWelcomeSeen(true);
     setHabitsWelcomeSeenFlag();
-  }, [activeTab, habitsWelcomeSeen]);
+  }, [activeTab, habitsWelcomeSeen, welcomeOpen]);
 
   async function persistGoals(nextGoals) {
     const ordered = sortGoals(nextGoals);
@@ -309,6 +334,10 @@ export default function App() {
   async function closeWelcome() {
     setWelcomeOpen(false);
     await setWelcomeSeen();
+
+    // since welcome includes habits onboarding now, mark habits onboarding as seen too
+    setHabitsWelcomeSeen(true);
+    await setHabitsWelcomeSeenFlag();
   }
 
   function normalizeNewGoal() {
@@ -360,7 +389,13 @@ export default function App() {
   async function openEdit(goal) {
     await hapticLight();
     setEditGoal(goal);
-    if (goal.type === "count") setEditValue(String(goal.progress ?? 0));
+
+    if (goal.type === "count") {
+      setEditValue(String(goal.progress ?? 0));
+    } else {
+      setEditValue("0");
+    }
+
     setEditOpen(true);
     playEditOpenAnim();
   }
@@ -369,6 +404,19 @@ export default function App() {
     setEditOpen(false);
     setEditGoal(null);
     setEditValue("0");
+  }
+
+  async function bumpEditCount(delta) {
+    if (!editGoal || editGoal.type !== "count") return;
+
+    await hapticLight();
+
+    const t = editGoal.target || 0;
+    const cur = Number(editValue);
+    const curSafe = Number.isFinite(cur) ? cur : 0;
+
+    const next = clamp(Math.floor(curSafe + delta), 0, t);
+    setEditValue(String(next));
   }
 
   async function saveEditCount() {
@@ -462,29 +510,6 @@ export default function App() {
 
       <View style={styles.tabRow}>
         <Pressable
-          onPress={() => setActiveTab("goals")}
-          style={[
-            styles.tabPill,
-            {
-              backgroundColor:
-                activeTab === "goals" ? theme.primary : theme.card,
-              borderColor: activeTab === "goals" ? theme.primary : theme.border,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              {
-                color: activeTab === "goals" ? theme.primaryTextOn : theme.text,
-              },
-            ]}
-          >
-            Goals
-          </Text>
-        </Pressable>
-
-        <Pressable
           onPress={() => setActiveTab("habits")}
           style={[
             styles.tabPill,
@@ -506,6 +531,29 @@ export default function App() {
             ]}
           >
             Habits
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => setActiveTab("goals")}
+          style={[
+            styles.tabPill,
+            {
+              backgroundColor:
+                activeTab === "goals" ? theme.primary : theme.card,
+              borderColor: activeTab === "goals" ? theme.primary : theme.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              {
+                color: activeTab === "goals" ? theme.primaryTextOn : theme.text,
+              },
+            ]}
+          >
+            Goals
           </Text>
         </Pressable>
       </View>
@@ -530,6 +578,7 @@ export default function App() {
             </View>
           </View>
 
+          {/* Goals: ONLY Add Goal (theme moved to Habits footer) */}
           <View style={styles.actionsRow}>
             <Pressable
               onPress={() => setAddOpen(true)}
@@ -546,21 +595,6 @@ export default function App() {
                 style={[styles.primaryBtnText, { color: theme.primaryTextOn }]}
               >
                 Add Goal
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setCustomizeOpen(true)}
-              style={({ pressed }) => [
-                styles.secondaryBtn,
-                {
-                  backgroundColor: pressed ? theme.border : theme.card,
-                  borderColor: theme.border,
-                },
-              ]}
-            >
-              <Text style={[styles.secondaryBtnText, { color: theme.text }]}>
-                Theme
               </Text>
             </Pressable>
           </View>
@@ -596,6 +630,15 @@ export default function App() {
     </View>
   );
 
+  // Fix: don’t render list UI until storage has been loaded/seeded
+  if (!ready) {
+    return (
+      <GestureHandlerRootView style={styles.safe}>
+        <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} />
+      </GestureHandlerRootView>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={styles.safe}>
       <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
@@ -606,7 +649,16 @@ export default function App() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
-            onDragEnd={({ data }) => persistGoals(data)}
+            onDragBegin={() => {
+              if (!goalDragging) {
+                setGoalDragging(true);
+                hapticDragStart();
+              }
+            }}
+            onDragEnd={({ data }) => {
+              setGoalDragging(false);
+              persistGoals(data);
+            }}
             renderItem={({ item, drag, isActive }) => (
               <GoalItem
                 goal={item}
@@ -619,18 +671,31 @@ export default function App() {
             )}
           />
         ) : (
-          <FlatList
+          <DraggableFlatList
+            activationDistance={12}
             data={habits}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
-            renderItem={({ item }) => (
+            onDragBegin={() => {
+              if (!habitDragging) {
+                setHabitDragging(true);
+                hapticDragStart();
+              }
+            }}
+            onDragEnd={({ data }) => {
+              setHabitDragging(false);
+              saveHabits(data);
+            }}
+            renderItem={({ item, drag, isActive }) => (
               <HabitRow
                 habit={item}
                 dates={dates}
                 theme={theme}
                 onToggle={toggleHabit}
                 onDelete={deleteHabit}
+                onDrag={drag}
+                dragging={isActive}
                 labelWidth={LABEL_W}
                 squareSize={SQUARE}
                 labelGap={LABEL_GAP}
@@ -638,26 +703,52 @@ export default function App() {
             )}
             ListFooterComponent={
               <View style={{ marginTop: 14 }}>
-                <Pressable
-                  onPress={() => setHabitAddOpen(true)}
-                  style={({ pressed }) => [
-                    styles.habitFooterBtn,
-                    {
-                      backgroundColor: pressed ? theme.border : theme.card,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.habitFooterText, { color: theme.text }]}>
-                    Add habit
-                  </Text>
-                </Pressable>
+                {/* Habits footer: two rounded buttons like Goals */}
+                <View style={styles.actionsRow}>
+                  <Pressable
+                    onPress={() => setHabitAddOpen(true)}
+                    style={({ pressed }) => [
+                      styles.primaryBtn,
+                      {
+                        backgroundColor: pressed
+                          ? theme.primaryPressed
+                          : theme.primary,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.primaryBtnText,
+                        { color: theme.primaryTextOn },
+                      ]}
+                    >
+                      Add Habit
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => setCustomizeOpen(true)}
+                    style={({ pressed }) => [
+                      styles.secondaryBtn,
+                      {
+                        backgroundColor: pressed ? theme.border : theme.card,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.secondaryBtnText, { color: theme.text }]}
+                    >
+                      Theme
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
             }
           />
         )}
 
-        {/* One-time Habits Welcome */}
+        {/* One-time Habits Welcome (kept for upgrades / older users) */}
         <Modal
           visible={habitsWelcomeOpen}
           animationType="fade"
@@ -675,45 +766,31 @@ export default function App() {
                 Habits
               </Text>
 
+              {/* KEEP EXACT LINE (as requested) */}
               <Text
                 style={[
                   styles.modalSub,
                   { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
                 ]}
               >
-                “You do not rise to the level of your goals. You fall to the
-                level of your systems.”
-              </Text>
-              <Text
-                style={[
-                  styles.modalSub,
-                  { color: theme.mutedText, marginTop: 6 },
-                ]}
-              >
-                — James Clear, Atomic Habits
+                Tap a square to track that day. Tap cycles: Off → Good → Bad →
+                Off.
               </Text>
 
-              <View style={{ marginTop: 12 }}>
+              <View style={{ marginTop: 10 }}>
                 <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Tap a square to track your day.
+                  • Simple habits (like reading) are basically On/Off.
                 </Text>
                 <Text style={[styles.bullet, { color: theme.text }]}>
-                  • It cycles: Off → Good → Bad → Off.
+                  • Working out can be marked “good” or “bad”.
                 </Text>
                 <Text style={[styles.bullet, { color: theme.text }]}>
                   • Swipe a habit left to delete it.
                 </Text>
+                <Text style={[styles.bullet, { color: theme.text }]}>
+                  • Press and hold a habit to reorder it.
+                </Text>
               </View>
-
-              <Text
-                style={[
-                  styles.modalSub,
-                  { color: theme.mutedText, marginTop: 12, lineHeight: 18 },
-                ]}
-              >
-                Small daily wins add up and can improve your everyday life over
-                time.
-              </Text>
 
               <View style={styles.modalActions}>
                 <Pressable
@@ -742,7 +819,7 @@ export default function App() {
           </View>
         </Modal>
 
-        {/* Welcome Modal */}
+        {/* Main Welcome Modal (unchanged) */}
         <Modal
           visible={welcomeOpen}
           animationType="fade"
@@ -759,16 +836,26 @@ export default function App() {
               <Text style={[styles.modalTitle, { color: theme.text }]}>
                 Welcome to Yearly Tracker
               </Text>
+
               <Text
                 style={[
                   styles.modalSub,
                   { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
                 ]}
               >
-                Track your goals for the year—fully offline.
+                “Success is the product of daily habits—not once-in-a-lifetime
+                transformations.”
+              </Text>
+              <Text
+                style={[
+                  styles.modalSub,
+                  { color: theme.mutedText, marginTop: 6 },
+                ]}
+              >
+                — James Clear
               </Text>
 
-              <View style={{ marginTop: 12 }}>
+              <View style={{ marginTop: 14 }}>
                 <Text style={[styles.bullet, { color: theme.text }]}>
                   • No accounts
                 </Text>
@@ -1052,7 +1139,7 @@ export default function App() {
           </View>
         </Modal>
 
-        {/* Customize Modal */}
+        {/* Theme Modal (opened from Habits footer) */}
         <Modal
           visible={customizeOpen}
           animationType="fade"
@@ -1225,24 +1312,66 @@ export default function App() {
                       <Text style={[styles.label, { color: theme.mutedText }]}>
                         Current
                       </Text>
-                      <TextInput
-                        value={editValue}
-                        onChangeText={setEditValue}
-                        keyboardType={
-                          Platform.OS === "ios" ? "number-pad" : "numeric"
-                        }
-                        placeholder="0"
-                        placeholderTextColor={theme.mutedText}
-                        style={[
-                          styles.input,
-                          {
-                            borderColor: theme.border,
-                            color: theme.text,
-                            backgroundColor: theme.bg,
-                          },
-                        ]}
-                        maxLength={8}
-                      />
+
+                      {/* NEW: quick - / + controls + input */}
+                      <View style={styles.countRow}>
+                        <Pressable
+                          onPress={() => bumpEditCount(-1)}
+                          style={({ pressed }) => [
+                            styles.iconBtn,
+                            {
+                              backgroundColor: pressed
+                                ? theme.border
+                                : theme.bg,
+                              borderColor: theme.border,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[styles.iconBtnText, { color: theme.text }]}
+                          >
+                            −
+                          </Text>
+                        </Pressable>
+
+                        <TextInput
+                          value={editValue}
+                          onChangeText={setEditValue}
+                          keyboardType={
+                            Platform.OS === "ios" ? "number-pad" : "numeric"
+                          }
+                          placeholder="0"
+                          placeholderTextColor={theme.mutedText}
+                          style={[
+                            styles.countInput,
+                            {
+                              borderColor: theme.border,
+                              color: theme.text,
+                              backgroundColor: theme.bg,
+                            },
+                          ]}
+                          maxLength={8}
+                        />
+
+                        <Pressable
+                          onPress={() => bumpEditCount(1)}
+                          style={({ pressed }) => [
+                            styles.iconBtn,
+                            {
+                              backgroundColor: pressed
+                                ? theme.border
+                                : theme.bg,
+                              borderColor: theme.border,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[styles.iconBtnText, { color: theme.text }]}
+                          >
+                            +
+                          </Text>
+                        </Pressable>
+                      </View>
 
                       <View style={styles.modalActions}>
                         <Pressable
@@ -1413,6 +1542,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    minWidth: 110,
   },
   secondaryBtnText: { fontSize: 14, fontWeight: "950", letterSpacing: 0.2 },
 
@@ -1460,6 +1590,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
+
   input: {
     marginTop: 8,
     borderWidth: 1,
@@ -1490,7 +1621,44 @@ const styles = StyleSheet.create({
   },
   inlineInfoText: { fontSize: 12, fontWeight: "750" },
 
-  themeGrid: { marginTop: 14, flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  // NEW: edit count row with - input +
+  countRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  iconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconBtnText: {
+    fontSize: 22,
+    fontWeight: "950",
+    letterSpacing: 0.2,
+    marginTop: -1,
+  },
+  countInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+
+  themeGrid: {
+    marginTop: 14,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
   themeCard: {
     flexBasis: "48%",
     borderWidth: 1,
@@ -1541,12 +1709,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalBtnText: { fontSize: 13, fontWeight: "950", letterSpacing: 0.2 },
-
-  habitFooterBtn: {
-    borderWidth: 1,
-    borderRadius: 2,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-  },
-  habitFooterText: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
 });

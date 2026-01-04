@@ -1,5 +1,6 @@
 // components/HabitRow.js
-import React from "react";
+
+import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
@@ -9,89 +10,79 @@ export default function HabitRow({
   theme,
   onToggle,
   onDelete,
+  onDrag,
+  dragging,
   labelWidth = 140,
   squareSize = 34,
   labelGap = 10,
 }) {
-  const renderRightActions = () => {
-    return (
-      <View style={styles.rightActionsWrap}>
-        <Pressable
-          onPress={() => onDelete(habit.id)}
-          style={[
-            styles.deleteBtn,
-            {
-              height: squareSize,
-              backgroundColor: theme.danger,
-              borderColor: theme.danger,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={`Delete habit ${habit.title}`}
-        >
-          <Text style={styles.deleteText}>Delete</Text>
-        </Pressable>
-      </View>
-    );
-  };
+  const squaresW = useMemo(
+    () => squareSize * dates.length,
+    [squareSize, dates.length]
+  );
 
-  // value meanings:
-  // 0/undefined = off
-  // 1 = did it (good)
-  // 2 = did it (bad)
   function squareBg(val) {
+    // 0/off: transparent
+    // 1/good: theme.primary
+    // 2/bad: theme.danger
+    if (!val) return "transparent";
     if (val === 1) return theme.primary;
-    if (val === 2) return theme.danger;
-    return theme.card;
+    return theme.danger;
   }
 
-  function squareLabel(val) {
-    if (val === 1) return "did it (good)";
-    if (val === 2) return "did it (bad)";
-    return "not done";
-  }
+  const renderRightActions = () => (
+    <Pressable
+      onPress={() => onDelete?.(habit.id)}
+      style={({ pressed }) => [
+        styles.deleteBtn,
+        {
+          width: 96,
+          backgroundColor: theme.danger,
+          opacity: pressed ? 0.85 : 1,
+        },
+      ]}
+    >
+      <Text style={[styles.deleteText, { color: "#fff" }]}>Delete</Text>
+    </Pressable>
+  );
 
   return (
-    <Swipeable
-      renderRightActions={renderRightActions}
-      rightThreshold={40}
-      overshootRight={false}
-    >
-      <View style={styles.row}>
-        <Text
+    <Swipeable renderRightActions={renderRightActions} overshootRight={false}>
+      <View style={[styles.row, { opacity: dragging ? 0.9 : 1 }]}>
+        {/* Label (long-press to drag) */}
+        <Pressable
+          onLongPress={onDrag}
+          delayLongPress={150}
           style={[
-            styles.habitName,
+            styles.labelBox,
             {
               width: labelWidth,
-              color: theme.mutedText,
               paddingRight: labelGap,
             },
           ]}
-          numberOfLines={1}
         >
-          {habit.title}
-        </Text>
+          <Text style={[styles.label, { color: theme.text }]} numberOfLines={1}>
+            {habit.title}
+          </Text>
+        </Pressable>
 
-        <View style={styles.squaresRow}>
+        {/* Squares */}
+        <View style={[styles.squaresRow, { width: squaresW }]}>
           {dates.map((d) => {
-            const val = habit.checks?.[d.key]; // 0/1/2
+            const v = (habit.checks || {})[d.key] || 0;
             return (
               <Pressable
                 key={d.key}
-                onPress={() => onToggle(habit.id, d.key)}
+                onPress={() => onToggle?.(habit.id, d.key)}
                 style={[
                   styles.square,
                   {
                     width: squareSize,
                     height: squareSize,
-                    backgroundColor: squareBg(val),
                     borderColor: theme.border,
+                    backgroundColor: squareBg(v),
                   },
                 ]}
-                accessibilityRole="button"
-                accessibilityLabel={`${habit.title} day ${d.num} ${squareLabel(
-                  val
-                )}`}
               />
             );
           })}
@@ -107,36 +98,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
   },
-  habitName: {
-    fontSize: 13,
-    fontWeight: "800",
+  labelBox: {
+    justifyContent: "center",
+  },
+  label: {
+    fontSize: 15,
+    fontWeight: "950",
     letterSpacing: 0.2,
   },
   squaresRow: {
     flexDirection: "row",
-    alignItems: "center",
-    // no gap: squares touch
   },
   square: {
     borderWidth: 1,
-    borderRadius: 2,
-  },
-
-  rightActionsWrap: {
-    justifyContent: "center",
-    alignItems: "flex-end",
-    paddingLeft: 12,
+    borderRadius: 8,
   },
   deleteBtn: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
     marginVertical: 10,
+    borderRadius: 14,
   },
   deleteText: {
-    color: "#fff",
     fontSize: 13,
     fontWeight: "950",
     letterSpacing: 0.2,
