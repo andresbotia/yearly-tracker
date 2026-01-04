@@ -1,6 +1,6 @@
 // App.js
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -10,9 +10,11 @@ import {
   Pressable,
   StyleSheet,
   Platform,
+  Animated,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import DraggableFlatList from "react-native-draggable-flatlist";
+import * as Haptics from "expo-haptics";
 
 import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
@@ -117,6 +119,9 @@ export default function App() {
   const [editGoal, setEditGoal] = useState(null);
   const [editValue, setEditValue] = useState("0"); // for count goals
 
+  // Edit modal animation value
+  const editAnim = useRef(new Animated.Value(0)).current;
+
   const theme = useMemo(() => makeTheme(themeChoice), [themeChoice]);
 
   const yearlyPercent = useMemo(() => {
@@ -124,6 +129,28 @@ export default function App() {
     const sum = goals.reduce((acc, g) => acc + goalPercent(g), 0);
     return sum / goals.length;
   }, [goals]);
+
+  function playEditOpenAnim() {
+    editAnim.setValue(0);
+    Animated.spring(editAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 7,
+      tension: 90,
+    }).start();
+  }
+
+  async function hapticLight() {
+    try {
+      await Haptics.selectionAsync();
+    } catch {}
+  }
+
+  async function hapticSuccess() {
+    try {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {}
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -216,10 +243,14 @@ export default function App() {
     await persistGoals(next);
   }
 
-  function openEdit(goal) {
+  async function openEdit(goal) {
+    await hapticLight();
+
     setEditGoal(goal);
     if (goal.type === "count") setEditValue(String(goal.progress ?? 0));
     setEditOpen(true);
+
+    playEditOpenAnim();
   }
 
   function closeEdit() {
@@ -240,12 +271,20 @@ export default function App() {
     const next = goals.map((g) =>
       g.id === editGoal.id ? { ...g, progress: nextProgress } : g
     );
+
+    const willBeComplete = t > 0 && nextProgress >= t;
+    if (willBeComplete) await hapticSuccess();
+    else await hapticLight();
+
     await persistGoals(next);
     closeEdit();
   }
 
   async function setMilestoneComplete(done) {
     if (!editGoal || editGoal.type !== "boolean") return;
+
+    if (done) await hapticSuccess();
+    else await hapticLight();
 
     const next = goals.map((g) =>
       g.id === editGoal.id ? { ...g, progress: done ? 1 : 0 } : g
@@ -698,15 +737,32 @@ export default function App() {
         {/* Edit Progress Modal */}
         <Modal
           visible={editOpen}
-          animationType="slide"
+          animationType="fade"
           transparent
           onRequestClose={closeEdit}
         >
           <View style={styles.modalBackdrop}>
-            <View
+            <Animated.View
               style={[
                 styles.modalCard,
                 { backgroundColor: theme.card, borderColor: theme.border },
+                {
+                  opacity: editAnim,
+                  transform: [
+                    {
+                      scale: editAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.96, 1],
+                      }),
+                    },
+                    {
+                      translateY: editAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [14, 0],
+                      }),
+                    },
+                  ],
+                },
               ]}
             >
               <Text style={[styles.modalTitle, { color: theme.text }]}>
@@ -885,7 +941,7 @@ export default function App() {
                   )}
                 </>
               )}
-            </View>
+            </Animated.View>
           </View>
         </Modal>
       </SafeAreaView>

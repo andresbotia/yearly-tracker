@@ -2,6 +2,7 @@
 
 import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
+import * as Haptics from "expo-haptics";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -33,6 +34,12 @@ export default function GoalItem({
       ? "Completed"
       : "Not yet";
 
+  async function hapticLight() {
+    try {
+      await Haptics.selectionAsync();
+    } catch {}
+  }
+
   return (
     <Pressable
       onLongPress={onDrag}
@@ -41,7 +48,10 @@ export default function GoalItem({
       style={({ pressed }) => [
         styles.card,
         { backgroundColor: theme.card, borderColor: theme.border },
-        (pressed || dragging) && { opacity: 0.95, transform: [{ scale: 0.99 }] },
+        (pressed || dragging) && {
+          opacity: 0.95,
+          transform: [{ scale: 0.99 }],
+        },
       ]}
     >
       <View style={styles.rowTop}>
@@ -105,17 +115,25 @@ export default function GoalItem({
             <View
               style={[
                 styles.completedPill,
-                { backgroundColor: theme.bg, borderColor: theme.border },
+                {
+                  backgroundColor: theme.bg,
+                  borderColor: theme.primaryPressed,
+                },
               ]}
               accessibilityLabel={`${goal.title} completed`}
             >
-              <Text style={[styles.completedText, { color: theme.text }]}>
+              <Text
+                style={[styles.primaryBtnText, { color: theme.primaryPressed }]}
+              >
                 ✓ Completed
               </Text>
             </View>
 
             <Pressable
-              onPress={() => onEdit(goal)}
+              onPress={async () => {
+                await hapticLight();
+                onEdit(goal);
+              }}
               style={({ pressed }) => [
                 styles.ghostBtn,
                 {
@@ -133,7 +151,10 @@ export default function GoalItem({
           </>
         ) : (
           <Pressable
-            onPress={() => onEdit(goal)}
+            onPress={async () => {
+              await hapticLight();
+              onEdit(goal);
+            }}
             style={({ pressed }) => [
               styles.primaryBtn,
               {
@@ -268,11 +289,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
-  },
-  completedText: {
-    fontSize: 13,
-    fontWeight: "950",
-    letterSpacing: 0.2,
   },
 
   ghostBtn: {
