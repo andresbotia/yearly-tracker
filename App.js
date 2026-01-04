@@ -16,7 +16,7 @@ import DraggableFlatList from "react-native-draggable-flatlist";
 
 import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
-import { HUE_OPTIONS, makeTheme } from "./utils/theme";
+import { THEMES, makeTheme } from "./utils/theme";
 import {
   loadGoalsWithMeta,
   saveGoals,
@@ -101,7 +101,7 @@ export default function App() {
   const year = new Date().getFullYear();
 
   const [goals, setGoals] = useState([]);
-  const [hue, setHue] = useState(210);
+  const [themeChoice, setThemeChoice] = useState("bright-blue");
 
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -117,7 +117,7 @@ export default function App() {
   const [editGoal, setEditGoal] = useState(null);
   const [editValue, setEditValue] = useState("0"); // for count goals
 
-  const theme = useMemo(() => makeTheme(hue), [hue]);
+  const theme = useMemo(() => makeTheme(themeChoice), [themeChoice]);
 
   const yearlyPercent = useMemo(() => {
     if (!goals.length) return 0;
@@ -144,7 +144,9 @@ export default function App() {
         setGoals(sortGoals(storedGoals));
       }
 
-      if (typeof storedHue === "number") setHue(storedHue);
+      if (typeof storedHue === "number" || typeof storedHue === "string") {
+        setThemeChoice(storedHue);
+      }
 
       // One-time welcome modal
       if (!welcomeSeen) {
@@ -252,9 +254,9 @@ export default function App() {
     closeEdit();
   }
 
-  async function handlePickHue(nextHue) {
-    setHue(nextHue);
-    await saveHue(nextHue);
+  async function handlePickTheme(nextTheme) {
+    setThemeChoice(nextTheme);
+    await saveHue(nextTheme);
   }
 
   const header = (
@@ -326,528 +328,566 @@ export default function App() {
     <GestureHandlerRootView style={styles.safe}>
       <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
         <DraggableFlatList
-        activationDistance={12}
-        data={goals}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListHeaderComponent={header}
-        ListEmptyComponent={
-          <View
-            style={[
-              styles.emptyBox,
-              { borderColor: theme.border, backgroundColor: theme.card },
-            ]}
-          >
-            <Text style={[styles.emptyTitle, { color: theme.text }]}>
-              Start your year strong
-            </Text>
-            <Text style={[styles.emptySub, { color: theme.mutedText }]}>
-              Add a count goal (like “Read 20 books”) or a milestone (like “Run
-              a 5K”).
-            </Text>
-          </View>
-        }
-        onDragEnd={({ data }) => {
-          persistGoals(data);
-        }}
-        renderItem={({ item, drag, isActive }) => (
-          <GoalItem
-            goal={item}
-            theme={theme}
-            onEdit={openEdit}
-            onDelete={handleDeleteGoal}
-            onDrag={drag}
-            dragging={isActive}
-          />
-        )}
-      />
-
-      {/* Welcome Modal (one-time) */}
-      <Modal
-        visible={welcomeOpen}
-        animationType="fade"
-        transparent
-        onRequestClose={closeWelcome}
-      >
-        <View style={styles.modalBackdrop}>
-          <View
-            style={[
-              styles.modalCard,
-              { backgroundColor: theme.card, borderColor: theme.border },
-            ]}
-          >
-            <Text style={[styles.modalTitle, { color: theme.text }]}>
-              Welcome to Yearly Tracker
-            </Text>
-
-            <Text
+          activationDistance={12}
+          data={goals}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={header}
+          ListEmptyComponent={
+            <View
               style={[
-                styles.modalSub,
-                { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
+                styles.emptyBox,
+                { borderColor: theme.border, backgroundColor: theme.card },
               ]}
             >
-              Track your goals for the year—fully offline.
-            </Text>
-
-            <View style={{ marginTop: 12 }}>
-              <Text style={[styles.bullet, { color: theme.text }]}>
-                • No accounts
+              <Text style={[styles.emptyTitle, { color: theme.text }]}>
+                Start your year strong
               </Text>
-              <Text style={[styles.bullet, { color: theme.text }]}>
-                • No tracking or analytics
-              </Text>
-              <Text style={[styles.bullet, { color: theme.text }]}>
-                • Everything is stored locally on your phone
+              <Text style={[styles.emptySub, { color: theme.mutedText }]}>
+                Add a count goal (like “Read 20 books”) or a milestone (like
+                “Run a 5K”).
               </Text>
             </View>
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={closeWelcome}
-                style={({ pressed }) => [
-                  styles.modalBtn,
-                  {
-                    backgroundColor: pressed
-                      ? theme.primaryPressed
-                      : theme.primary,
-                    borderColor: theme.primary,
-                  },
-                ]}
-              >
-                <Text
-                  style={[styles.modalBtnText, { color: theme.primaryTextOn }]}
-                >
-                  Get Started
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Add Goal Modal */}
-      <Modal
-        visible={addOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setAddOpen(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View
-            style={[
-              styles.modalCard,
-              { backgroundColor: theme.card, borderColor: theme.border },
-            ]}
-          >
-            <Text style={[styles.modalTitle, { color: theme.text }]}>
-              Add Goal
-            </Text>
-
-            <Text style={[styles.label, { color: theme.mutedText }]}>
-              Title
-            </Text>
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder="e.g., Read 20 books"
-              placeholderTextColor={theme.mutedText}
-              style={[
-                styles.input,
-                {
-                  borderColor: theme.border,
-                  color: theme.text,
-                  backgroundColor: theme.bg,
-                },
-              ]}
-              autoCorrect={false}
-              autoCapitalize="sentences"
-              maxLength={60}
+          }
+          onDragEnd={({ data }) => {
+            persistGoals(data);
+          }}
+          renderItem={({ item, drag, isActive }) => (
+            <GoalItem
+              goal={item}
+              theme={theme}
+              onEdit={openEdit}
+              onDelete={handleDeleteGoal}
+              onDrag={drag}
+              dragging={isActive}
             />
+          )}
+        />
 
-            <Text style={[styles.label, { color: theme.mutedText }]}>Type</Text>
-            <View style={styles.typeRow}>
-              <Pressable
-                onPress={() => setType("count")}
-                style={({ pressed }) => [
-                  styles.pill,
-                  {
-                    backgroundColor:
-                      type === "count" ? theme.primary : theme.bg,
-                    borderColor:
-                      type === "count" ? theme.primary : theme.border,
-                    opacity: pressed ? 0.9 : 1,
-                  },
+        {/* Welcome Modal (one-time) */}
+        <Modal
+          visible={welcomeOpen}
+          animationType="fade"
+          transparent
+          onRequestClose={closeWelcome}
+        >
+          <View style={styles.modalBackdrop}>
+            <View
+              style={[
+                styles.modalCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Welcome to Yearly Tracker
+              </Text>
+
+              <Text
+                style={[
+                  styles.modalSub,
+                  { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
                 ]}
               >
-                <Text
-                  style={[
-                    styles.pillText,
+                Track your goals for the year—fully offline.
+              </Text>
+
+              <View style={{ marginTop: 12 }}>
+                <Text style={[styles.bullet, { color: theme.text }]}>
+                  • No accounts
+                </Text>
+                <Text style={[styles.bullet, { color: theme.text }]}>
+                  • No tracking or analytics
+                </Text>
+                <Text style={[styles.bullet, { color: theme.text }]}>
+                  • Everything is stored locally on your phone
+                </Text>
+              </View>
+
+              <View style={styles.modalActions}>
+                <Pressable
+                  onPress={closeWelcome}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
                     {
-                      color:
-                        type === "count" ? theme.primaryTextOn : theme.text,
+                      backgroundColor: pressed
+                        ? theme.primaryPressed
+                        : theme.primary,
+                      borderColor: theme.primary,
                     },
                   ]}
                 >
-                  Count
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setType("boolean")}
-                style={({ pressed }) => [
-                  styles.pill,
-                  {
-                    backgroundColor:
-                      type === "boolean" ? theme.primary : theme.bg,
-                    borderColor:
-                      type === "boolean" ? theme.primary : theme.border,
-                    opacity: pressed ? 0.9 : 1,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.pillText,
-                    {
-                      color:
-                        type === "boolean" ? theme.primaryTextOn : theme.text,
-                    },
-                  ]}
-                >
-                  Milestone
-                </Text>
-              </Pressable>
-            </View>
-
-            {type === "count" && (
-              <>
-                <Text style={[styles.label, { color: theme.mutedText }]}>
-                  Target
-                </Text>
-                <TextInput
-                  value={targetText}
-                  onChangeText={setTargetText}
-                  keyboardType={
-                    Platform.OS === "ios" ? "number-pad" : "numeric"
-                  }
-                  placeholder="e.g., 10"
-                  placeholderTextColor={theme.mutedText}
-                  style={[
-                    styles.input,
-                    {
-                      borderColor: theme.border,
-                      color: theme.text,
-                      backgroundColor: theme.bg,
-                    },
-                  ]}
-                  maxLength={6}
-                />
-              </>
-            )}
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setAddOpen(false)}
-                style={({ pressed }) => [
-                  styles.modalBtn,
-                  {
-                    backgroundColor: pressed ? theme.border : theme.bg,
-                    borderColor: theme.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                  Cancel
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleAddGoal}
-                style={({ pressed }) => [
-                  styles.modalBtn,
-                  {
-                    backgroundColor: pressed
-                      ? theme.primaryPressed
-                      : theme.primary,
-                    borderColor: theme.primary,
-                  },
-                ]}
-              >
-                <Text
-                  style={[styles.modalBtnText, { color: theme.primaryTextOn }]}
-                >
-                  Save
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Customize Modal */}
-      <Modal
-        visible={customizeOpen}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setCustomizeOpen(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View
-            style={[
-              styles.modalCard,
-              { backgroundColor: theme.card, borderColor: theme.border },
-            ]}
-          >
-            <Text style={[styles.modalTitle, { color: theme.text }]}>
-              Customize
-            </Text>
-            <Text style={[styles.modalSub, { color: theme.mutedText }]}>
-              Pick a theme color
-            </Text>
-
-            <View style={styles.hueGrid}>
-              {HUE_OPTIONS.map((h) => {
-                const selected = h === hue;
-                const swatch = `hsl(${h}, 80%, 45%)`;
-                return (
-                  <Pressable
-                    key={h}
-                    onPress={() => handlePickHue(h)}
-                    style={styles.swatchWrap}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Select theme hue ${h}`}
+                  <Text
+                    style={[
+                      styles.modalBtnText,
+                      { color: theme.primaryTextOn },
+                    ]}
                   >
-                    <View
-                      style={[
-                        styles.swatch,
-                        {
-                          backgroundColor: swatch,
-                          borderColor: selected ? theme.text : "transparent",
-                        },
-                      ]}
-                    />
-                    {selected && (
-                      <Text
-                        style={[styles.selectedText, { color: theme.text }]}
-                      >
-                        ✓
-                      </Text>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setCustomizeOpen(false)}
-                style={({ pressed }) => [
-                  styles.modalBtn,
-                  {
-                    backgroundColor: pressed
-                      ? theme.primaryPressed
-                      : theme.primary,
-                    borderColor: theme.primary,
-                  },
-                ]}
-              >
-                <Text
-                  style={[styles.modalBtnText, { color: theme.primaryTextOn }]}
-                >
-                  Done
-                </Text>
-              </Pressable>
+                    Get Started
+                  </Text>
+                </Pressable>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      {/* Edit Progress Modal */}
-      <Modal
-        visible={editOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={closeEdit}
-      >
-        <View style={styles.modalBackdrop}>
-          <View
-            style={[
-              styles.modalCard,
-              { backgroundColor: theme.card, borderColor: theme.border },
-            ]}
-          >
-            <Text style={[styles.modalTitle, { color: theme.text }]}>
-              Edit Progress
-            </Text>
+        {/* Add Goal Modal */}
+        <Modal
+          visible={addOpen}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setAddOpen(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View
+              style={[
+                styles.modalCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Add Goal
+              </Text>
 
-            {!!editGoal && (
-              <>
-                <Text
-                  style={[styles.editGoalTitle, { color: theme.text }]}
-                  numberOfLines={2}
+              <Text style={[styles.label, { color: theme.mutedText }]}>
+                Title
+              </Text>
+              <TextInput
+                value={title}
+                onChangeText={setTitle}
+                placeholder="e.g., Read 20 books"
+                placeholderTextColor={theme.mutedText}
+                style={[
+                  styles.input,
+                  {
+                    borderColor: theme.border,
+                    color: theme.text,
+                    backgroundColor: theme.bg,
+                  },
+                ]}
+                autoCorrect={false}
+                autoCapitalize="sentences"
+                maxLength={60}
+              />
+
+              <Text style={[styles.label, { color: theme.mutedText }]}>
+                Type
+              </Text>
+              <View style={styles.typeRow}>
+                <Pressable
+                  onPress={() => setType("count")}
+                  style={({ pressed }) => [
+                    styles.pill,
+                    {
+                      backgroundColor:
+                        type === "count" ? theme.primary : theme.bg,
+                      borderColor:
+                        type === "count" ? theme.primary : theme.border,
+                      opacity: pressed ? 0.9 : 1,
+                    },
+                  ]}
                 >
-                  {editGoal.title}
-                </Text>
+                  <Text
+                    style={[
+                      styles.pillText,
+                      {
+                        color:
+                          type === "count" ? theme.primaryTextOn : theme.text,
+                      },
+                    ]}
+                  >
+                    Count
+                  </Text>
+                </Pressable>
 
-                <Text style={[styles.modalSub, { color: theme.mutedText }]}>
-                  {editGoal.type === "count"
-                    ? "Set your current value"
-                    : "Mark your milestone status"}
-                </Text>
+                <Pressable
+                  onPress={() => setType("boolean")}
+                  style={({ pressed }) => [
+                    styles.pill,
+                    {
+                      backgroundColor:
+                        type === "boolean" ? theme.primary : theme.bg,
+                      borderColor:
+                        type === "boolean" ? theme.primary : theme.border,
+                      opacity: pressed ? 0.9 : 1,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.pillText,
+                      {
+                        color:
+                          type === "boolean" ? theme.primaryTextOn : theme.text,
+                      },
+                    ]}
+                  >
+                    Milestone
+                  </Text>
+                </Pressable>
+              </View>
 
-                {editGoal.type === "count" ? (
-                  <>
-                    <View
-                      style={[
-                        styles.inlineInfo,
+              {type === "count" && (
+                <>
+                  <Text style={[styles.label, { color: theme.mutedText }]}>
+                    Target
+                  </Text>
+                  <TextInput
+                    value={targetText}
+                    onChangeText={setTargetText}
+                    keyboardType={
+                      Platform.OS === "ios" ? "number-pad" : "numeric"
+                    }
+                    placeholder="e.g., 10"
+                    placeholderTextColor={theme.mutedText}
+                    style={[
+                      styles.input,
+                      {
+                        borderColor: theme.border,
+                        color: theme.text,
+                        backgroundColor: theme.bg,
+                      },
+                    ]}
+                    maxLength={6}
+                  />
+                </>
+              )}
+
+              <View style={styles.modalActions}>
+                <Pressable
+                  onPress={() => setAddOpen(false)}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    {
+                      backgroundColor: pressed ? theme.border : theme.bg,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
+                    Cancel
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleAddGoal}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    {
+                      backgroundColor: pressed
+                        ? theme.primaryPressed
+                        : theme.primary,
+                      borderColor: theme.primary,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.modalBtnText,
+                      { color: theme.primaryTextOn },
+                    ]}
+                  >
+                    Save
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Customize Modal */}
+        <Modal
+          visible={customizeOpen}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setCustomizeOpen(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View
+              style={[
+                styles.modalCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Customize
+              </Text>
+              <Text style={[styles.modalSub, { color: theme.mutedText }]}>
+                Pick a theme
+              </Text>
+
+              <View style={styles.themeGrid}>
+                {THEMES.map((t) => {
+                  const selected = t.id === themeChoice;
+                  return (
+                    <Pressable
+                      key={t.id}
+                      onPress={() => handlePickTheme(t.id)}
+                      style={({ pressed }) => [
+                        styles.themeCard,
                         {
-                          backgroundColor: theme.bg,
-                          borderColor: theme.border,
+                          borderColor: selected ? theme.primary : theme.border,
+                          backgroundColor: selected ? theme.ringBg : theme.card,
+                          opacity: pressed ? 0.9 : 1,
                         },
                       ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select theme ${t.name}`}
                     >
-                      <Text
-                        style={[
-                          styles.inlineInfoText,
-                          { color: theme.mutedText },
-                        ]}
-                      >
-                        Range: 0 – {editGoal.target}
-                      </Text>
-                    </View>
-
-                    <Text style={[styles.label, { color: theme.mutedText }]}>
-                      Current
-                    </Text>
-                    <TextInput
-                      value={editValue}
-                      onChangeText={setEditValue}
-                      keyboardType={
-                        Platform.OS === "ios" ? "number-pad" : "numeric"
-                      }
-                      placeholder="0"
-                      placeholderTextColor={theme.mutedText}
-                      style={[
-                        styles.input,
-                        {
-                          borderColor: theme.border,
-                          color: theme.text,
-                          backgroundColor: theme.bg,
-                        },
-                      ]}
-                      maxLength={8}
-                    />
-
-                    <View style={styles.modalActions}>
-                      <Pressable
-                        onPress={closeEdit}
-                        style={({ pressed }) => [
-                          styles.modalBtn,
-                          {
-                            backgroundColor: pressed ? theme.border : theme.bg,
-                            borderColor: theme.border,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[styles.modalBtnText, { color: theme.text }]}
-                        >
-                          Cancel
+                      <View style={styles.themeHeader}>
+                        <Text style={[styles.themeName, { color: theme.text }]}>
+                          {t.name}
                         </Text>
-                      </Pressable>
-
-                      <Pressable
-                        onPress={saveEditCount}
-                        style={({ pressed }) => [
-                          styles.modalBtn,
-                          {
-                            backgroundColor: pressed
-                              ? theme.primaryPressed
-                              : theme.primary,
-                            borderColor: theme.primary,
-                          },
-                        ]}
-                      >
-                        <Text
+                      </View>
+                      <View style={styles.swatchRow}>
+                        <View
                           style={[
-                            styles.modalBtnText,
-                            { color: theme.primaryTextOn },
+                            styles.themeSwatch,
+                            { backgroundColor: t.palette.primary },
                           ]}
-                        >
-                          Save
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    {/* Milestone defaults visually to "Not yet" */}
-                    <View style={styles.milestoneRow}>
-                      <Pressable
-                        onPress={() => setMilestoneComplete(false)}
-                        style={({ pressed }) => [
-                          styles.milestoneBtn,
+                        />
+                        <View
+                          style={[
+                            styles.themeSwatch,
+                            { backgroundColor: t.palette.card },
+                          ]}
+                        />
+                        <View
+                          style={[
+                            styles.themeSwatch,
+                            { backgroundColor: t.palette.bg },
+                          ]}
+                        />
+                      </View>
+                      <Text
+                        style={[styles.themeHint, { color: theme.mutedText }]}
+                      >
+                        Tap to apply
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <View style={styles.modalActions}>
+                <Pressable
+                  onPress={() => setCustomizeOpen(false)}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    {
+                      backgroundColor: pressed
+                        ? theme.primaryPressed
+                        : theme.primary,
+                      borderColor: theme.primary,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.modalBtnText,
+                      { color: theme.primaryTextOn },
+                    ]}
+                  >
+                    Done
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Edit Progress Modal */}
+        <Modal
+          visible={editOpen}
+          animationType="slide"
+          transparent
+          onRequestClose={closeEdit}
+        >
+          <View style={styles.modalBackdrop}>
+            <View
+              style={[
+                styles.modalCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Edit Progress
+              </Text>
+
+              {!!editGoal && (
+                <>
+                  <Text
+                    style={[styles.editGoalTitle, { color: theme.text }]}
+                    numberOfLines={2}
+                  >
+                    {editGoal.title}
+                  </Text>
+
+                  <Text style={[styles.modalSub, { color: theme.mutedText }]}>
+                    {editGoal.type === "count"
+                      ? "Set your current value"
+                      : "Mark your milestone status"}
+                  </Text>
+
+                  {editGoal.type === "count" ? (
+                    <>
+                      <View
+                        style={[
+                          styles.inlineInfo,
                           {
                             backgroundColor: theme.bg,
                             borderColor: theme.border,
-                            opacity: pressed ? 0.85 : 1,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[styles.milestoneText, { color: theme.text }]}
-                        >
-                          Not yet
-                        </Text>
-                      </Pressable>
-
-                      <Pressable
-                        onPress={() => setMilestoneComplete(true)}
-                        style={({ pressed }) => [
-                          styles.milestoneBtn,
-                          {
-                            backgroundColor: "transparent",
-                            borderColor: theme.border,
-                            opacity: pressed ? 0.85 : 1,
                           },
                         ]}
                       >
                         <Text
                           style={[
-                            styles.milestoneText,
+                            styles.inlineInfoText,
                             { color: theme.mutedText },
                           ]}
                         >
-                          Mark completed
+                          Range: 0 – {editGoal.target}
                         </Text>
-                      </Pressable>
-                    </View>
+                      </View>
 
-                    <View style={styles.modalActions}>
-                      <Pressable
-                        onPress={closeEdit}
-                        style={({ pressed }) => [
-                          styles.modalBtn,
+                      <Text style={[styles.label, { color: theme.mutedText }]}>
+                        Current
+                      </Text>
+                      <TextInput
+                        value={editValue}
+                        onChangeText={setEditValue}
+                        keyboardType={
+                          Platform.OS === "ios" ? "number-pad" : "numeric"
+                        }
+                        placeholder="0"
+                        placeholderTextColor={theme.mutedText}
+                        style={[
+                          styles.input,
                           {
-                            backgroundColor: pressed ? theme.border : theme.bg,
                             borderColor: theme.border,
+                            color: theme.text,
+                            backgroundColor: theme.bg,
                           },
                         ]}
-                      >
-                        <Text
-                          style={[styles.modalBtnText, { color: theme.text }]}
+                        maxLength={8}
+                      />
+
+                      <View style={styles.modalActions}>
+                        <Pressable
+                          onPress={closeEdit}
+                          style={({ pressed }) => [
+                            styles.modalBtn,
+                            {
+                              backgroundColor: pressed
+                                ? theme.border
+                                : theme.bg,
+                              borderColor: theme.border,
+                            },
+                          ]}
                         >
-                          Close
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </>
-                )}
-              </>
-            )}
+                          <Text
+                            style={[styles.modalBtnText, { color: theme.text }]}
+                          >
+                            Cancel
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={saveEditCount}
+                          style={({ pressed }) => [
+                            styles.modalBtn,
+                            {
+                              backgroundColor: pressed
+                                ? theme.primaryPressed
+                                : theme.primary,
+                              borderColor: theme.primary,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.modalBtnText,
+                              { color: theme.primaryTextOn },
+                            ]}
+                          >
+                            Save
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      {/* Milestone defaults visually to "Not yet" */}
+                      <View style={styles.milestoneRow}>
+                        <Pressable
+                          onPress={() => setMilestoneComplete(false)}
+                          style={({ pressed }) => [
+                            styles.milestoneBtn,
+                            {
+                              backgroundColor: theme.bg,
+                              borderColor: theme.border,
+                              opacity: pressed ? 0.85 : 1,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.milestoneText,
+                              { color: theme.text },
+                            ]}
+                          >
+                            Not yet
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() => setMilestoneComplete(true)}
+                          style={({ pressed }) => [
+                            styles.milestoneBtn,
+                            {
+                              backgroundColor: "transparent",
+                              borderColor: theme.border,
+                              opacity: pressed ? 0.85 : 1,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.milestoneText,
+                              { color: theme.mutedText },
+                            ]}
+                          >
+                            Mark completed
+                          </Text>
+                        </Pressable>
+                      </View>
+
+                      <View style={styles.modalActions}>
+                        <Pressable
+                          onPress={closeEdit}
+                          style={({ pressed }) => [
+                            styles.modalBtn,
+                            {
+                              backgroundColor: pressed
+                                ? theme.border
+                                : theme.bg,
+                              borderColor: theme.border,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[styles.modalBtnText, { color: theme.text }]}
+                          >
+                            Close
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </>
+                  )}
+                </>
+              )}
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -960,15 +1000,35 @@ const styles = StyleSheet.create({
   },
   inlineInfoText: { fontSize: 12, fontWeight: "750" },
 
-  hueGrid: { marginTop: 14, flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  swatchWrap: {
-    width: 56,
-    height: 56,
-    alignItems: "center",
-    justifyContent: "center",
+  themeGrid: {
+    marginTop: 14,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
   },
-  swatch: { width: 44, height: 44, borderRadius: 999, borderWidth: 2 },
-  selectedText: { position: "absolute", fontSize: 16, fontWeight: "950" },
+  themeCard: {
+    flexBasis: "48%",
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+  themeHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  themeName: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
+  swatchRow: {
+    flexDirection: "row",
+    gap: 6,
+    width: 100,
+    justifyContent: "space-between",
+    paddingTop: 10,
+  },
+  themeSwatch: { width: 16, height: 16, borderRadius: 6 },
+  themeHint: { marginTop: 10, fontSize: 12, fontWeight: "750" },
 
   milestoneRow: { marginTop: 14, flexDirection: "row", gap: 10 },
   milestoneBtn: {

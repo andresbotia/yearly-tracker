@@ -32,7 +32,8 @@ export async function loadHue() {
     const raw = await AsyncStorage.getItem(KEYS.hue);
     if (!raw) return null;
     const n = Number(raw);
-    return Number.isFinite(n) ? n : null;
+    if (Number.isFinite(n)) return n;
+    return raw; // allow named themes
   } catch {
     return null;
   }
