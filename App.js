@@ -11,13 +11,16 @@ import {
   StyleSheet,
   Platform,
   Animated,
+  FlatList,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import DraggableFlatList from "react-native-draggable-flatlist";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
+import HabitRow from "./components/HabitRow";
 import { THEMES, makeTheme } from "./utils/theme";
 import {
   loadGoalsWithMeta,
@@ -27,6 +30,14 @@ import {
   loadWelcomeSeen,
   setWelcomeSeen,
 } from "./utils/storage";
+
+const HABITS_KEY = "yt_habits_v1";
+const HABITS_WELCOME_SEEN_KEY = "yt_habits_welcome_seen_v1";
+
+// IMPORTANT: these MUST match the header + rows
+const SQUARE = 34;
+const LABEL_W = 140;
+const LABEL_GAP = 10;
 
 function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -51,11 +62,8 @@ function sortGoals(goals) {
   const completed = [];
 
   goals.forEach((goal) => {
-    if (isGoalComplete(goal)) {
-      completed.push(goal);
-    } else {
-      inProgress.push(goal);
-    }
+    if (isGoalComplete(goal)) completed.push(goal);
+    else inProgress.push(goal);
   });
 
   return [...inProgress, ...completed];
@@ -99,8 +107,44 @@ function makeStarterGoals() {
   ];
 }
 
+function makeStarterHabits() {
+  return ["Workout", "Cardio", "Drink Water", "Read"].map((t) => ({
+    id: uid(),
+    title: t,
+    checks: {}, // dayKey -> 1 (good) | 2 (bad)
+  }));
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function dateKey(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function monthName(d) {
+  return d.toLocaleString(undefined, { month: "long" });
+}
+
+function lastNDays(n) {
+  const out = [];
+  const today = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const dt = new Date(today);
+    dt.setDate(today.getDate() - i);
+    out.push({
+      key: dateKey(dt),
+      num: dt.getDate(),
+    });
+  }
+  return out;
+}
+
 export default function App() {
   const year = new Date().getFullYear();
+
+  const [activeTab, setActiveTab] = useState("goals"); // "goals" | "habits"
 
   const [goals, setGoals] = useState([]);
   const [themeChoice, setThemeChoice] = useState("bright-blue");
@@ -109,20 +153,29 @@ export default function App() {
   const [addOpen, setAddOpen] = useState(false);
   const [customizeOpen, setCustomizeOpen] = useState(false);
 
+  // One-time habits welcome
+  const [habitsWelcomeOpen, setHabitsWelcomeOpen] = useState(false);
+  const [habitsWelcomeSeen, setHabitsWelcomeSeen] = useState(true); // default true until loaded
+
   // Add goal form state
   const [title, setTitle] = useState("");
-  const [type, setType] = useState("count"); // "count" | "boolean"
+  const [type, setType] = useState("count");
   const [targetText, setTargetText] = useState("10");
 
   // Edit progress modal state
   const [editOpen, setEditOpen] = useState(false);
   const [editGoal, setEditGoal] = useState(null);
-  const [editValue, setEditValue] = useState("0"); // for count goals
-
-  // Edit modal animation value
+  const [editValue, setEditValue] = useState("0");
   const editAnim = useRef(new Animated.Value(0)).current;
 
+  // Habits state
+  const [habits, setHabits] = useState([]);
+  const [habitAddOpen, setHabitAddOpen] = useState(false);
+  const [habitTitle, setHabitTitle] = useState("");
+
   const theme = useMemo(() => makeTheme(themeChoice), [themeChoice]);
+
+  const dates = useMemo(() => lastNDays(5), [activeTab]);
 
   const yearlyPercent = useMemo(() => {
     if (!goals.length) return 0;
@@ -152,17 +205,61 @@ export default function App() {
     } catch {}
   }
 
+  async function loadHabits() {
+    try {
+      const raw = await AsyncStorage.getItem(HABITS_KEY);
+      if (!raw) return { habits: [], hasStoredValue: false };
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return { habits: [], hasStoredValue: false };
+      return { habits: parsed, hasStoredValue: true };
+    } catch {
+      return { habits: [], hasStoredValue: false };
+    }
+  }
+
+  async function saveHabits(next) {
+    setHabits(next);
+    try {
+      await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(next));
+    } catch {}
+  }
+
+  async function loadHabitsWelcomeSeen() {
+    try {
+      const raw = await AsyncStorage.getItem(HABITS_WELCOME_SEEN_KEY);
+      return raw === "1";
+    } catch {
+      return true;
+    }
+  }
+
+  async function setHabitsWelcomeSeenFlag() {
+    try {
+      await AsyncStorage.setItem(HABITS_WELCOME_SEEN_KEY, "1");
+    } catch {}
+  }
+
   useEffect(() => {
     let mounted = true;
 
     (async () => {
-      const [{ goals: storedGoals, hasStoredValue }, storedHue, welcomeSeen] =
-        await Promise.all([loadGoalsWithMeta(), loadHue(), loadWelcomeSeen()]);
+      const [
+        { goals: storedGoals, hasStoredValue: hasGoalStorage },
+        storedHue,
+        welcomeSeen,
+        { habits: storedHabits, hasStoredValue: hasHabitStorage },
+        habitsSeenFlag,
+      ] = await Promise.all([
+        loadGoalsWithMeta(),
+        loadHue(),
+        loadWelcomeSeen(),
+        loadHabits(),
+        loadHabitsWelcomeSeen(),
+      ]);
 
       if (!mounted) return;
 
-      // First run: seed starter goals
-      if (!hasStoredValue) {
+      if (!hasGoalStorage) {
         const seeded = makeStarterGoals();
         const ordered = sortGoals(seeded);
         setGoals(ordered);
@@ -175,16 +272,33 @@ export default function App() {
         setThemeChoice(storedHue);
       }
 
-      // One-time welcome modal
-      if (!welcomeSeen) {
-        setWelcomeOpen(true);
+      if (!hasHabitStorage) {
+        const seededHabits = makeStarterHabits();
+        await saveHabits(seededHabits);
+      } else {
+        setHabits(storedHabits);
       }
+
+      setHabitsWelcomeSeen(habitsSeenFlag);
+
+      if (!welcomeSeen) setWelcomeOpen(true);
     })();
 
     return () => {
       mounted = false;
     };
   }, []);
+
+  // When they enter Habits tab, show the one-time popup if not seen
+  useEffect(() => {
+    if (activeTab !== "habits") return;
+    if (habitsWelcomeSeen) return;
+
+    setHabitsWelcomeOpen(true);
+    // mark as seen immediately so it only ever happens once
+    setHabitsWelcomeSeen(true);
+    setHabitsWelcomeSeenFlag();
+  }, [activeTab, habitsWelcomeSeen]);
 
   async function persistGoals(nextGoals) {
     const ordered = sortGoals(nextGoals);
@@ -245,11 +359,9 @@ export default function App() {
 
   async function openEdit(goal) {
     await hapticLight();
-
     setEditGoal(goal);
     if (goal.type === "count") setEditValue(String(goal.progress ?? 0));
     setEditOpen(true);
-
     playEditOpenAnim();
   }
 
@@ -298,112 +410,339 @@ export default function App() {
     await saveHue(nextTheme);
   }
 
-  const header = (
+  async function addHabit() {
+    const t = habitTitle.trim();
+    if (!t) return;
+
+    await hapticLight();
+
+    const next = [{ id: uid(), title: t, checks: {} }, ...habits];
+    setHabitTitle("");
+    setHabitAddOpen(false);
+    await saveHabits(next);
+  }
+
+  // 3-state cycle:
+  // off(undefined/0) -> 1 (good) -> 2 (bad) -> off
+  async function toggleHabit(habitId, dayKey) {
+    await hapticLight();
+
+    const next = habits.map((h) => {
+      if (h.id !== habitId) return h;
+
+      const checks = { ...(h.checks || {}) };
+      const cur = checks[dayKey] || 0;
+
+      let nextVal = 0;
+      if (cur === 0) nextVal = 1;
+      else if (cur === 1) nextVal = 2;
+      else nextVal = 0;
+
+      if (nextVal === 0) delete checks[dayKey];
+      else checks[dayKey] = nextVal;
+
+      return { ...h, checks };
+    });
+
+    await saveHabits(next);
+  }
+
+  async function deleteHabit(habitId) {
+    await hapticLight();
+    const next = habits.filter((h) => h.id !== habitId);
+    await saveHabits(next);
+  }
+
+  const topHeader = (
     <View style={styles.header}>
       <Text style={[styles.appTitle, { color: theme.text }]}>
         Yearly Tracker
       </Text>
       <Text style={[styles.yearText, { color: theme.mutedText }]}>{year}</Text>
 
-      <View style={styles.ringCard(theme)}>
-        <ProgressRing
-          size={176}
-          strokeWidth={14}
-          percent={yearlyPercent}
-          theme={theme}
-          label="Year completion"
-        />
-        <View style={{ marginTop: 12, alignItems: "center" }}>
-          <Text style={[styles.bigPct, { color: theme.text }]}>
-            {Math.round(yearlyPercent)}%
-          </Text>
-          <Text style={[styles.bigPctSub, { color: theme.mutedText }]}>
-            average across goals
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.actionsRow}>
+      <View style={styles.tabRow}>
         <Pressable
-          onPress={() => setAddOpen(true)}
-          style={({ pressed }) => [
-            styles.primaryBtn,
-            { backgroundColor: pressed ? theme.primaryPressed : theme.primary },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Add Goal"
-        >
-          <Text style={[styles.primaryBtnText, { color: theme.primaryTextOn }]}>
-            Add Goal
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setCustomizeOpen(true)}
-          style={({ pressed }) => [
-            styles.secondaryBtn,
+          onPress={() => setActiveTab("goals")}
+          style={[
+            styles.tabPill,
             {
-              backgroundColor: pressed ? theme.border : theme.card,
-              borderColor: theme.border,
+              backgroundColor:
+                activeTab === "goals" ? theme.primary : theme.card,
+              borderColor: activeTab === "goals" ? theme.primary : theme.border,
             },
           ]}
-          accessibilityRole="button"
-          accessibilityLabel="Customize Theme"
         >
-          <Text style={[styles.secondaryBtnText, { color: theme.text }]}>
-            Customize
+          <Text
+            style={[
+              styles.tabText,
+              {
+                color: activeTab === "goals" ? theme.primaryTextOn : theme.text,
+              },
+            ]}
+          >
+            Goals
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => setActiveTab("habits")}
+          style={[
+            styles.tabPill,
+            {
+              backgroundColor:
+                activeTab === "habits" ? theme.primary : theme.card,
+              borderColor:
+                activeTab === "habits" ? theme.primary : theme.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              {
+                color:
+                  activeTab === "habits" ? theme.primaryTextOn : theme.text,
+              },
+            ]}
+          >
+            Habits
           </Text>
         </Pressable>
       </View>
 
-      <View style={styles.divider(theme)} />
-      <Text style={[styles.sectionTitle, { color: theme.mutedText }]}>
-        Goals
-      </Text>
+      {activeTab === "goals" ? (
+        <>
+          <View style={styles.ringCard(theme)}>
+            <ProgressRing
+              size={176}
+              strokeWidth={14}
+              percent={yearlyPercent}
+              theme={theme}
+              label="Year completion"
+            />
+            <View style={{ marginTop: 12, alignItems: "center" }}>
+              <Text style={[styles.bigPct, { color: theme.text }]}>
+                {Math.round(yearlyPercent)}%
+              </Text>
+              <Text style={[styles.bigPctSub, { color: theme.mutedText }]}>
+                average across goals
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.actionsRow}>
+            <Pressable
+              onPress={() => setAddOpen(true)}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                {
+                  backgroundColor: pressed
+                    ? theme.primaryPressed
+                    : theme.primary,
+                },
+              ]}
+            >
+              <Text
+                style={[styles.primaryBtnText, { color: theme.primaryTextOn }]}
+              >
+                Add Goal
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setCustomizeOpen(true)}
+              style={({ pressed }) => [
+                styles.secondaryBtn,
+                {
+                  backgroundColor: pressed ? theme.border : theme.card,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
+              <Text style={[styles.secondaryBtnText, { color: theme.text }]}>
+                Theme
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.divider(theme)} />
+          <Text style={[styles.sectionTitle, { color: theme.mutedText }]}>
+            Goals
+          </Text>
+        </>
+      ) : (
+        <>
+          <View style={styles.habitsHeaderGrid}>
+            <View style={{ width: LABEL_W, paddingRight: LABEL_GAP }}>
+              <Text style={[styles.monthTitle, { color: theme.text }]}>
+                {monthName(new Date())}
+              </Text>
+            </View>
+
+            <View style={styles.daysRow}>
+              {dates.map((d) => (
+                <View key={d.key} style={styles.dayCell}>
+                  <Text style={[styles.dayNum, { color: theme.mutedText }]}>
+                    {d.num}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.divider(theme)} />
+        </>
+      )}
     </View>
   );
 
   return (
     <GestureHandlerRootView style={styles.safe}>
       <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
-        <DraggableFlatList
-          activationDistance={12}
-          data={goals}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          ListHeaderComponent={header}
-          ListEmptyComponent={
+        {activeTab === "goals" ? (
+          <DraggableFlatList
+            activationDistance={12}
+            data={goals}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            ListHeaderComponent={topHeader}
+            onDragEnd={({ data }) => persistGoals(data)}
+            renderItem={({ item, drag, isActive }) => (
+              <GoalItem
+                goal={item}
+                theme={theme}
+                onEdit={openEdit}
+                onDelete={handleDeleteGoal}
+                onDrag={drag}
+                dragging={isActive}
+              />
+            )}
+          />
+        ) : (
+          <FlatList
+            data={habits}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            ListHeaderComponent={topHeader}
+            renderItem={({ item }) => (
+              <HabitRow
+                habit={item}
+                dates={dates}
+                theme={theme}
+                onToggle={toggleHabit}
+                onDelete={deleteHabit}
+                labelWidth={LABEL_W}
+                squareSize={SQUARE}
+                labelGap={LABEL_GAP}
+              />
+            )}
+            ListFooterComponent={
+              <View style={{ marginTop: 14 }}>
+                <Pressable
+                  onPress={() => setHabitAddOpen(true)}
+                  style={({ pressed }) => [
+                    styles.habitFooterBtn,
+                    {
+                      backgroundColor: pressed ? theme.border : theme.card,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.habitFooterText, { color: theme.text }]}>
+                    Add habit
+                  </Text>
+                </Pressable>
+              </View>
+            }
+          />
+        )}
+
+        {/* One-time Habits Welcome */}
+        <Modal
+          visible={habitsWelcomeOpen}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setHabitsWelcomeOpen(false)}
+        >
+          <View style={styles.modalBackdrop}>
             <View
               style={[
-                styles.emptyBox,
-                { borderColor: theme.border, backgroundColor: theme.card },
+                styles.modalCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
               ]}
             >
-              <Text style={[styles.emptyTitle, { color: theme.text }]}>
-                Start your year strong
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Habits
               </Text>
-              <Text style={[styles.emptySub, { color: theme.mutedText }]}>
-                Add a count goal (like “Read 20 books”) or a milestone (like
-                “Run a 5K”).
-              </Text>
-            </View>
-          }
-          onDragEnd={({ data }) => {
-            persistGoals(data);
-          }}
-          renderItem={({ item, drag, isActive }) => (
-            <GoalItem
-              goal={item}
-              theme={theme}
-              onEdit={openEdit}
-              onDelete={handleDeleteGoal}
-              onDrag={drag}
-              dragging={isActive}
-            />
-          )}
-        />
 
-        {/* Welcome Modal (one-time) */}
+              <Text
+                style={[
+                  styles.modalSub,
+                  { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
+                ]}
+              >
+                “You do not rise to the level of your goals. You fall to the
+                level of your systems.”
+              </Text>
+              <Text
+                style={[
+                  styles.modalSub,
+                  { color: theme.mutedText, marginTop: 6 },
+                ]}
+              >
+                — James Clear, Atomic Habits
+              </Text>
+
+              <View style={{ marginTop: 12 }}>
+                <Text style={[styles.bullet, { color: theme.text }]}>
+                  • Tap a square to track your day.
+                </Text>
+                <Text style={[styles.bullet, { color: theme.text }]}>
+                  • It cycles: Off → Good → Bad → Off.
+                </Text>
+                <Text style={[styles.bullet, { color: theme.text }]}>
+                  • Swipe a habit left to delete it.
+                </Text>
+              </View>
+
+              <Text
+                style={[
+                  styles.modalSub,
+                  { color: theme.mutedText, marginTop: 12, lineHeight: 18 },
+                ]}
+              >
+                Small daily wins add up and can improve your everyday life over
+                time.
+              </Text>
+
+              <View style={styles.modalActions}>
+                <Pressable
+                  onPress={() => setHabitsWelcomeOpen(false)}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    {
+                      backgroundColor: pressed
+                        ? theme.primaryPressed
+                        : theme.primary,
+                      borderColor: theme.primary,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.modalBtnText,
+                      { color: theme.primaryTextOn },
+                    ]}
+                  >
+                    Got it
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Welcome Modal */}
         <Modal
           visible={welcomeOpen}
           animationType="fade"
@@ -420,7 +759,6 @@ export default function App() {
               <Text style={[styles.modalTitle, { color: theme.text }]}>
                 Welcome to Yearly Tracker
               </Text>
-
               <Text
                 style={[
                   styles.modalSub,
@@ -462,6 +800,87 @@ export default function App() {
                     ]}
                   >
                     Get Started
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Add Habit Modal */}
+        <Modal
+          visible={habitAddOpen}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setHabitAddOpen(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View
+              style={[
+                styles.modalCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Add Habit
+              </Text>
+
+              <Text style={[styles.label, { color: theme.mutedText }]}>
+                Habit name
+              </Text>
+              <TextInput
+                value={habitTitle}
+                onChangeText={setHabitTitle}
+                placeholder="e.g., Workout"
+                placeholderTextColor={theme.mutedText}
+                style={[
+                  styles.input,
+                  {
+                    borderColor: theme.border,
+                    color: theme.text,
+                    backgroundColor: theme.bg,
+                  },
+                ]}
+                autoCorrect={false}
+                autoCapitalize="words"
+                maxLength={24}
+              />
+
+              <View style={styles.modalActions}>
+                <Pressable
+                  onPress={() => setHabitAddOpen(false)}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    {
+                      backgroundColor: pressed ? theme.border : theme.bg,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
+                    Cancel
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={addHabit}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    {
+                      backgroundColor: pressed
+                        ? theme.primaryPressed
+                        : theme.primary,
+                      borderColor: theme.primary,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.modalBtnText,
+                      { color: theme.primaryTextOn },
+                    ]}
+                  >
+                    Save
                   </Text>
                 </Pressable>
               </View>
@@ -648,7 +1067,7 @@ export default function App() {
               ]}
             >
               <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Customize
+                Theme
               </Text>
               <Text style={[styles.modalSub, { color: theme.mutedText }]}>
                 Pick a theme
@@ -669,8 +1088,6 @@ export default function App() {
                           opacity: pressed ? 0.9 : 1,
                         },
                       ]}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Select theme ${t.name}`}
                     >
                       <View style={styles.themeHeader}>
                         <Text style={[styles.themeName, { color: theme.text }]}>
@@ -872,7 +1289,6 @@ export default function App() {
                     </>
                   ) : (
                     <>
-                      {/* Milestone defaults visually to "Not yet" */}
                       <View style={styles.milestoneRow}>
                         <Pressable
                           onPress={() => setMilestoneComplete(false)}
@@ -957,6 +1373,17 @@ const styles = StyleSheet.create({
   appTitle: { fontSize: 30, fontWeight: "950", letterSpacing: 0.2 },
   yearText: { marginTop: 4, fontSize: 13, fontWeight: "800" },
 
+  tabRow: { marginTop: 14, flexDirection: "row", gap: 10 },
+  tabPill: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tabText: { fontSize: 13, fontWeight: "950", letterSpacing: 0.2 },
+
   ringCard: (theme) => ({
     marginTop: 16,
     borderRadius: 22,
@@ -1002,9 +1429,16 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
 
-  emptyBox: { borderWidth: 1, borderRadius: 20, padding: 16, marginTop: 12 },
-  emptyTitle: { fontSize: 16, fontWeight: "950" },
-  emptySub: { marginTop: 6, fontSize: 13, fontWeight: "650", lineHeight: 18 },
+  habitsHeaderGrid: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "flex-end",
+  },
+  monthTitle: { fontSize: 34, fontWeight: "950", letterSpacing: 0.2 },
+
+  daysRow: { flexDirection: "row", width: SQUARE * 5 },
+  dayCell: { width: SQUARE, alignItems: "center", justifyContent: "center" },
+  dayNum: { fontSize: 14, fontWeight: "800", letterSpacing: 0.2 },
 
   bullet: { marginTop: 6, fontSize: 13, fontWeight: "800" },
 
@@ -1056,12 +1490,7 @@ const styles = StyleSheet.create({
   },
   inlineInfoText: { fontSize: 12, fontWeight: "750" },
 
-  themeGrid: {
-    marginTop: 14,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
+  themeGrid: { marginTop: 14, flexDirection: "row", flexWrap: "wrap", gap: 12 },
   themeCard: {
     flexBasis: "48%",
     borderWidth: 1,
@@ -1112,4 +1541,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalBtnText: { fontSize: 13, fontWeight: "950", letterSpacing: 0.2 },
+
+  habitFooterBtn: {
+    borderWidth: 1,
+    borderRadius: 2,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+  },
+  habitFooterText: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
 });
