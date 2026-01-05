@@ -16,7 +16,8 @@
       "bundleIdentifier": "com.andresbotia.ResolutionTracker",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
