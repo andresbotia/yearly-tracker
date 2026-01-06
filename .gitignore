@@ -62,3 +62,8 @@ android/
 # android/app/build/
 # android/local.properties
 
+
+# iOS local artifacts
+ios/**/.xcode.env
+ios/**/*.bak.*
+ios/**/*.DISABLED
