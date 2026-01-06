@@ -67,3 +67,8 @@ android/
 ios/**/.xcode.env
 ios/**/*.bak.*
 ios/**/*.DISABLED
+
+# iOS local artifacts
+ios/**/.xcode.env
+ios/**/*.bak.*
+ios/**/*.DISABLED
