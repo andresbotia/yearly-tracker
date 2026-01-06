@@ -39,6 +39,9 @@ const SQUARE = 34;
 const LABEL_W = 140;
 const LABEL_GAP = 10;
 
+// Android-only layout patch helpers (keeps iOS exactly the same)
+const ANDROID = Platform.OS === "android";
+
 function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
@@ -562,7 +565,7 @@ export default function App() {
       <Text style={[styles.appTitle, { color: theme.text }]}>Yearly Tracker</Text>
       <Text style={[styles.yearText, { color: theme.mutedText }]}>{year}</Text>
 
-      <View style={styles.tabRow}>
+      <View style={[styles.tabRow, ANDROID && styles.noGap]}>
         <Pressable
           onPress={() => setActiveTab("habits")}
           style={[
@@ -592,6 +595,7 @@ export default function App() {
           onPress={() => setActiveTab("goals")}
           style={[
             styles.tabPill,
+            ANDROID && styles.ml10,
             {
               backgroundColor: activeTab === "goals" ? theme.primary : theme.card,
               borderColor: activeTab === "goals" ? theme.primary : theme.border,
@@ -631,7 +635,7 @@ export default function App() {
             </View>
           </View>
 
-          <View style={styles.actionsRow}>
+          <View style={[styles.actionsRow, ANDROID && styles.noGap]}>
             <Pressable
               onPress={() => setAddOpen(true)}
               style={({ pressed }) => [
@@ -642,7 +646,10 @@ export default function App() {
               ]}
             >
               <Text
-                style={[styles.primaryBtnText, { color: theme.primaryTextOn }]}
+                style={[
+                  styles.primaryBtnText,
+                  { color: theme.primaryTextOn },
+                ]}
               >
                 Add Goal
               </Text>
@@ -752,7 +759,7 @@ export default function App() {
             )}
             ListFooterComponent={
               <View style={{ marginTop: 14 }}>
-                <View style={styles.actionsRow}>
+                <View style={[styles.actionsRow, ANDROID && styles.noGap]}>
                   <Pressable
                     onPress={() => setHabitAddOpen(true)}
                     style={({ pressed }) => [
@@ -778,15 +785,14 @@ export default function App() {
                     onPress={() => setCustomizeOpen(true)}
                     style={({ pressed }) => [
                       styles.secondaryBtn,
+                      ANDROID && styles.ml10,
                       {
                         backgroundColor: pressed ? theme.border : theme.card,
                         borderColor: theme.border,
                       },
                     ]}
                   >
-                    <Text
-                      style={[styles.secondaryBtnText, { color: theme.text }]}
-                    >
+                    <Text style={[styles.secondaryBtnText, { color: theme.text }]}>
                       Theme
                     </Text>
                   </Pressable>
@@ -810,9 +816,7 @@ export default function App() {
                 { backgroundColor: theme.card, borderColor: theme.border },
               ]}
             >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Habits
-              </Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Habits</Text>
 
               <Text
                 style={[
@@ -820,8 +824,7 @@ export default function App() {
                   { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
                 ]}
               >
-                Tap a square to track that day. Tap cycles: Off → Good → Bad →
-                Off.
+                Tap a square to track that day. Tap cycles: Off → Good → Bad → Off.
               </Text>
 
               <View style={{ marginTop: 10 }}>
@@ -839,25 +842,18 @@ export default function App() {
                 </Text>
               </View>
 
-              <View style={styles.modalActions}>
+              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
                 <Pressable
                   onPress={() => setHabitsWelcomeOpen(false)}
                   style={({ pressed }) => [
                     styles.modalBtn,
                     {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
+                      backgroundColor: pressed ? theme.primaryPressed : theme.primary,
                       borderColor: theme.primary,
                     },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
+                  <Text style={[styles.modalBtnText, { color: theme.primaryTextOn }]}>
                     Got it
                   </Text>
                 </Pressable>
@@ -890,22 +886,14 @@ export default function App() {
                   { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
                 ]}
               >
-                “Success is the product of daily habits—not once-in-a-lifetime
-                transformations.”
+                “Success is the product of daily habits—not once-in-a-lifetime transformations.”
               </Text>
-              <Text
-                style={[
-                  styles.modalSub,
-                  { color: theme.mutedText, marginTop: 6 },
-                ]}
-              >
+              <Text style={[styles.modalSub, { color: theme.mutedText, marginTop: 6 }]}>
                 — James Clear
               </Text>
 
               <View style={{ marginTop: 14 }}>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • No accounts
-                </Text>
+                <Text style={[styles.bullet, { color: theme.text }]}>• No accounts</Text>
                 <Text style={[styles.bullet, { color: theme.text }]}>
                   • No tracking or analytics
                 </Text>
@@ -914,25 +902,18 @@ export default function App() {
                 </Text>
               </View>
 
-              <View style={styles.modalActions}>
+              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
                 <Pressable
                   onPress={closeWelcome}
                   style={({ pressed }) => [
                     styles.modalBtn,
                     {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
+                      backgroundColor: pressed ? theme.primaryPressed : theme.primary,
                       borderColor: theme.primary,
                     },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
+                  <Text style={[styles.modalBtnText, { color: theme.primaryTextOn }]}>
                     Get Started
                   </Text>
                 </Pressable>
@@ -955,13 +936,9 @@ export default function App() {
                 { backgroundColor: theme.card, borderColor: theme.border },
               ]}
             >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Add Habit
-              </Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Add Habit</Text>
 
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Habit name
-              </Text>
+              <Text style={[styles.label, { color: theme.mutedText }]}>Habit name</Text>
               <TextInput
                 value={habitTitle}
                 onChangeText={setHabitTitle}
@@ -980,7 +957,7 @@ export default function App() {
                 maxLength={24}
               />
 
-              <View style={styles.modalActions}>
+              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
                 <Pressable
                   onPress={() => setHabitAddOpen(false)}
                   style={({ pressed }) => [
@@ -991,29 +968,21 @@ export default function App() {
                     },
                   ]}
                 >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Cancel
-                  </Text>
+                  <Text style={[styles.modalBtnText, { color: theme.text }]}>Cancel</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={addHabit}
                   style={({ pressed }) => [
                     styles.modalBtn,
+                    ANDROID && styles.ml10,
                     {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
+                      backgroundColor: pressed ? theme.primaryPressed : theme.primary,
                       borderColor: theme.primary,
                     },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
+                  <Text style={[styles.modalBtnText, { color: theme.primaryTextOn }]}>
                     Save
                   </Text>
                 </Pressable>
@@ -1036,13 +1005,9 @@ export default function App() {
                 { backgroundColor: theme.card, borderColor: theme.border },
               ]}
             >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Add Goal
-              </Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Add Goal</Text>
 
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Title
-              </Text>
+              <Text style={[styles.label, { color: theme.mutedText }]}>Title</Text>
               <TextInput
                 value={title}
                 onChangeText={setTitle}
@@ -1062,16 +1027,14 @@ export default function App() {
               />
 
               <Text style={[styles.label, { color: theme.mutedText }]}>Type</Text>
-              <View style={styles.typeRow}>
+              <View style={[styles.typeRow, ANDROID && styles.noGap]}>
                 <Pressable
                   onPress={() => setType("count")}
                   style={({ pressed }) => [
                     styles.pill,
                     {
-                      backgroundColor:
-                        type === "count" ? theme.primary : theme.bg,
-                      borderColor:
-                        type === "count" ? theme.primary : theme.border,
+                      backgroundColor: type === "count" ? theme.primary : theme.bg,
+                      borderColor: type === "count" ? theme.primary : theme.border,
                       opacity: pressed ? 0.9 : 1,
                     },
                   ]}
@@ -1079,10 +1042,7 @@ export default function App() {
                   <Text
                     style={[
                       styles.pillText,
-                      {
-                        color:
-                          type === "count" ? theme.primaryTextOn : theme.text,
-                      },
+                      { color: type === "count" ? theme.primaryTextOn : theme.text },
                     ]}
                   >
                     Count
@@ -1093,11 +1053,10 @@ export default function App() {
                   onPress={() => setType("boolean")}
                   style={({ pressed }) => [
                     styles.pill,
+                    ANDROID && styles.ml10,
                     {
-                      backgroundColor:
-                        type === "boolean" ? theme.primary : theme.bg,
-                      borderColor:
-                        type === "boolean" ? theme.primary : theme.border,
+                      backgroundColor: type === "boolean" ? theme.primary : theme.bg,
+                      borderColor: type === "boolean" ? theme.primary : theme.border,
                       opacity: pressed ? 0.9 : 1,
                     },
                   ]}
@@ -1105,10 +1064,7 @@ export default function App() {
                   <Text
                     style={[
                       styles.pillText,
-                      {
-                        color:
-                          type === "boolean" ? theme.primaryTextOn : theme.text,
-                      },
+                      { color: type === "boolean" ? theme.primaryTextOn : theme.text },
                     ]}
                   >
                     Milestone
@@ -1118,9 +1074,7 @@ export default function App() {
 
               {type === "count" && (
                 <>
-                  <Text style={[styles.label, { color: theme.mutedText }]}>
-                    Target
-                  </Text>
+                  <Text style={[styles.label, { color: theme.mutedText }]}>Target</Text>
                   <TextInput
                     value={targetText}
                     onChangeText={setTargetText}
@@ -1140,7 +1094,7 @@ export default function App() {
                 </>
               )}
 
-              <View style={styles.modalActions}>
+              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
                 <Pressable
                   onPress={() => setAddOpen(false)}
                   style={({ pressed }) => [
@@ -1151,29 +1105,21 @@ export default function App() {
                     },
                   ]}
                 >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Cancel
-                  </Text>
+                  <Text style={[styles.modalBtnText, { color: theme.text }]}>Cancel</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={handleAddGoal}
                   style={({ pressed }) => [
                     styles.modalBtn,
+                    ANDROID && styles.ml10,
                     {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
+                      backgroundColor: pressed ? theme.primaryPressed : theme.primary,
                       borderColor: theme.primary,
                     },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
+                  <Text style={[styles.modalBtnText, { color: theme.primaryTextOn }]}>
                     Save
                   </Text>
                 </Pressable>
@@ -1196,14 +1142,17 @@ export default function App() {
                 { backgroundColor: theme.card, borderColor: theme.border },
               ]}
             >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Theme
-              </Text>
-              <Text style={[styles.modalSub, { color: theme.mutedText }]}>
-                Pick a theme
-              </Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Theme</Text>
+              <Text style={[styles.modalSub, { color: theme.mutedText }]}>Pick a theme</Text>
 
-              <View style={styles.themeGrid}>
+              {/* Android-only patch: remove gap on Android; spacing handled via layout fixes */}
+              <View
+                style={[
+                  styles.themeGrid,
+                  ANDROID && styles.noGap,
+                  ANDROID && styles.themeGridAndroid,
+                ]}
+              >
                 {THEMES.map((t) => {
                   const selected = t.id === themeChoice;
                   return (
@@ -1212,6 +1161,7 @@ export default function App() {
                       onPress={() => handlePickTheme(t.id)}
                       style={({ pressed }) => [
                         styles.themeCard,
+                        ANDROID && styles.themeCardAndroid,
                         {
                           borderColor: selected ? theme.primary : theme.border,
                           backgroundColor: selected ? theme.ringBg : theme.card,
@@ -1219,32 +1169,29 @@ export default function App() {
                         },
                       ]}
                     >
-                      <View style={styles.themeHeader}>
-                        <Text style={[styles.themeName, { color: theme.text }]}>
-                          {t.name}
-                        </Text>
+                      <View style={[styles.themeHeader, ANDROID && styles.noGap]}>
+                        <Text style={[styles.themeName, { color: theme.text }]}>{t.name}</Text>
                       </View>
-                      <View style={styles.swatchRow}>
-                        <View
-                          style={[
-                            styles.themeSwatch,
-                            { backgroundColor: t.palette.primary },
-                          ]}
-                        />
-                        <View
-                          style={[
-                            styles.themeSwatch,
-                            { backgroundColor: t.palette.card },
-                          ]}
-                        />
-                        <View
-                          style={[
-                            styles.themeSwatch,
-                            { backgroundColor: t.palette.bg },
-                          ]}
-                        />
+
+                      <View
+                        style={[
+                          styles.swatchRow,
+                          ANDROID && styles.noGap,
+                          ANDROID && styles.swatchRowAndroid,
+                        ]}
+                      >
+                        <View style={[styles.themeSwatch, { backgroundColor: t.palette.primary }]} />
+                        <View style={[styles.themeSwatch, { backgroundColor: t.palette.card }]} />
+                        <View style={[styles.themeSwatch, { backgroundColor: t.palette.bg }]} />
                       </View>
-                      <Text style={[styles.themeHint, { color: theme.mutedText }]}>
+
+                      <Text
+                        style={[
+                          styles.themeHint,
+                          ANDROID && styles.themeHintAndroid,
+                          { color: theme.mutedText },
+                        ]}
+                      >
                         Tap to apply
                       </Text>
                     </Pressable>
@@ -1252,25 +1199,18 @@ export default function App() {
                 })}
               </View>
 
-              <View style={styles.modalActions}>
+              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
                 <Pressable
                   onPress={() => setCustomizeOpen(false)}
                   style={({ pressed }) => [
                     styles.modalBtn,
                     {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
+                      backgroundColor: pressed ? theme.primaryPressed : theme.primary,
                       borderColor: theme.primary,
                     },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
+                  <Text style={[styles.modalBtnText, { color: theme.primaryTextOn }]}>
                     Done
                   </Text>
                 </Pressable>
@@ -1280,12 +1220,7 @@ export default function App() {
         </Modal>
 
         {/* Edit Progress */}
-        <Modal
-          visible={editOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={closeEdit}
-        >
+        <Modal visible={editOpen} animationType="fade" transparent onRequestClose={closeEdit}>
           <View style={styles.modalBackdrop}>
             <Animated.View
               style={[
@@ -1310,16 +1245,11 @@ export default function App() {
                 },
               ]}
             >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Edit Progress
-              </Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Edit Progress</Text>
 
               {!!editGoal && (
                 <>
-                  <Text
-                    style={[styles.editGoalTitle, { color: theme.text }]}
-                    numberOfLines={2}
-                  >
+                  <Text style={[styles.editGoalTitle, { color: theme.text }]} numberOfLines={2}>
                     {editGoal.title}
                   </Text>
 
@@ -1334,40 +1264,29 @@ export default function App() {
                       <View
                         style={[
                           styles.inlineInfo,
-                          {
-                            backgroundColor: theme.bg,
-                            borderColor: theme.border,
-                          },
+                          { backgroundColor: theme.bg, borderColor: theme.border },
                         ]}
                       >
-                        <Text
-                          style={[
-                            styles.inlineInfoText,
-                            { color: theme.mutedText },
-                          ]}
-                        >
+                        <Text style={[styles.inlineInfoText, { color: theme.mutedText }]}>
                           Range: 0 – {editGoal.target}
                         </Text>
                       </View>
 
-                      <Text style={[styles.label, { color: theme.mutedText }]}>
-                        Current
-                      </Text>
+                      <Text style={[styles.label, { color: theme.mutedText }]}>Current</Text>
 
-                      <View style={styles.countRow}>
+                      <View style={[styles.countRow, ANDROID && styles.noGap]}>
                         <Pressable
                           onPress={() => bumpEditCount(-1)}
                           style={({ pressed }) => [
                             styles.iconBtn,
+                            ANDROID && styles.mr10,
                             {
                               backgroundColor: pressed ? theme.border : theme.bg,
                               borderColor: theme.border,
                             },
                           ]}
                         >
-                          <Text style={[styles.iconBtnText, { color: theme.text }]}>
-                            −
-                          </Text>
+                          <Text style={[styles.iconBtnText, { color: theme.text }]}>−</Text>
                         </Pressable>
 
                         <TextInput
@@ -1391,19 +1310,18 @@ export default function App() {
                           onPress={() => bumpEditCount(1)}
                           style={({ pressed }) => [
                             styles.iconBtn,
+                            ANDROID && styles.ml10,
                             {
                               backgroundColor: pressed ? theme.border : theme.bg,
                               borderColor: theme.border,
                             },
                           ]}
                         >
-                          <Text style={[styles.iconBtnText, { color: theme.text }]}>
-                            +
-                          </Text>
+                          <Text style={[styles.iconBtnText, { color: theme.text }]}>+</Text>
                         </Pressable>
                       </View>
 
-                      <View style={styles.modalActions}>
+                      <View style={[styles.modalActions, ANDROID && styles.noGap]}>
                         <Pressable
                           onPress={closeEdit}
                           style={({ pressed }) => [
@@ -1414,29 +1332,21 @@ export default function App() {
                             },
                           ]}
                         >
-                          <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                            Cancel
-                          </Text>
+                          <Text style={[styles.modalBtnText, { color: theme.text }]}>Cancel</Text>
                         </Pressable>
 
                         <Pressable
                           onPress={saveEditCount}
                           style={({ pressed }) => [
                             styles.modalBtn,
+                            ANDROID && styles.ml10,
                             {
-                              backgroundColor: pressed
-                                ? theme.primaryPressed
-                                : theme.primary,
+                              backgroundColor: pressed ? theme.primaryPressed : theme.primary,
                               borderColor: theme.primary,
                             },
                           ]}
                         >
-                          <Text
-                            style={[
-                              styles.modalBtnText,
-                              { color: theme.primaryTextOn },
-                            ]}
-                          >
+                          <Text style={[styles.modalBtnText, { color: theme.primaryTextOn }]}>
                             Save
                           </Text>
                         </Pressable>
@@ -1444,7 +1354,7 @@ export default function App() {
                     </>
                   ) : (
                     <>
-                      <View style={styles.milestoneRow}>
+                      <View style={[styles.milestoneRow, ANDROID && styles.noGap]}>
                         <Pressable
                           onPress={() => setMilestoneComplete(false)}
                           style={({ pressed }) => [
@@ -1456,15 +1366,14 @@ export default function App() {
                             },
                           ]}
                         >
-                          <Text style={[styles.milestoneText, { color: theme.text }]}>
-                            Not yet
-                          </Text>
+                          <Text style={[styles.milestoneText, { color: theme.text }]}>Not yet</Text>
                         </Pressable>
 
                         <Pressable
                           onPress={() => setMilestoneComplete(true)}
                           style={({ pressed }) => [
                             styles.milestoneBtn,
+                            ANDROID && styles.ml10,
                             {
                               backgroundColor: "transparent",
                               borderColor: theme.border,
@@ -1472,18 +1381,13 @@ export default function App() {
                             },
                           ]}
                         >
-                          <Text
-                            style={[
-                              styles.milestoneText,
-                              { color: theme.mutedText },
-                            ]}
-                          >
+                          <Text style={[styles.milestoneText, { color: theme.mutedText }]}>
                             Mark completed
                           </Text>
                         </Pressable>
                       </View>
 
-                      <View style={styles.modalActions}>
+                      <View style={[styles.modalActions, ANDROID && styles.noGap]}>
                         <Pressable
                           onPress={closeEdit}
                           style={({ pressed }) => [
@@ -1494,9 +1398,7 @@ export default function App() {
                             },
                           ]}
                         >
-                          <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                            Close
-                          </Text>
+                          <Text style={[styles.modalBtnText, { color: theme.text }]}>Close</Text>
                         </Pressable>
                       </View>
                     </>
@@ -1682,6 +1584,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
   },
+
   themeHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -1725,4 +1628,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalBtnText: { fontSize: 13, fontWeight: "950", letterSpacing: 0.2 },
+
+  // -------------------------
+  // ANDROID-ONLY PATCH STYLES
+  // -------------------------
+  noGap: { gap: 0 },
+
+  ml10: { marginLeft: 10 },
+  mr10: { marginRight: 10 },
+
+  themeGridAndroid: { justifyContent: "space-between" },
+
+  themeCardAndroid: {
+    // Android wrap is more stable with explicit width vs flexBasis
+    width: "48%",
+    marginBottom: 12,
+  },
+
+  swatchRowAndroid: { justifyContent: "space-between" },
+
+  themeHintAndroid: { marginTop: 8 },
 });
