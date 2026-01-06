@@ -1,0 +1,63 @@
+import Foundation
+#if canImport(WidgetKit)
+import WidgetKit
+#endif
+
+enum SharedStore {
+    // MUST match your App Group id (exactly)
+    static let appGroupId = "group.com.andresbotia.ResolutionTracker.shared"
+
+    static let widgetPayloadKey = "yt_widget_payload_v1"
+
+    static var defaults: UserDefaults? {
+        UserDefaults(suiteName: appGroupId)
+    }
+
+    // What the widget reads / the app writes
+    struct WidgetPayload: Codable {
+        let yearlyProgress: Double   // 0...1
+        let goals: [Goal]
+        let habits: [Habit]
+
+        struct Goal: Codable {
+            let id: String
+            let title: String
+            let percent: Double // 0...1
+        }
+
+        struct Habit: Codable {
+            let id: String
+            let title: String
+            let todayState: Int // 0 off, 1 good, 2 bad
+        }
+    }
+
+    // Widget side
+    static func loadPayload() -> WidgetPayload? {
+        guard let data = defaults?.data(forKey: widgetPayloadKey) else { return nil }
+        return try? JSONDecoder().decode(WidgetPayload.self, from: data)
+    }
+
+    // App side
+    static func savePayload(_ payload: WidgetPayload) {
+        guard let defaults else { return }
+        guard let data = try? JSONEncoder().encode(payload) else { return }
+        defaults.set(data, forKey: widgetPayloadKey)
+
+        // Tell iOS to refresh widgets
+        #if canImport(WidgetKit)
+        WidgetCenter.shared.reloadAllTimelines()
+        #endif
+    }
+
+    static func clearPayload() {
+        defaults?.removeObject(forKey: widgetPayloadKey)
+        #if canImport(WidgetKit)
+        WidgetCenter.shared.reloadAllTimelines()
+        #endif
+    }
+  static func loadRawData() -> Data? {
+    defaults?.data(forKey: widgetPayloadKey)
+  }
+
+}

@@ -37,5 +37,28 @@ yarn-error.*
 *.tsbuildinfo
 
 # generated native folders
-/ios
-/android
+# generated native folders
+# NOTE: We track ios because we added a Widget Extension + native bridge code.
+# If you haven't customized Android, you can keep /android ignored (see below).
+
+# iOS build artifacts (keep repo clean)
+ios/Pods/
+ios/build/
+ios/DerivedData/
+ios/xcuserdata/
+ios/**/*.xcuserstate
+ios/.xcode.env.local
+*.ipa
+*.xcarchive
+*.dSYM*
+*.dSYM.zip
+
+# Android (OPTIONAL)
+# If you are NOT customizing Android native code, keep it ignored:
+android/
+# If you ARE customizing Android native code, comment the line above and ignore artifacts instead:
+# android/.gradle/
+# android/build/
+# android/app/build/
+# android/local.properties
+

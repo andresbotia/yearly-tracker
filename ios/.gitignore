@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.xcarchive
+*.dSYM*
+project.xcworkspace/
+*.xcworkspace/
+
+# Environment
+.xcode.env.local
+
+# CocoaPods
+Pods/
