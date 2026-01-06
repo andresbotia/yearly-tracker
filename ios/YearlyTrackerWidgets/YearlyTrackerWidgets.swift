@@ -356,28 +356,3 @@ struct GoalsListWidget: Widget {
 
 // MARK: - Previews
 
-#Preview(as: .systemLarge) {
-    HabitsWidget()
-} timeline: {
-    Entry(
-        date: Date(),
-        payload: SharedStore.WidgetPayload(
-            yearlyProgress: 0.63,
-            goals: [
-                .init(id: "g1", title: "Read 20 books", percent: 0.35),
-                .init(id: "g2", title: "Run 200 miles", percent: 0.20),
-                .init(id: "g3", title: "Lose 30 pounds", percent: 0.10),
-                .init(id: "g4", title: "Run a 5K", percent: 0.80)
-            ],
-            habits: [
-                .init(id: "h1", title: "Workout", todayState: 1),
-                .init(id: "h2", title: "Cardio", todayState: 2),
-                .init(id: "h3", title: "Drink Water", todayState: 1),
-                .init(id: "h4", title: "Read", todayState: 0),
-                .init(id: "h5", title: "Duolingo", todayState: 1),
-                .init(id: "h6", title: "Stretch", todayState: 0),
-                .init(id: "h7", title: "Journal", todayState: 1)
-            ]
-        )
-    )
-}
