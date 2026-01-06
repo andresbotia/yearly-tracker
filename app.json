@@ -20,6 +20,7 @@
       "buildNumber": "2"
     },
     "android": {
+      "package": "com.andresbotia.yearlytracker",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#F5F7FA"
