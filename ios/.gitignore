@@ -20,3 +20,6 @@ project.xcworkspace/
 
 # CocoaPods
 Pods/
+*.bak.*
+*.DISABLED
+.xcode.env
