@@ -14,14 +14,14 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.andresbotia.ResolutionTracker",
+      "buildNumber": "3",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      },
-      "buildNumber": "2"
+      }
     },
     "android": {
       "package": "com.andresbotia.yearlytracker",
-      "versionCode": 7,
+      "versionCode": 9,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#F5F7FA"
