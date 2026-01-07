@@ -1,8 +1,14 @@
-// components/GoalItem.js
-
 import React, { useMemo } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import * as Haptics from "expo-haptics";
+
+const ANDROID = Platform.OS === "android";
+const FW = {
+  black: ANDROID ? "900" : "950",
+  extraBold: ANDROID ? "800" : "900",
+  bold: ANDROID ? "700" : "800",
+};
+const RIPPLE = ANDROID ? { color: "rgba(0,0,0,0.08)" } : null;
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -45,6 +51,7 @@ export default function GoalItem({
       onLongPress={onDrag}
       delayLongPress={120}
       disabled={!onDrag}
+      android_ripple={RIPPLE}
       style={({ pressed }) => [
         styles.card,
         { backgroundColor: theme.card, borderColor: theme.border },
@@ -54,15 +61,17 @@ export default function GoalItem({
         },
       ]}
     >
-      <View style={styles.rowTop}>
+      <View style={[styles.rowTop, ANDROID && styles.noGap]}>
         <Pressable
           onLongPress={onDrag}
           delayLongPress={120}
           disabled={!onDrag}
           hitSlop={8}
+          android_ripple={RIPPLE}
           style={[
             styles.dragHandle,
             { borderColor: theme.border, backgroundColor: theme.bg },
+            ANDROID && styles.mr12,
           ]}
           accessibilityRole="button"
           accessibilityLabel={`Drag to reorder ${goal.title}`}
@@ -83,11 +92,12 @@ export default function GoalItem({
             {goal.title}
           </Text>
 
-          <View style={styles.metaRow}>
+          <View style={[styles.metaRow, ANDROID && styles.noGap]}>
             <View
               style={[
                 styles.badge,
                 { borderColor: theme.border, backgroundColor: theme.bg },
+                ANDROID && styles.mr10,
               ]}
             >
               <Text style={[styles.badgeText, { color: theme.mutedText }]}>
@@ -109,7 +119,7 @@ export default function GoalItem({
         </View>
       </View>
 
-      <View style={styles.actions}>
+      <View style={[styles.actions, ANDROID && styles.noGap]}>
         {isComplete ? (
           <>
             <View
@@ -134,12 +144,14 @@ export default function GoalItem({
                 await hapticLight();
                 onEdit(goal);
               }}
+              android_ripple={RIPPLE}
               style={({ pressed }) => [
                 styles.ghostBtn,
                 {
                   backgroundColor: pressed ? theme.border : "transparent",
                   borderColor: theme.border,
                 },
+                ANDROID && styles.ml10,
               ]}
               accessibilityRole="button"
               accessibilityLabel={`Adjust ${goal.title}`}
@@ -155,6 +167,7 @@ export default function GoalItem({
               await hapticLight();
               onEdit(goal);
             }}
+            android_ripple={RIPPLE}
             style={({ pressed }) => [
               styles.primaryBtn,
               {
@@ -176,12 +189,14 @@ export default function GoalItem({
 
         <Pressable
           onPress={() => onDelete(goal.id)}
+          android_ripple={RIPPLE}
           style={({ pressed }) => [
             styles.ghostBtn,
             {
               backgroundColor: pressed ? theme.border : "transparent",
               borderColor: theme.border,
             },
+            ANDROID && styles.ml10,
           ]}
           accessibilityRole="button"
           accessibilityLabel={`Delete ${goal.title}`}
@@ -222,7 +237,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: "900",
+    fontWeight: FW.extraBold,
     letterSpacing: 0.2,
   },
   metaRow: {
@@ -239,12 +254,12 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: FW.bold,
     letterSpacing: 0.2,
   },
   metaText: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: FW.bold,
   },
   rightCol: {
     alignItems: "flex-end",
@@ -252,13 +267,13 @@ const styles = StyleSheet.create({
   },
   pctText: {
     fontSize: 18,
-    fontWeight: "950",
+    fontWeight: FW.black,
     letterSpacing: 0.2,
   },
   pctSub: {
     marginTop: 2,
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: FW.bold,
   },
 
   actions: {
@@ -278,7 +293,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: FW.extraBold,
     letterSpacing: 0.2,
   },
 
@@ -301,7 +316,13 @@ const styles = StyleSheet.create({
   },
   ghostBtnText: {
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: FW.extraBold,
     letterSpacing: 0.2,
   },
+
+  // Android gap patch
+  noGap: { gap: 0 },
+  mr12: { marginRight: 12 },
+  mr10: { marginRight: 10 },
+  ml10: { marginLeft: 10 },
 });

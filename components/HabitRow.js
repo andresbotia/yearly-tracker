@@ -1,8 +1,14 @@
 // components/HabitRow.js
 
 import React, { useMemo } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
+
+const ANDROID = Platform.OS === "android";
+const FW = {
+  black: ANDROID ? "900" : "950",
+};
+const RIPPLE = ANDROID ? { color: "rgba(0,0,0,0.08)" } : null;
 
 export default function HabitRow({
   habit,
@@ -33,14 +39,17 @@ export default function HabitRow({
   const renderRightActions = () => (
     <Pressable
       onPress={() => onDelete?.(habit.id)}
+      android_ripple={RIPPLE}
       style={({ pressed }) => [
         styles.deleteBtn,
         {
           width: 96,
           backgroundColor: theme.danger,
-          opacity: pressed ? 0.85 : 1,
+          opacity: pressed ? 0.9 : 1,
         },
       ]}
+      accessibilityRole="button"
+      accessibilityLabel={`Delete habit ${habit.title}`}
     >
       <Text style={[styles.deleteText, { color: "#fff" }]}>Delete</Text>
     </Pressable>
@@ -53,6 +62,8 @@ export default function HabitRow({
         <Pressable
           onLongPress={onDrag}
           delayLongPress={150}
+          android_ripple={RIPPLE}
+          hitSlop={6}
           style={[
             styles.labelBox,
             {
@@ -60,6 +71,8 @@ export default function HabitRow({
               paddingRight: labelGap,
             },
           ]}
+          accessibilityRole="button"
+          accessibilityLabel={`Reorder habit ${habit.title}`}
         >
           <Text style={[styles.label, { color: theme.text }]} numberOfLines={1}>
             {habit.title}
@@ -74,15 +87,20 @@ export default function HabitRow({
               <Pressable
                 key={d.key}
                 onPress={() => onToggle?.(habit.id, d.key)}
-                style={[
+                android_ripple={RIPPLE}
+                hitSlop={6}
+                style={({ pressed }) => [
                   styles.square,
                   {
                     width: squareSize,
                     height: squareSize,
                     borderColor: theme.border,
                     backgroundColor: squareBg(v),
+                    opacity: pressed ? 0.85 : 1,
                   },
                 ]}
+                accessibilityRole="button"
+                accessibilityLabel={`${habit.title} on ${d.key}`}
               />
             );
           })}
@@ -100,10 +118,12 @@ const styles = StyleSheet.create({
   },
   labelBox: {
     justifyContent: "center",
+    borderRadius: 12,
+    overflow: ANDROID ? "hidden" : "visible",
   },
   label: {
     fontSize: 15,
-    fontWeight: "950",
+    fontWeight: FW.black,
     letterSpacing: 0.2,
   },
   squaresRow: {
@@ -112,16 +132,18 @@ const styles = StyleSheet.create({
   square: {
     borderWidth: 1,
     borderRadius: 8,
+    overflow: ANDROID ? "hidden" : "visible",
   },
   deleteBtn: {
     justifyContent: "center",
     alignItems: "center",
     marginVertical: 10,
     borderRadius: 14,
+    overflow: ANDROID ? "hidden" : "visible",
   },
   deleteText: {
     fontSize: 13,
-    fontWeight: "950",
+    fontWeight: FW.black,
     letterSpacing: 0.2,
   },
 });
