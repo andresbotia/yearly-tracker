@@ -56,6 +56,8 @@ import {
   loadCustomThemes,
   saveCustomThemes,
 } from "./utils/storage";
+import { Ionicons } from "@expo/vector-icons";
+
 
 const HABITS_KEY = "yt_habits_v1";
 const HABITS_WELCOME_SEEN_KEY = "yt_habits_welcome_seen_v1";
@@ -722,10 +724,7 @@ export default function App() {
     setColorPickerOpen(true);
   }
 
-  function onPickerCompleteJS(c) {
-    const next = safeHex6(c?.hex, pickerValue || pickerStartHex || "#ffffff");
-    applyPickerHex(next);
-  }
+  
 
   function onPickerChangeJS(c) {
     const next = safeHex6(c?.hex, pickerValue || pickerStartHex || "#ffffff");
@@ -2502,42 +2501,36 @@ export default function App() {
                             },
                           ]}
                         >
-                          <View
-                            style={[
-                              styles.themeHeader,
-                              ANDROID && styles.noGap,
-                            ]}
-                          >
-                            <Text style={[styles.themeName, { color: "#000" }]}>
-                              {t.name}
-                            </Text>
+                          <View style={[styles.themeHeader, ANDROID && styles.noGap]}>
+  <View style={styles.themeNameWrap}>
+    <Text
+      numberOfLines={1}
+      ellipsizeMode="tail"
+      style={[styles.themeName, { color: "#000" }]}
+    >
+      {t.name}
+    </Text>
+  </View>
 
-                            {isCustom && (
-                              <Pressable
-                                onPress={(e) => {
-                                  e?.stopPropagation?.();
-                                  deleteCustomTheme(t._customId);
-                                }}
-                                style={({ pressed }) => [
-                                  styles.trashBtn,
-                                  {
-                                    borderColor: "#111",
-                                    backgroundColor: pressed ? "#eee" : "#fff",
-                                  },
-                                ]}
-                                hitSlop={10}
-                              >
-                                <Text
-                                  style={[
-                                    styles.trashBtnText,
-                                    { color: "#111" },
-                                  ]}
-                                >
-                                  Delete
-                                </Text>
-                              </Pressable>
-                            )}
-                          </View>
+  {isCustom && (
+    <Pressable
+      onPress={(e) => {
+        e?.stopPropagation?.();
+        deleteCustomTheme(t._customId);
+      }}
+      style={({ pressed }) => [
+        styles.trashIconBtn,
+        { backgroundColor: pressed ? "#eee" : "#fff" },
+      ]}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel={`Delete theme ${t.name}`}
+    >
+      <Ionicons name="trash-outline" size={18} color="#111" />
+    </Pressable>
+  )}
+</View>
+
 
                           <View
                             style={[
@@ -3016,6 +3009,7 @@ export default function App() {
                     <ColorPicker
                       value={safeHex6(pickerUIValue, "#ffffff")}
                       onChange={onPickerChange}
+                      key={pickerRemountKey}
                       onCompleteJS={onPickerCompleteJS}
                       sliderThickness={20}
                       thumbSize={24}
@@ -3690,11 +3684,13 @@ const styles = StyleSheet.create({
 
   themeHeader: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
+  alignItems: "center",
+  gap: 10,
   },
-  themeName: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
+  themeName: { fontSize: 14,
+  fontWeight: "900",
+  letterSpacing: 0.2,
+  flexShrink: 1, },
   swatchRow: {
     flexDirection: "row",
     gap: 6,
@@ -3863,6 +3859,15 @@ const styles = StyleSheet.create({
     marginTop: 14,
     maxHeight: 420,
   },
+  trashIconBtn: {
+  width: 36,          
+  height: 36,
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: "#111",
+  alignItems: "center",
+  justifyContent: "center",
+},
   themeCreateScroll: {
     marginTop: 8,
     maxHeight: 520, // keeps it inside the modal; user can scroll
@@ -3996,6 +4001,11 @@ const styles = StyleSheet.create({
     height: 170,
     borderRadius: 16,
   },
+
+  themeNameWrap: {
+  flex: 1,
+  minWidth: 0,  
+},
 
   picker: {
     width: "100%",
