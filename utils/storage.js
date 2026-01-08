@@ -1,9 +1,12 @@
+// utils/storage.js
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const KEYS = {
   goals: "rt_goals_v1",
   hue: "rt_hue_v1",
   welcomeSeen: "rt_welcome_seen_v1",
+  year: "rt_year_v1", // ✅ new
 };
 
 // Returns { goals: Goal[], hasStoredValue: boolean }
@@ -52,4 +55,20 @@ export async function loadWelcomeSeen() {
 
 export async function setWelcomeSeen() {
   await AsyncStorage.setItem(KEYS.welcomeSeen, "1");
+}
+
+// ✅ new: year rollover support
+export async function loadStoredYear() {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.year);
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setStoredYear(year) {
+  await AsyncStorage.setItem(KEYS.year, String(year));
 }
