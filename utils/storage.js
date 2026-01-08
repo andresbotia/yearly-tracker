@@ -13,6 +13,9 @@ const KEYS = {
   // ✅ New (annual rollover + history foundation)
   currentYear: "yt_current_year_v1",
   goalHistory: "yt_goal_history_v1",
+
+  // ✅ New: custom themes
+  customThemes: "yt_custom_themes_v1",
 };
 
 // -----------------------------
@@ -136,6 +139,129 @@ export async function appendGoalHistory(entry) {
   } catch {
     // ignore
   }
+}
+
+// -----------------------------
+// ✅ Custom themes (stored locally)
+// Data format: [{ id, name, palette: {...}, createdAt }]
+// -----------------------------
+
+function safeParseJSON(raw, fallback) {
+  try {
+    if (!raw) return fallback;
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
+function uid() {
+  return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function isHex6(s) {
+  return typeof s === "string" && /^#?[0-9a-fA-F]{6}$/.test(s.trim());
+}
+
+function normHex(hex) {
+  if (!hex) return "#000000";
+  const t = String(hex).trim();
+  if (t.startsWith("#")) return `#${t.slice(1).toLowerCase()}`;
+  return `#${t.toLowerCase()}`;
+}
+
+// A light-weight "fill missing" so storage is resilient even if caller passes partial palette.
+// (Your theme.js will also ensure completeness at render time.)
+function ensurePaletteShape(palette) {
+  const p = { ...(palette || {}) };
+
+  const safe = {
+    primary: isHex6(p.primary) ? normHex(p.primary) : "#2b6dff",
+    bg: isHex6(p.bg) ? normHex(p.bg) : "#f5f7fa",
+    card: isHex6(p.card) ? normHex(p.card) : "#ffffff",
+    border: isHex6(p.border) ? normHex(p.border) : "#e3e7ef",
+    text: isHex6(p.text) ? normHex(p.text) : "#0b1220",
+    mutedText: isHex6(p.mutedText) ? normHex(p.mutedText) : "#5b6472",
+    primaryTextOn: isHex6(p.primaryTextOn)
+      ? normHex(p.primaryTextOn)
+      : "#ffffff",
+    primaryPressed: isHex6(p.primaryPressed)
+      ? normHex(p.primaryPressed)
+      : "#1f56d1",
+    ringBg: isHex6(p.ringBg) ? normHex(p.ringBg) : "#e1e8ff",
+  };
+
+  return safe;
+}
+
+function sanitizeCustomThemeRecord(rec) {
+  const id = rec?.id ? String(rec.id) : uid();
+  const name =
+    String(rec?.name || "")
+      .trim()
+      .slice(0, 32) || "Custom Theme";
+  const palette = ensurePaletteShape(rec?.palette);
+
+  return {
+    id,
+    name,
+    palette,
+    createdAt: Number(rec?.createdAt) || Date.now(),
+  };
+}
+
+export async function loadCustomThemes() {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.customThemes);
+    const parsed = safeParseJSON(raw, []);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(sanitizeCustomThemeRecord);
+  } catch {
+    return [];
+  }
+}
+
+export async function saveCustomThemes(themes) {
+  const safe = Array.isArray(themes)
+    ? themes.map(sanitizeCustomThemeRecord)
+    : [];
+  try {
+    await AsyncStorage.setItem(KEYS.customThemes, JSON.stringify(safe));
+  } catch {}
+  return safe;
+}
+
+export async function addCustomTheme({ name, palette }) {
+  const current = await loadCustomThemes();
+  const next = [
+    ...current,
+    sanitizeCustomThemeRecord({
+      id: uid(),
+      name,
+      palette,
+      createdAt: Date.now(),
+    }),
+  ];
+  return await saveCustomThemes(next);
+}
+
+export async function updateCustomTheme(id, { name, palette }) {
+  const current = await loadCustomThemes();
+  const next = current.map((t) => {
+    if (String(t.id) !== String(id)) return t;
+    return sanitizeCustomThemeRecord({
+      ...t,
+      name: name ?? t.name,
+      palette: palette ?? t.palette,
+    });
+  });
+  return await saveCustomThemes(next);
+}
+
+export async function deleteCustomTheme(id) {
+  const current = await loadCustomThemes();
+  const next = current.filter((t) => String(t.id) !== String(id));
+  return await saveCustomThemes(next);
 }
 
 // -----------------------------

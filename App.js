@@ -16,6 +16,19 @@ import {
   ScrollView,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import ColorPicker, {
+  HueCircular,
+  Panel1,
+  Swatches,
+  PreviewText,
+  colorKit,
+} from "reanimated-color-picker";
+
+// import Reanimated, {
+//   useSharedValue,
+//   useAnimatedStyle,
+// } from "react-native-reanimated";
+
 import DraggableFlatList from "react-native-draggable-flatlist";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -23,7 +36,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
 import HabitRow from "./components/HabitRow";
-import { THEMES, makeTheme } from "./utils/theme";
+import {
+  THEMES,
+  makeTheme,
+  CUSTOM_THEME_PREFIX,
+  buildPaletteFromPrimary,
+  ensurePaletteComplete,
+} from "./utils/theme";
 import {
   loadGoalsWithMeta,
   saveGoals,
@@ -31,10 +50,11 @@ import {
   saveHue,
   loadWelcomeSeen,
   setWelcomeSeen,
-  // ✅ new rollover + history
   loadCurrentYear,
   saveCurrentYear,
   appendGoalHistory,
+  loadCustomThemes,
+  saveCustomThemes,
 } from "./utils/storage";
 
 const HABITS_KEY = "yt_habits_v1";
@@ -44,7 +64,6 @@ const SQUARE = 34;
 const LABEL_W = 140;
 const LABEL_GAP = 10;
 
-// Android-only layout patch helpers (keeps iOS exactly the same)
 const ANDROID = Platform.OS === "android";
 
 const GOAL_TEMPLATES = [
@@ -60,6 +79,9 @@ const GOAL_TEMPLATES = [
   { label: "Workouts", title: "Do 150 workouts", type: "count", target: "150" },
   { label: "Milestone", title: "Run a 5K", type: "boolean", target: "" },
 ];
+const customSwatches = new Array(6)
+  .fill("#fff")
+  .map(() => colorKit.randomRgbColor().hex());
 
 function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -163,19 +185,124 @@ function lastNDays(n) {
   return out;
 }
 
+function isHex6(v) {
+  const s = String(v ?? "").trim();
+  return /^#?[0-9a-fA-F]{6}$/.test(s);
+}
+
+function normalizeHex(s) {
+  const t = String(s || "").trim();
+  if (!t) return "";
+  return t.startsWith("#")
+    ? `#${t.slice(1).toLowerCase()}`
+    : `#${t.toLowerCase()}`;
+}
+
+function sanitizeName(s) {
+  return String(s || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 28);
+}
+// Returns "#rrggbb" (lowercase) OR "" if it can't be normalized
+function normalizeHex6(input) {
+  // Accept plain strings only; anything else becomes ""
+  let s = typeof input === "string" ? input.trim().toLowerCase() : "";
+  if (!s) return "";
+
+  // Small named-color safety net (optional)
+  const NAMED = {
+    white: "#ffffff",
+    black: "#000000",
+    red: "#ff0000",
+    green: "#00ff00",
+    blue: "#0000ff",
+    transparent: "", // treat as invalid for our purposes
+  };
+  if (NAMED[s] !== undefined) return NAMED[s];
+
+  // rgb()/rgba() -> hex6
+  if (s.startsWith("rgb")) {
+    const nums = s.match(/[-+]?\d*\.?\d+/g) || [];
+    if (nums.length >= 3) {
+      const r = clamp(Math.round(Number(nums[0])), 0, 255);
+      const g = clamp(Math.round(Number(nums[1])), 0, 255);
+      const b = clamp(Math.round(Number(nums[2])), 0, 255);
+      const to2 = (n) => n.toString(16).padStart(2, "0");
+      return `#${to2(r)}${to2(g)}${to2(b)}`;
+    }
+    return "";
+  }
+
+  // Strip "#"
+  if (s.startsWith("#")) s = s.slice(1);
+
+  // Expand short hex: rgb / rgba
+  if (/^[0-9a-f]{3}$/.test(s)) {
+    s = s
+      .split("")
+      .map((ch) => ch + ch)
+      .join(""); // rgb -> rrggbb
+  } else if (/^[0-9a-f]{4}$/.test(s)) {
+    // rgba -> rrggbbaa
+    s = s
+      .split("")
+      .map((ch) => ch + ch)
+      .join("");
+  }
+
+  // Drop alpha if present: rrggbbaa -> rrggbb
+  if (/^[0-9a-f]{8}$/.test(s)) s = s.slice(0, 6);
+
+  // Validate final rrggbb
+  if (!/^[0-9a-f]{6}$/.test(s)) return "";
+
+  return `#${s}`;
+}
+
 export default function App() {
   const year = new Date().getFullYear();
 
   const [ready, setReady] = useState(false);
   const [activeTab, setActiveTab] = useState("habits");
   const [goals, setGoals] = useState([]);
+
+  // Theme selection can be:
+  // - built-in id (string)
+  // - legacy hue number/string
+  // - "custom:<id>"
   const [themeChoice, setThemeChoice] = useState("bright-blue");
 
-  // ✅ Only allow one habit swipe-open at a time
-  const openHabitSwipeRef = useRef(null); // stores Swipeable instance
+  // Custom themes list stored in AsyncStorage
+  const [customThemes, setCustomThemesState] = useState([]);
+
+  // Theme modal pages
+  const [themePage, setThemePage] = useState("pick"); // 'pick' | 'create'
+  const [customName, setCustomName] = useState("");
+  const [customMode, setCustomMode] = useState("light"); // 'light' | 'dark'
+
+  // Custom theme inputs (simple: only 3 colors)
+  const [ctPrimary, setCtPrimary] = useState("#2b6dff");
+  const [ctBg, setCtBg] = useState("#f5f7fa");
+  const [ctText, setCtText] = useState("#0b1220");
+
+  // Simple color picker overlay (NOT a nested Modal)
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [colorPickerTarget, setColorPickerTarget] = useState(null); // 'primary' | 'bg' | 'text'
+  const [pickerStartHex, setPickerStartHex] = useState("#ffffff"); // to revert on Cancel
+  const [pickerValue, setPickerValue] = useState("#ffffff"); // final chosen value (js)
+  const [pickerInitHex, setPickerInitHex] = useState("#ffffff");
+
+  // const pickerShared = useSharedValue("#ffffff"); // keeps picker stable when overlay opens
+
+  // Only allow one habit swipe-open at a time
+  const openHabitSwipeRef = useRef(null);
   const openHabitSwipeId = useRef(null);
 
-  // ✅ Close any currently open habit row (safe to call anytime)
+  // const pickerPreviewStyle = useAnimatedStyle(() => {
+  //   return { backgroundColor: safeHex6(pickerShared.value, "#ffffff") };
+  // });
+
   function closeOpenHabitSwipe() {
     const ref = openHabitSwipeRef.current;
     if (ref && typeof ref.close === "function") {
@@ -187,8 +314,19 @@ export default function App() {
     openHabitSwipeId.current = null;
   }
 
+  // Always returns a safe "#rrggbb"
+  function safeHex6(input, fallback = "#ffffff") {
+    const fb = normalizeHex6(fallback) || "#ffffff";
+    return normalizeHex6(input) || fb;
+  }
+  function applyPickerHex(next) {
+    const safe = safeHex6(next, pickerStartHex || "#ffffff");
+    setPickerValue(safe);
+    setPickerUIValue(safe);
+    setPickerRemountKey((k) => k + 1); // keeps picker synced reliably
+  }
+
   function handleHabitSwipeOpen(habitId, swipeableInstance) {
-    // If another row is open, close it first
     if (
       openHabitSwipeId.current &&
       openHabitSwipeId.current !== habitId &&
@@ -196,14 +334,11 @@ export default function App() {
     ) {
       closeOpenHabitSwipe();
     }
-
-    // Track the currently open row
     openHabitSwipeRef.current = swipeableInstance || null;
     openHabitSwipeId.current = habitId || null;
   }
 
   function handleHabitSwipeClose(habitId) {
-    // Only clear if the closing row is the one we tracked
     if (openHabitSwipeId.current === habitId) {
       openHabitSwipeRef.current = null;
       openHabitSwipeId.current = null;
@@ -224,36 +359,48 @@ export default function App() {
   const [editOpen, setEditOpen] = useState(false);
   const [editGoal, setEditGoal] = useState(null);
   const [editValue, setEditValue] = useState("0");
+  const [pickerUIValue, setPickerUIValue] = useState("#ffffff"); // drives the ColorPicker's value prop
+  const [pickerRemountKey, setPickerRemountKey] = useState(0); // forces picker to refresh when typing
+  const [hexEditing, setHexEditing] = useState(false);
+  const [hexDraft, setHexDraft] = useState("#ffffff");
+
   const editAnim = useRef(new Animated.Value(0)).current;
+
+  // reopen theme modal after picking (legacy; no longer needed since picker is inline)
+  const [resumeThemeAfterPicker, setResumeThemeAfterPicker] = useState(false);
+  const [resumeThemePage, setResumeThemePage] = useState("create"); // 'pick' | 'create'
 
   const [habits, setHabits] = useState([]);
   const [habitAddOpen, setHabitAddOpen] = useState(false);
   const [habitTitle, setHabitTitle] = useState("");
 
-  // ✅ Step 2: hide completed toggle
+  // Hide completed goals toggle
   const [hideCompleted, setHideCompleted] = useState(false);
 
-  // ✅ Step 1: undo toast
+  // Undo toast
   const [undo, setUndo] = useState(null); // { kind: 'goal'|'habit', item, index }
   const undoTimerRef = useRef(null);
 
-  // ✅ Annual rollover modal + source year
+  // Annual rollover modal + source year
   const [yearRolloverOpen, setYearRolloverOpen] = useState(false);
   const [rolloverFromYear, setRolloverFromYear] = useState(null);
 
-  // ✅ earlier chat: edit goal details modal
+  // Edit goal details modal
   const [goalDetailsOpen, setGoalDetailsOpen] = useState(false);
   const [goalDetailsGoal, setGoalDetailsGoal] = useState(null);
   const [goalDetailsTitle, setGoalDetailsTitle] = useState("");
   const [goalDetailsType, setGoalDetailsType] = useState("count");
   const [goalDetailsTargetText, setGoalDetailsTargetText] = useState("10");
 
-  // ✅ earlier chat: edit habit title modal
+  // Edit habit title modal
   const [habitEditOpen, setHabitEditOpen] = useState(false);
   const [habitEditHabit, setHabitEditHabit] = useState(null);
   const [habitEditTitle, setHabitEditTitle] = useState("");
 
-  const theme = useMemo(() => makeTheme(themeChoice), [themeChoice]);
+  const theme = useMemo(
+    () => makeTheme(themeChoice, customThemes),
+    [themeChoice, customThemes]
+  );
   const dates = useMemo(() => lastNDays(5), [activeTab]);
 
   const [goalDragging, setGoalDragging] = useState(false);
@@ -422,7 +569,6 @@ export default function App() {
     if (activeTab !== "habits") closeOpenHabitSwipe();
   }, [activeTab]);
 
-  // ✅ Helper: summary + snapshot
   function computeGoalSummary(goalsArr) {
     const safe = Array.isArray(goalsArr) ? goalsArr : [];
     const totalCount = safe.length;
@@ -462,13 +608,162 @@ export default function App() {
   }
 
   async function commitRolloverSnapshot() {
-    // Only snapshot when there was an actual previous year stored
     const prev = Number(rolloverFromYear);
     if (!Number.isFinite(prev)) return;
 
-    // Snapshot the "previous year" goals before applying changes
     const entry = buildHistoryEntry(prev, goals);
     await appendGoalHistory(entry);
+  }
+
+  // Custom themes helpers
+  async function persistCustomThemes(next) {
+    setCustomThemesState(next);
+    try {
+      await saveCustomThemes(next);
+    } catch {}
+  }
+
+  function resetCreateFormToDefaults() {
+    const base = buildPaletteFromPrimary("#2b6dff", "light");
+    setCustomName("");
+    setCustomMode("light");
+    setCtPrimary(base.primary);
+    setCtBg(base.bg);
+    setCtText(base.text);
+  }
+
+  function currentCreatePaletteDraft() {
+    const draft = {
+      primary: normalizeHex6(ctPrimary),
+      bg: normalizeHex6(ctBg),
+      text: normalizeHex6(ctText),
+      danger: "#ef4444",
+    };
+    return ensurePaletteComplete(draft, customMode);
+  }
+
+  async function autoFillFromPrimary() {
+    const p = isHex6(ctPrimary) ? normalizeHex(ctPrimary) : "#2b6dff";
+    const base = buildPaletteFromPrimary(p, customMode);
+
+    await hapticLight();
+    setCtPrimary(base.primary);
+    setCtBg(base.bg);
+    setCtText(base.text);
+  }
+
+  async function createCustomThemeAndSelect() {
+    const name = sanitizeName(customName);
+    if (!name) return;
+
+    const draft = currentCreatePaletteDraft();
+    const required = [draft.primary, draft.bg, draft.text];
+    if (required.some((v) => !isHex6(v))) return;
+
+    const id = uid();
+    const entry = {
+      id,
+      name,
+      palette: draft,
+      createdAt: Date.now(),
+    };
+
+    const next = [entry, ...(customThemes || [])];
+    await persistCustomThemes(next);
+
+    const choice = `${CUSTOM_THEME_PREFIX}${id}`;
+    await handlePickTheme(choice);
+
+    // Close Theme modal after saving + selecting
+    setCustomizeOpen(false);
+
+    setThemePage("pick");
+    resetCreateFormToDefaults();
+    await hapticSuccess();
+  }
+
+  async function deleteCustomTheme(id) {
+    await hapticLight();
+    const next = (customThemes || []).filter(
+      (t) => String(t.id) !== String(id)
+    );
+    await persistCustomThemes(next);
+
+    const selectedIsThis =
+      typeof themeChoice === "string" &&
+      themeChoice.startsWith(CUSTOM_THEME_PREFIX) &&
+      themeChoice.slice(CUSTOM_THEME_PREFIX.length) === String(id);
+
+    if (selectedIsThis) {
+      await handlePickTheme("bright-blue");
+    }
+    await hapticSuccess();
+  }
+
+  function openColorPicker(target) {
+    const cur =
+      target === "primary" ? ctPrimary : target === "bg" ? ctBg : ctText;
+
+    const start = safeHex6(cur, "#ffffff");
+
+    setColorPickerTarget(target);
+    setPickerStartHex(start);
+
+    setHexEditing(false);
+    setHexDraft(start);
+
+    applyPickerHex(start);
+    setColorPickerOpen(true);
+  }
+
+  function onPickerCompleteJS(c) {
+    const next = safeHex6(c?.hex, pickerValue || pickerStartHex || "#ffffff");
+    applyPickerHex(next);
+  }
+
+  function onPickerChangeJS(c) {
+    const next = safeHex6(c?.hex, pickerValue || pickerStartHex || "#ffffff");
+    setPickerValue(next);
+    setPickerUIValue(next);
+    // don't remount while dragging (keeps it smooth)
+  }
+
+  // This runs on JS thread when user completes a pick (lift finger / tap)
+  function onPickerComplete(color) {
+    const h = normalizeHex6(color?.hex) || pickerValue || "#ffffff";
+    setPickerValue(h);
+
+    // Update the target value immediately
+    if (colorPickerTarget === "primary") setCtPrimary(h);
+    else if (colorPickerTarget === "bg") setCtBg(h);
+    else if (colorPickerTarget === "text") setCtText(h);
+  }
+
+  async function cancelColorPicker() {
+    await hapticLight();
+
+    const back = safeHex6(pickerStartHex, "#ffffff");
+    setPickerValue(back);
+    setPickerUIValue(back);
+    setPickerRemountKey((k) => k + 1);
+
+    setColorPickerOpen(false);
+    setColorPickerTarget(null);
+  }
+
+  async function doneColorPicker() {
+    await hapticLight();
+
+    const final = safeHex6(pickerValue, pickerStartHex || "#ffffff");
+
+    // Commit only on Done ✅
+    if (colorPickerTarget === "primary") setCtPrimary(final);
+    else if (colorPickerTarget === "bg") setCtBg(final);
+    else if (colorPickerTarget === "text") setCtText(final);
+
+    setHexEditing(false);
+    setColorPickerOpen(false);
+    setColorPickerTarget(null);
   }
 
   useEffect(() => {
@@ -483,16 +778,21 @@ export default function App() {
           { habits: storedHabits, hasStoredValue: hasHabitStorage },
           habitsSeenFlag,
           storedYear,
+          storedCustomThemes,
         ] = await Promise.all([
           loadGoalsWithMeta(),
           loadHue(),
           loadWelcomeSeen(),
           loadHabits(),
           loadHabitsWelcomeSeen(),
-          loadCurrentYear(), // ✅ new
+          loadCurrentYear(),
+          loadCustomThemes(),
         ]);
 
         if (!mounted) return;
+
+        const ct = Array.isArray(storedCustomThemes) ? storedCustomThemes : [];
+        setCustomThemesState(ct);
 
         let finalGoals = [];
         let finalHabits = [];
@@ -523,18 +823,14 @@ export default function App() {
         }
 
         setHabitsWelcomeSeen(habitsSeenFlag);
-
         if (!welcomeSeen) setWelcomeOpen(true);
 
         if (storedYear == null) {
-          // If truly first run, set and do nothing
           await saveCurrentYear(year);
         } else if (storedYear !== year) {
-          // Year changed: block with rollover modal after data loads
           setRolloverFromYear(storedYear);
           setYearRolloverOpen(true);
         } else {
-          // Ensure new key is present even if we only had legacy
           await saveCurrentYear(year);
         }
 
@@ -639,7 +935,7 @@ export default function App() {
     setTargetText("10");
     setAddOpen(false);
 
-    await hapticSuccess(); // ✅ Step 6
+    await hapticSuccess();
   }
 
   async function handleDeleteGoal(id) {
@@ -651,7 +947,7 @@ export default function App() {
 
     await persistGoals(next);
 
-    if (item) showUndo("goal", item, idx); // ✅ Step 1
+    if (item) showUndo("goal", item, idx);
   }
 
   async function openEdit(goal) {
@@ -721,7 +1017,6 @@ export default function App() {
     closeEdit();
   }
 
-  // ✅ Goal details editing (title/type/goal number) — keeps progress
   async function openGoalDetails(goal) {
     await hapticLight();
     setGoalDetailsGoal(goal);
@@ -759,7 +1054,6 @@ export default function App() {
     const next = goals.map((g) => {
       if (g.id !== goalDetailsGoal.id) return g;
 
-      // keep progress as best as possible
       let nextProgress = g.progress ?? 0;
 
       if (nextType === "boolean") {
@@ -773,7 +1067,6 @@ export default function App() {
         };
       }
 
-      // count
       if (!Number.isFinite(nextProgress)) nextProgress = 0;
       nextProgress = clamp(Math.floor(nextProgress), 0, nextTarget || 0);
 
@@ -788,13 +1081,13 @@ export default function App() {
 
     await persistGoals(next);
     closeGoalDetails();
-    await hapticSuccess(); // ✅ Step 6
+    await hapticSuccess();
   }
 
   async function handlePickTheme(nextTheme) {
     setThemeChoice(nextTheme);
     await saveHue(nextTheme);
-    await hapticSuccess(); // ✅ Step 6
+    await hapticSuccess();
   }
 
   async function addHabit() {
@@ -808,7 +1101,7 @@ export default function App() {
     setHabitAddOpen(false);
     await saveHabits(next);
 
-    await hapticSuccess(); // ✅ Step 6
+    await hapticSuccess();
   }
 
   async function toggleHabit(habitId, dayKey) {
@@ -833,7 +1126,6 @@ export default function App() {
 
     await saveHabits(next);
 
-    // subtle “success” when marking good (1)
     const h = next.find((x) => x.id === habitId);
     if (h) {
       const v = (h.checks || {})[dayKey] || 0;
@@ -850,10 +1142,9 @@ export default function App() {
 
     await saveHabits(next);
 
-    if (item) showUndo("habit", item, idx); // ✅ Step 1
+    if (item) showUndo("habit", item, idx);
   }
 
-  // ✅ Habit title editing
   async function openHabitEdit(habit) {
     await hapticLight();
     setHabitEditHabit(habit);
@@ -878,17 +1169,13 @@ export default function App() {
 
     await saveHabits(next);
     closeHabitEdit();
-    await hapticSuccess(); // ✅ Step 6
+    await hapticSuccess();
   }
 
-  // ✅ Annual rollover handlers (GOALS only; HABITS unchanged)
+  // Annual rollover handlers (GOALS only; HABITS unchanged)
   async function handleRolloverCarryOver() {
     await hapticLight();
-
-    // snapshot previous year goals
     await commitRolloverSnapshot();
-
-    // keep goals as-is, just commit new year
     await saveCurrentYear(year);
 
     setYearRolloverOpen(false);
@@ -900,7 +1187,6 @@ export default function App() {
 
   async function handleRolloverResetProgress() {
     await hapticLight();
-
     await commitRolloverSnapshot();
 
     const resetGoals = goals.map((g) => ({
@@ -920,7 +1206,6 @@ export default function App() {
 
   async function handleRolloverStartNewGoals() {
     await hapticLight();
-
     await commitRolloverSnapshot();
 
     const cleared = [];
@@ -936,7 +1221,6 @@ export default function App() {
 
   async function handleRolloverDecideLater() {
     await hapticLight();
-    // Do NOT update currentYear key; re-prompt next app open
     setYearRolloverOpen(false);
     pushWidgets(goals, habits);
   }
@@ -1111,6 +1395,18 @@ export default function App() {
     );
   }
 
+  // Theme picker data (built-in + custom)
+  const customThemeCards = (customThemes || []).map((t) => ({
+    id: `${CUSTOM_THEME_PREFIX}${t.id}`,
+    name: t.name,
+    palette: t.palette,
+    _customId: t.id,
+    _isCustom: true,
+  }));
+
+  const allThemeCards = [...customThemeCards, ...THEMES];
+  const createPreview = currentCreatePaletteDraft();
+
   return (
     <GestureHandlerRootView style={styles.safe}>
       <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
@@ -1158,7 +1454,7 @@ export default function App() {
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
             onDragBegin={() => {
-              closeOpenHabitSwipe(); // ✅ prevents a row staying open while dragging
+              closeOpenHabitSwipe();
               if (!habitDragging) {
                 setHabitDragging(true);
                 hapticDragStart();
@@ -1210,7 +1506,10 @@ export default function App() {
                   </Pressable>
 
                   <Pressable
-                    onPress={() => setCustomizeOpen(true)}
+                    onPress={() => {
+                      setCustomizeOpen(true);
+                      setThemePage("pick");
+                    }}
                     style={({ pressed }) => [
                       styles.secondaryBtn,
                       ANDROID && styles.ml10,
@@ -1231,8 +1530,6 @@ export default function App() {
             }
           />
         )}
-
-        {/* ✅ Step 1: Undo toast */}
         {!!undo && (
           <View
             style={[
@@ -1266,13 +1563,11 @@ export default function App() {
             </Pressable>
           </View>
         )}
-
-        {/* ✅ Annual rollover (blocking until a choice or "later") */}
+        {/* ✅ Annual rollover */}
         <Modal
           visible={yearRolloverOpen}
           animationType="fade"
           transparent
-          // blocking: don't allow back button to dismiss without a choice
           onRequestClose={() => {}}
         >
           <View style={styles.modalBackdrop}>
@@ -1402,7 +1697,6 @@ export default function App() {
             </View>
           </View>
         </Modal>
-
         {/* Habits welcome */}
         <Modal
           visible={habitsWelcomeOpen}
@@ -1472,7 +1766,6 @@ export default function App() {
             </View>
           </View>
         </Modal>
-
         {/* Main welcome */}
         <Modal
           visible={welcomeOpen}
@@ -1547,7 +1840,6 @@ export default function App() {
             </View>
           </View>
         </Modal>
-
         {/* Edit Habit */}
         <Modal
           visible={habitEditOpen}
@@ -1629,7 +1921,6 @@ export default function App() {
             </View>
           </View>
         </Modal>
-
         {/* Add Habit */}
         <Modal
           visible={habitAddOpen}
@@ -1711,7 +2002,6 @@ export default function App() {
             </View>
           </View>
         </Modal>
-
         {/* Edit Goal Details */}
         <Modal
           visible={goalDetailsOpen}
@@ -1887,7 +2177,6 @@ export default function App() {
             </View>
           </View>
         </Modal>
-
         {/* Add Goal */}
         <Modal
           visible={addOpen}
@@ -1906,7 +2195,6 @@ export default function App() {
                 Add Goal
               </Text>
 
-              {/* ✅ Step 4: Templates */}
               <Text style={[styles.label, { color: theme.mutedText }]}>
                 Templates
               </Text>
@@ -2092,124 +2380,689 @@ export default function App() {
             </View>
           </View>
         </Modal>
-
-        {/* Theme */}
+        {/* ✅ Theme modal */}
+        {/* ✅ Theme modal */}
         <Modal
           visible={customizeOpen}
           animationType="fade"
           transparent
-          onRequestClose={() => setCustomizeOpen(false)}
+          presentationStyle="overFullScreen"
+          onRequestClose={() => {
+            if (colorPickerOpen) cancelColorPicker();
+            else setCustomizeOpen(false);
+          }}
         >
           <View style={styles.modalBackdrop}>
+            {/* theme card */}
             <View
               style={[
                 styles.modalCard,
                 { backgroundColor: theme.card, borderColor: theme.border },
               ]}
             >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Theme
-              </Text>
-              <Text style={[styles.modalSub, { color: theme.mutedText }]}>
-                Pick a theme
-              </Text>
+              <View style={[styles.themeTopRow, ANDROID && styles.noGap]}>
+                <Text style={[styles.modalTitle, { color: theme.text }]}>
+                  Theme
+                </Text>
 
-              <View
-                style={[
-                  styles.themeGrid,
-                  ANDROID && styles.noGap,
-                  ANDROID && styles.themeGridAndroid,
-                ]}
-              >
-                {THEMES.map((t) => {
-                  const selected = t.id === themeChoice;
-                  return (
+                {themePage === "pick" ? (
+                  <Pressable
+                    onPress={async () => {
+                      await hapticLight();
+                      setThemePage("create");
+                      resetCreateFormToDefaults();
+                    }}
+                    style={({ pressed }) => [
+                      styles.smallBtn,
+                      {
+                        backgroundColor: pressed ? theme.border : theme.bg,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.smallBtnText, { color: theme.text }]}>
+                      + Custom
+                    </Text>
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    onPress={async () => {
+                      await hapticLight();
+                      setThemePage("pick");
+                    }}
+                    style={({ pressed }) => [
+                      styles.smallBtn,
+                      {
+                        backgroundColor: pressed ? theme.border : theme.bg,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.smallBtnText, { color: theme.text }]}>
+                      Back
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+
+              {themePage === "pick" ? (
+                <>
+                  <Text style={[styles.modalSub, { color: theme.mutedText }]}>
+                    Pick a theme
+                  </Text>
+
+                  <ScrollView
+                    style={styles.themeScroll}
+                    contentContainerStyle={[
+                      styles.themeGrid,
+                      ANDROID && styles.noGap,
+                      ANDROID && styles.themeGridAndroid,
+                    ]}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {allThemeCards.map((t) => {
+                      const selected = t.id === themeChoice;
+                      const isCustom = !!t._isCustom;
+
+                      return (
+                        <Pressable
+                          key={t.id}
+                          onPress={() => handlePickTheme(t.id)}
+                          style={({ pressed }) => [
+                            styles.themeCard,
+                            ANDROID && styles.themeCardAndroid,
+                            {
+                              borderColor: selected
+                                ? theme.primary
+                                : theme.border,
+                              borderWidth: selected ? 2 : 1,
+                              backgroundColor: "#FFFFFF",
+                              opacity: pressed ? 0.92 : 1,
+                            },
+                          ]}
+                        >
+                          <View
+                            style={[
+                              styles.themeHeader,
+                              ANDROID && styles.noGap,
+                            ]}
+                          >
+                            <Text style={[styles.themeName, { color: "#000" }]}>
+                              {t.name}
+                            </Text>
+
+                            {isCustom && (
+                              <Pressable
+                                onPress={(e) => {
+                                  e?.stopPropagation?.();
+                                  deleteCustomTheme(t._customId);
+                                }}
+                                style={({ pressed }) => [
+                                  styles.trashBtn,
+                                  {
+                                    borderColor: "#111",
+                                    backgroundColor: pressed ? "#eee" : "#fff",
+                                  },
+                                ]}
+                                hitSlop={10}
+                              >
+                                <Text
+                                  style={[
+                                    styles.trashBtnText,
+                                    { color: "#111" },
+                                  ]}
+                                >
+                                  Delete
+                                </Text>
+                              </Pressable>
+                            )}
+                          </View>
+
+                          <View
+                            style={[
+                              styles.swatchRow,
+                              ANDROID && styles.noGap,
+                              ANDROID && styles.swatchRowAndroid,
+                            ]}
+                          >
+                            <View
+                              style={[
+                                styles.themeSwatch,
+                                { backgroundColor: t.palette.primary },
+                              ]}
+                            />
+                            <View
+                              style={[
+                                styles.themeSwatch,
+                                { backgroundColor: t.palette.card },
+                              ]}
+                            />
+                            <View
+                              style={[
+                                styles.themeSwatch,
+                                { backgroundColor: t.palette.bg },
+                              ]}
+                            />
+                          </View>
+
+                          <Text
+                            style={[
+                              styles.themeHint,
+                              ANDROID && styles.themeHintAndroid,
+                              { color: selected ? "#000" : "#555" },
+                            ]}
+                          >
+                            {selected ? "Selected" : "Tap to apply"}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+
+                  <View style={[styles.modalActions, ANDROID && styles.noGap]}>
                     <Pressable
-                      key={t.id}
-                      onPress={() => handlePickTheme(t.id)}
+                      onPress={() => setCustomizeOpen(false)}
                       style={({ pressed }) => [
-                        styles.themeCard,
-                        ANDROID && styles.themeCardAndroid,
+                        styles.modalBtn,
                         {
-                          borderColor: selected ? theme.primary : theme.border,
-                          backgroundColor: selected ? theme.ringBg : theme.card,
-                          opacity: pressed ? 0.9 : 1,
+                          backgroundColor: pressed
+                            ? theme.primaryPressed
+                            : theme.primary,
+                          borderColor: theme.primary,
                         },
                       ]}
                     >
-                      <View
-                        style={[styles.themeHeader, ANDROID && styles.noGap]}
-                      >
-                        <Text style={[styles.themeName, { color: theme.text }]}>
-                          {t.name}
-                        </Text>
-                      </View>
-
-                      <View
-                        style={[
-                          styles.swatchRow,
-                          ANDROID && styles.noGap,
-                          ANDROID && styles.swatchRowAndroid,
-                        ]}
-                      >
-                        <View
-                          style={[
-                            styles.themeSwatch,
-                            { backgroundColor: t.palette.primary },
-                          ]}
-                        />
-                        <View
-                          style={[
-                            styles.themeSwatch,
-                            { backgroundColor: t.palette.card },
-                          ]}
-                        />
-                        <View
-                          style={[
-                            styles.themeSwatch,
-                            { backgroundColor: t.palette.bg },
-                          ]}
-                        />
-                      </View>
-
                       <Text
                         style={[
-                          styles.themeHint,
-                          ANDROID && styles.themeHintAndroid,
-                          { color: theme.mutedText },
+                          styles.modalBtnText,
+                          { color: theme.primaryTextOn },
                         ]}
                       >
-                        Tap to apply
+                        Done
                       </Text>
                     </Pressable>
-                  );
-                })}
-              </View>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={[styles.modalSub, { color: theme.mutedText }]}>
+                    Create custom theme
+                  </Text>
 
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
+                  <View style={{ marginTop: 6, maxHeight: 520 }}>
+                    <ScrollView
+                      showsVerticalScrollIndicator={false}
+                      nestedScrollEnabled
+                      contentContainerStyle={{ paddingBottom: 10 }}
+                    >
+                      <Text style={[styles.label, { color: theme.mutedText }]}>
+                        Name
+                      </Text>
+                      <TextInput
+                        value={customName}
+                        onChangeText={setCustomName}
+                        placeholder="e.g., Ocean Breeze"
+                        placeholderTextColor={theme.mutedText}
+                        style={[
+                          styles.input,
+                          {
+                            borderColor: theme.border,
+                            color: theme.text,
+                            backgroundColor: theme.bg,
+                          },
+                        ]}
+                        autoCorrect={false}
+                        autoCapitalize="words"
+                        maxLength={28}
+                      />
+
+                      <Text style={[styles.label, { color: theme.mutedText }]}>
+                        Mode
+                      </Text>
+                      <View style={[styles.typeRow, ANDROID && styles.noGap]}>
+                        <Pressable
+                          onPress={async () => {
+                            await hapticLight();
+                            setCustomMode("light");
+                            const p = isHex6(ctPrimary)
+                              ? normalizeHex(ctPrimary)
+                              : "#2b6dff";
+                            const base = buildPaletteFromPrimary(p, "light");
+                            setCtPrimary(base.primary);
+                            setCtBg(base.bg);
+                            setCtText(base.text);
+                          }}
+                          style={({ pressed }) => [
+                            styles.pill,
+                            {
+                              backgroundColor:
+                                customMode === "light"
+                                  ? theme.primary
+                                  : theme.bg,
+                              borderColor:
+                                customMode === "light"
+                                  ? theme.primary
+                                  : theme.border,
+                              opacity: pressed ? 0.9 : 1,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.pillText,
+                              {
+                                color:
+                                  customMode === "light"
+                                    ? theme.primaryTextOn
+                                    : theme.text,
+                              },
+                            ]}
+                          >
+                            Light
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={async () => {
+                            await hapticLight();
+                            setCustomMode("dark");
+                            const p = isHex6(ctPrimary)
+                              ? normalizeHex(ctPrimary)
+                              : "#2b6dff";
+                            const base = buildPaletteFromPrimary(p, "dark");
+                            setCtPrimary(base.primary);
+                            setCtBg(base.bg);
+                            setCtText(base.text);
+                          }}
+                          style={({ pressed }) => [
+                            styles.pill,
+                            ANDROID && styles.ml10,
+                            {
+                              backgroundColor:
+                                customMode === "dark"
+                                  ? theme.primary
+                                  : theme.bg,
+                              borderColor:
+                                customMode === "dark"
+                                  ? theme.primary
+                                  : theme.border,
+                              opacity: pressed ? 0.9 : 1,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.pillText,
+                              {
+                                color:
+                                  customMode === "dark"
+                                    ? theme.primaryTextOn
+                                    : theme.text,
+                              },
+                            ]}
+                          >
+                            Dark
+                          </Text>
+                        </Pressable>
+                      </View>
+
+                      <View
+                        style={[styles.previewRow, ANDROID && styles.noGap]}
+                      >
+                        <View
+                          style={[
+                            styles.previewCard,
+                            {
+                              backgroundColor: createPreview.card,
+                              borderColor: createPreview.border,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              color: createPreview.text,
+                              fontWeight: "900",
+                            }}
+                          >
+                            Preview
+                          </Text>
+                          <View style={{ height: 10 }} />
+                          <View
+                            style={[
+                              styles.previewBtn,
+                              { backgroundColor: createPreview.primary },
+                            ]}
+                          >
+                            <Text
+                              style={{
+                                color: createPreview.primaryTextOn,
+                                fontWeight: "900",
+                              }}
+                            >
+                              Primary
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+                          <Pressable
+                            onPress={autoFillFromPrimary}
+                            style={({ pressed }) => [
+                              styles.smallBtnWide,
+                              {
+                                backgroundColor: pressed
+                                  ? theme.border
+                                  : theme.bg,
+                                borderColor: theme.border,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.smallBtnText,
+                                { color: theme.text },
+                              ]}
+                            >
+                              Auto-fill from primary
+                            </Text>
+                          </Pressable>
+
+                          <Pressable
+                            onPress={() => {
+                              resetCreateFormToDefaults();
+                              hapticLight();
+                            }}
+                            style={({ pressed }) => [
+                              styles.smallBtnWide,
+                              {
+                                marginTop: 10,
+                                backgroundColor: pressed
+                                  ? theme.border
+                                  : theme.bg,
+                                borderColor: theme.border,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.smallBtnText,
+                                { color: theme.text },
+                              ]}
+                            >
+                              Reset
+                            </Text>
+                          </Pressable>
+                        </View>
+                      </View>
+
+                      <Text style={[styles.label, { color: theme.mutedText }]}>
+                        Colors
+                      </Text>
+
+                      <View
+                        style={[styles.colorPickRow, ANDROID && styles.noGap]}
+                      >
+                        <Pressable
+                          onPress={() => openColorPicker("primary")}
+                          style={[
+                            styles.colorPickItem,
+                            {
+                              borderColor: theme.border,
+                              backgroundColor: theme.bg,
+                            },
+                          ]}
+                        >
+                          <View
+                            style={[
+                              styles.colorSquare,
+                              {
+                                backgroundColor: ctPrimary,
+                                borderColor: theme.border,
+                              },
+                            ]}
+                          />
+                          <Text
+                            style={[
+                              styles.colorPickText,
+                              { color: theme.text },
+                            ]}
+                          >
+                            Primary
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() => openColorPicker("bg")}
+                          style={[
+                            styles.colorPickItem,
+                            {
+                              borderColor: theme.border,
+                              backgroundColor: theme.bg,
+                            },
+                          ]}
+                        >
+                          <View
+                            style={[
+                              styles.colorSquare,
+                              {
+                                backgroundColor: ctBg,
+                                borderColor: theme.border,
+                              },
+                            ]}
+                          />
+                          <Text
+                            style={[
+                              styles.colorPickText,
+                              { color: theme.text },
+                            ]}
+                          >
+                            Background
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() => openColorPicker("text")}
+                          style={[
+                            styles.colorPickItem,
+                            {
+                              borderColor: theme.border,
+                              backgroundColor: theme.bg,
+                            },
+                          ]}
+                        >
+                          <View
+                            style={[
+                              styles.colorSquare,
+                              {
+                                backgroundColor: ctText,
+                                borderColor: theme.border,
+                              },
+                            ]}
+                          />
+                          <Text
+                            style={[
+                              styles.colorPickText,
+                              { color: theme.text },
+                            ]}
+                          >
+                            Text
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </ScrollView>
+                  </View>
+
+                  <View style={[styles.modalActions, ANDROID && styles.noGap]}>
+                    <Pressable
+                      onPress={async () => {
+                        await hapticLight();
+                        setThemePage("pick");
+                        resetCreateFormToDefaults();
+                      }}
+                      style={({ pressed }) => [
+                        styles.modalBtn,
+                        {
+                          backgroundColor: pressed ? theme.border : theme.bg,
+                          borderColor: theme.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.modalBtnText, { color: theme.text }]}
+                      >
+                        Cancel
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={createCustomThemeAndSelect}
+                      style={({ pressed }) => [
+                        styles.modalBtn,
+                        ANDROID && styles.ml10,
+                        {
+                          backgroundColor: pressed
+                            ? theme.primaryPressed
+                            : theme.primary,
+                          borderColor: theme.primary,
+                          opacity: sanitizeName(customName) ? 1 : 0.5,
+                        },
+                      ]}
+                      disabled={!sanitizeName(customName)}
+                    >
+                      <Text
+                        style={[
+                          styles.modalBtnText,
+                          { color: theme.primaryTextOn },
+                        ]}
+                      >
+                        Save Theme
+                      </Text>
+                    </Pressable>
+                  </View>
+                </>
+              )}
+            </View>
+
+            {/* ✅ Picker overlay (no hex typing) */}
+            {colorPickerOpen && (
+              <View style={styles.pickerOverlay} pointerEvents="box-none">
                 <Pressable
-                  onPress={() => setCustomizeOpen(false)}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
+                  style={styles.pickerOverlayBackdrop}
+                  onPress={cancelColorPicker}
+                />
+
+                <View
+                  style={[
+                    styles.pickerSheet,
+                    { backgroundColor: theme.card, borderColor: theme.border },
                   ]}
                 >
-                  <Text
+                  <Text style={[styles.pickerTitle, { color: theme.text }]}>
+                    {colorPickerTarget === "primary"
+                      ? "Pick Primary"
+                      : colorPickerTarget === "bg"
+                      ? "Pick Background"
+                      : "Pick Text"}
+                  </Text>
+
+                  <Text style={[styles.pickerSub, { color: theme.mutedText }]}>
+                    Drag to choose a color
+                  </Text>
+
+                  <View
                     style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
+                      styles.pickerPreviewRow,
+                      { borderColor: theme.border },
                     ]}
                   >
-                    Done
-                  </Text>
-                </Pressable>
+                    <View
+                      style={[
+                        styles.pickerPreviewDot,
+                        { backgroundColor: safeHex6(pickerValue, "#ffffff") },
+                      ]}
+                    />
+                    <Text style={[styles.pickerHexText, { color: theme.text }]}>
+                      {pickerValue}
+                    </Text>
+                  </View>
+
+                  {/* only picker scrolls so header + buttons don't get cut off */}
+                  <ScrollView
+                    style={styles.pickerScroll}
+                    contentContainerStyle={{ paddingBottom: 10 }}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <ColorPicker
+                      key={pickerRemountKey}
+                      value={safeHex6(pickerUIValue, "#ffffff")}
+                      onChangeJS={onPickerChangeJS}
+                      onCompleteJS={onPickerCompleteJS}
+                      sliderThickness={20}
+                      thumbSize={24}
+                      boundedThumb
+                      style={styles.picker}
+                    >
+                      {/* Hue ring wraps the saturation/value panel */}
+                      <HueCircular
+                        containerStyle={{ justifyContent: "center" }}
+                        thumbShape="pill"
+                      >
+                        <Panel1
+                          style={{
+                            width: "70%",
+                            height: "70%",
+                            borderRadius: 16,
+                            alignSelf: "center",
+                          }}
+                        />
+                      </HueCircular>
+                    </ColorPicker>
+                  </ScrollView>
+
+                  <View style={[styles.modalActions, ANDROID && styles.noGap]}>
+                    <Pressable
+                      onPress={cancelColorPicker}
+                      style={({ pressed }) => [
+                        styles.modalBtn,
+                        {
+                          backgroundColor: pressed ? theme.border : theme.bg,
+                          borderColor: theme.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.modalBtnText, { color: theme.text }]}
+                      >
+                        Cancel
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={doneColorPicker}
+                      style={({ pressed }) => [
+                        styles.modalBtn,
+                        ANDROID && styles.ml10,
+                        {
+                          backgroundColor: pressed
+                            ? theme.primaryPressed
+                            : theme.primary,
+                          borderColor: theme.primary,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.modalBtnText,
+                          { color: theme.primaryTextOn },
+                        ]}
+                      >
+                        Done
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
               </View>
-            </View>
+            )}
           </View>
         </Modal>
 
@@ -2244,6 +3097,7 @@ export default function App() {
                 },
               ]}
             >
+              {/* keep the rest of your Edit Progress modal exactly as you already have it */}
               {!!editGoal && (
                 <>
                   <Text
@@ -2328,8 +3182,6 @@ export default function App() {
                               borderColor: theme.border,
                             },
                           ]}
-                          accessibilityRole="button"
-                          accessibilityLabel="Decrease"
                         >
                           <Text
                             style={[
@@ -2370,8 +3222,6 @@ export default function App() {
                               borderColor: theme.border,
                             },
                           ]}
-                          accessibilityRole="button"
-                          accessibilityLabel="Increase"
                         >
                           <Text
                             style={[
@@ -2615,6 +3465,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 10,
   },
+  pickerHexInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
 
   sectionTitle: {
     fontSize: 12,
@@ -2696,7 +3556,6 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 18, fontWeight: "900" },
   modalSub: { marginTop: 6, fontSize: 13, fontWeight: "600" },
 
-  // ✅ Rollover stacked choices
   rolloverStack: { marginTop: 14, gap: 10 },
   rolloverBtn: {
     borderWidth: 1,
@@ -2753,52 +3612,55 @@ const styles = StyleSheet.create({
   },
   pillText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
 
-  inlineInfo: {
-    marginTop: 10,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  inlineInfoText: { fontSize: 12, fontWeight: "700" },
-
-  countRow: {
-    marginTop: 8,
+  themeTopRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     gap: 10,
   },
-  iconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+  smallBtn: {
     borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  iconBtnText: {
-    fontSize: 22,
-    fontWeight: "900",
-    letterSpacing: 0.2,
-    marginTop: -1,
-  },
-  countInput: {
-    flex: 1,
+  smallBtnText: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
+
+  smallBtnWide: {
     borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 12,
+    borderRadius: 12,
     paddingVertical: 10,
-    fontSize: 14,
-    fontWeight: "800",
-    textAlign: "center",
+    paddingHorizontal: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
-  themeGrid: {
+  previewRow: {
     marginTop: 14,
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "stretch",
+  },
+  previewCard: { flex: 1, borderWidth: 1, borderRadius: 16, padding: 12 },
+  previewBtn: { borderRadius: 12, paddingVertical: 10, alignItems: "center" },
+
+  trashBtn: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+  },
+  trashBtnText: { fontSize: 12, fontWeight: "900" },
+
+  themeGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
+    paddingBottom: 6,
   },
+
   themeCard: {
     flexBasis: "48%",
     borderWidth: 1,
@@ -2824,17 +3686,6 @@ const styles = StyleSheet.create({
   themeSwatch: { width: 16, height: 16, borderRadius: 6 },
   themeHint: { marginTop: 10, fontSize: 12, fontWeight: "700" },
 
-  milestoneRow: { marginTop: 14, flexDirection: "row", gap: 10 },
-  milestoneBtn: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  milestoneText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
-
   modalActions: {
     marginTop: 16,
     flexDirection: "row",
@@ -2851,7 +3702,66 @@ const styles = StyleSheet.create({
   },
   modalBtnText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
 
-  // Edit Progress modal
+  colorPickRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    gap: 10,
+  },
+  colorPickItem: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  colorSquare: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+  },
+  colorPickText: {
+    marginTop: 8,
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+  colorPickHex: {
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+
+  inlinePickerCard: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 12,
+  },
+
+  swatchGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    paddingBottom: 8,
+  },
+  swatchCell: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  swatchFill: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+  },
+
   editTitle: { fontSize: 16, fontWeight: "900", letterSpacing: 0.2 },
   editMetaRow: {
     marginTop: 6,
@@ -2916,11 +3826,7 @@ const styles = StyleSheet.create({
   },
   miniPillText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
 
-  // -------------------------
-  // ANDROID-ONLY PATCH STYLES
-  // -------------------------
   noGap: { gap: 0 },
-
   ml10: { marginLeft: 10 },
   mr10: { marginRight: 10 },
 
@@ -2934,4 +3840,146 @@ const styles = StyleSheet.create({
   swatchRowAndroid: { justifyContent: "space-between" },
 
   themeHintAndroid: { marginTop: 8 },
+  themeScroll: {
+    marginTop: 14,
+    maxHeight: 420,
+  },
+  themeCreateScroll: {
+    marginTop: 8,
+    maxHeight: 520, // keeps it inside the modal; user can scroll
+  },
+  themeCreateScrollContent: {
+    paddingBottom: 14,
+  },
+
+  pickerContainer: {
+    marginTop: 12,
+  },
+  picker: {
+    width: "100%",
+  },
+  pickerDivider: {
+    height: 1,
+    marginTop: 12,
+    marginBottom: 12,
+    backgroundColor: "rgba(0,0,0,0.10)",
+  },
+  pickerSwatches: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  pickerSwatch: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+  },
+  previewTxt: {
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+  pickerOverlayBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+
+  pickerOverlayCard: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    top: "15%",
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 16,
+    overflow: "hidden",
+  },
+  pickerSurface: {
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 12,
+    overflow: "hidden", // ✅ clips the Hue ring edges too
+  },
+  modalCardRelative: {
+    position: "relative",
+    overflow: "hidden", // clips overlay to rounded corners
+  },
+
+  pickerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+
+  pickerSheet: {
+    width: "92%",
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 14,
+  },
+
+  pickerTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+
+  pickerSub: {
+    marginTop: 6,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  pickerPreviewRow: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  pickerPreviewDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.10)",
+  },
+
+  pickerHexText: {
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+
+  pickerInner: {
+    marginTop: 12,
+  },
+
+  pickerPanel: {
+    height: 180,
+    borderRadius: 14,
+    width: "100%",
+  },
+
+  pickerHue: {
+    width: 210,
+    height: 210,
+    alignSelf: "center",
+  },
+  pickerScroll: { marginTop: 12 },
+  pickerPanel: {
+    width: "100%",
+    height: 170,
+    borderRadius: 16,
+  },
+
+  picker: {
+    width: "100%",
+    alignSelf: "center",
+  },
 });
