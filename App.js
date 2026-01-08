@@ -24,10 +24,10 @@ import ColorPicker, {
   colorKit,
 } from "reanimated-color-picker";
 
-// import Reanimated, {
-//   useSharedValue,
-//   useAnimatedStyle,
-// } from "react-native-reanimated";
+import Reanimated, {
+  useSharedValue,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 
 import DraggableFlatList from "react-native-draggable-flatlist";
 import * as Haptics from "expo-haptics";
@@ -272,6 +272,12 @@ export default function App() {
   // - legacy hue number/string
   // - "custom:<id>"
   const [themeChoice, setThemeChoice] = useState("bright-blue");
+
+  const pickerShared = useSharedValue("#ffffff");
+
+  const pickerPreviewStyle = useAnimatedStyle(() => {
+    return { backgroundColor: pickerShared.value };
+  });
 
   // Custom themes list stored in AsyncStorage
   const [customThemes, setCustomThemesState] = useState([]);
@@ -726,6 +732,21 @@ export default function App() {
     setPickerValue(next);
     setPickerUIValue(next);
     // don't remount while dragging (keeps it smooth)
+  }
+  // UI thread (no React setState here)
+  const onPickerChange = (c) => {
+    "worklet";
+    pickerShared.value = c?.hex ?? "#ffffff";
+  };
+
+  // JS thread (commit once when user lets go)
+  function onPickerCompleteJS(c) {
+    const next = safeHex6(c?.hex, pickerUIValue || "#ffffff");
+    pickerShared.value = next;
+
+    // only set state if it actually changed (prevents extra rerenders)
+    setPickerUIValue((prev) => (prev === next ? prev : next));
+    setPickerValue((prev) => (prev === next ? prev : next));
   }
 
   // This runs on JS thread when user completes a pick (lift finger / tap)
@@ -2993,16 +3014,14 @@ export default function App() {
                     showsVerticalScrollIndicator={false}
                   >
                     <ColorPicker
-                      key={pickerRemountKey}
                       value={safeHex6(pickerUIValue, "#ffffff")}
-                      onChangeJS={onPickerChangeJS}
+                      onChange={onPickerChange}
                       onCompleteJS={onPickerCompleteJS}
                       sliderThickness={20}
                       thumbSize={24}
                       boundedThumb
                       style={styles.picker}
                     >
-                      {/* Hue ring wraps the saturation/value panel */}
                       <HueCircular
                         containerStyle={{ justifyContent: "center" }}
                         thumbShape="pill"
