@@ -31,8 +31,10 @@ import {
   saveHue,
   loadWelcomeSeen,
   setWelcomeSeen,
-  loadStoredYear,
-  setStoredYear,
+  // ✅ new rollover + history
+  loadCurrentYear,
+  saveCurrentYear,
+  appendGoalHistory,
 } from "./utils/storage";
 
 const HABITS_KEY = "yt_habits_v1";
@@ -235,8 +237,9 @@ export default function App() {
   const [undo, setUndo] = useState(null); // { kind: 'goal'|'habit', item, index }
   const undoTimerRef = useRef(null);
 
-  // ✅ Step 3: year rollover prompt
+  // ✅ Annual rollover modal + source year
   const [yearRolloverOpen, setYearRolloverOpen] = useState(false);
+  const [rolloverFromYear, setRolloverFromYear] = useState(null);
 
   // ✅ earlier chat: edit goal details modal
   const [goalDetailsOpen, setGoalDetailsOpen] = useState(false);
@@ -419,6 +422,55 @@ export default function App() {
     if (activeTab !== "habits") closeOpenHabitSwipe();
   }, [activeTab]);
 
+  // ✅ Helper: summary + snapshot
+  function computeGoalSummary(goalsArr) {
+    const safe = Array.isArray(goalsArr) ? goalsArr : [];
+    const totalCount = safe.length;
+
+    if (!totalCount) {
+      return { avgPercent: 0, completedCount: 0, totalCount: 0 };
+    }
+
+    let sum = 0;
+    let completedCount = 0;
+
+    for (const g of safe) {
+      const pct = goalPercent(g);
+      sum += pct;
+      if (pct >= 100) completedCount += 1;
+    }
+
+    const avgPercent = Number((sum / totalCount).toFixed(1));
+    return { avgPercent, completedCount, totalCount };
+  }
+
+  function buildHistoryEntry(prevYear, goalsArr) {
+    const safe = Array.isArray(goalsArr) ? goalsArr : [];
+    return {
+      year: Number(prevYear),
+      savedAt: Date.now(),
+      goals: safe.map((g) => ({
+        id: g?.id,
+        title: g?.title,
+        type: g?.type,
+        target: g?.target ?? null,
+        progress: g?.progress ?? 0,
+        createdAt: g?.createdAt ?? null,
+      })),
+      summary: computeGoalSummary(safe),
+    };
+  }
+
+  async function commitRolloverSnapshot() {
+    // Only snapshot when there was an actual previous year stored
+    const prev = Number(rolloverFromYear);
+    if (!Number.isFinite(prev)) return;
+
+    // Snapshot the "previous year" goals before applying changes
+    const entry = buildHistoryEntry(prev, goals);
+    await appendGoalHistory(entry);
+  }
+
   useEffect(() => {
     let mounted = true;
 
@@ -437,7 +489,7 @@ export default function App() {
           loadWelcomeSeen(),
           loadHabits(),
           loadHabitsWelcomeSeen(),
-          loadStoredYear(),
+          loadCurrentYear(), // ✅ new
         ]);
 
         if (!mounted) return;
@@ -474,14 +526,16 @@ export default function App() {
 
         if (!welcomeSeen) setWelcomeOpen(true);
 
-        // ✅ Step 3: year rollover (skip on true first run)
-        const isTrueFirstRun = !hasGoalStorage && !hasHabitStorage;
-        if (isTrueFirstRun) {
-          await setStoredYear(year);
-        } else if (storedYear && storedYear !== year) {
+        if (storedYear == null) {
+          // If truly first run, set and do nothing
+          await saveCurrentYear(year);
+        } else if (storedYear !== year) {
+          // Year changed: block with rollover modal after data loads
+          setRolloverFromYear(storedYear);
           setYearRolloverOpen(true);
-        } else if (!storedYear) {
-          await setStoredYear(year);
+        } else {
+          // Ensure new key is present even if we only had legacy
+          await saveCurrentYear(year);
         }
 
         pushWidgets(finalGoals, finalHabits);
@@ -499,6 +553,15 @@ export default function App() {
     if (!ready) return;
     pushWidgets(goals, habits);
   }, [ready, goals, habits, themeChoice]);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!ready) return;
@@ -818,33 +881,64 @@ export default function App() {
     await hapticSuccess(); // ✅ Step 6
   }
 
-  // ✅ Step 3 action handlers
-  async function handleYearStartFresh() {
+  // ✅ Annual rollover handlers (GOALS only; HABITS unchanged)
+  async function handleRolloverCarryOver() {
     await hapticLight();
+
+    // snapshot previous year goals
+    await commitRolloverSnapshot();
+
+    // keep goals as-is, just commit new year
+    await saveCurrentYear(year);
+
+    setYearRolloverOpen(false);
+    setRolloverFromYear(null);
+
+    pushWidgets(goals, habits);
+    await hapticSuccess();
+  }
+
+  async function handleRolloverResetProgress() {
+    await hapticLight();
+
+    await commitRolloverSnapshot();
 
     const resetGoals = goals.map((g) => ({
       ...g,
       progress: 0,
     }));
 
-    const resetHabits = habits.map((h) => ({
-      ...h,
-      checks: {},
-    }));
-
     await persistGoals(resetGoals);
-    await saveHabits(resetHabits);
+    await saveCurrentYear(year);
 
-    await setStoredYear(year);
     setYearRolloverOpen(false);
+    setRolloverFromYear(null);
+
+    pushWidgets(resetGoals, habits);
     await hapticSuccess();
   }
 
-  async function handleYearCarryOver() {
+  async function handleRolloverStartNewGoals() {
     await hapticLight();
-    await setStoredYear(year);
+
+    await commitRolloverSnapshot();
+
+    const cleared = [];
+    await persistGoals(cleared);
+    await saveCurrentYear(year);
+
     setYearRolloverOpen(false);
+    setRolloverFromYear(null);
+
+    pushWidgets(cleared, habits);
     await hapticSuccess();
+  }
+
+  async function handleRolloverDecideLater() {
+    await hapticLight();
+    // Do NOT update currentYear key; re-prompt next app open
+    setYearRolloverOpen(false);
+    pushWidgets(goals, habits);
   }
 
   const topHeader = (
@@ -983,7 +1077,11 @@ export default function App() {
         <>
           <View style={styles.habitsHeaderGrid}>
             <View style={{ width: LABEL_W, paddingRight: LABEL_GAP }}>
-              <Text style={[styles.monthTitle, { color: theme.text }]}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.monthTitle, { color: theme.text }]}
+              >
                 {monthName(new Date())}
               </Text>
             </View>
@@ -1169,12 +1267,13 @@ export default function App() {
           </View>
         )}
 
-        {/* ✅ Step 3: Year rollover */}
+        {/* ✅ Annual rollover (blocking until a choice or "later") */}
         <Modal
           visible={yearRolloverOpen}
           animationType="fade"
           transparent
-          onRequestClose={() => setYearRolloverOpen(false)}
+          // blocking: don't allow back button to dismiss without a choice
+          onRequestClose={() => {}}
         >
           <View style={styles.modalBackdrop}>
             <View
@@ -1184,7 +1283,7 @@ export default function App() {
               ]}
             >
               <Text style={[styles.modalTitle, { color: theme.text }]}>
-                New year
+                New year detected
               </Text>
 
               <Text
@@ -1193,31 +1292,70 @@ export default function App() {
                   { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
                 ]}
               >
-                It’s {year}. Do you want to start fresh or carry everything
-                over?
+                It’s {year}. What do you want to do with your goals?
               </Text>
 
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
+              {!!rolloverFromYear && (
+                <Text
+                  style={[
+                    styles.modalSub,
+                    { color: theme.mutedText, marginTop: 8, lineHeight: 18 },
+                  ]}
+                >
+                  We’ll save a snapshot of {rolloverFromYear} before applying
+                  your choice.
+                </Text>
+              )}
+
+              <View style={styles.rolloverStack}>
                 <Pressable
-                  onPress={handleYearCarryOver}
+                  onPress={handleRolloverCarryOver}
                   style={({ pressed }) => [
-                    styles.modalBtn,
+                    styles.rolloverBtn,
                     {
                       backgroundColor: pressed ? theme.border : theme.bg,
                       borderColor: theme.border,
                     },
                   ]}
                 >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Carry over
+                  <Text
+                    style={[styles.rolloverBtnTitle, { color: theme.text }]}
+                  >
+                    Keep goals + keep progress
+                  </Text>
+                  <Text
+                    style={[styles.rolloverBtnSub, { color: theme.mutedText }]}
+                  >
+                    Carry everything over into {year}.
                   </Text>
                 </Pressable>
 
                 <Pressable
-                  onPress={handleYearStartFresh}
+                  onPress={handleRolloverResetProgress}
                   style={({ pressed }) => [
-                    styles.modalBtn,
-                    ANDROID && styles.ml10,
+                    styles.rolloverBtn,
+                    {
+                      backgroundColor: pressed ? theme.border : theme.bg,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.rolloverBtnTitle, { color: theme.text }]}
+                  >
+                    Keep goals, reset progress
+                  </Text>
+                  <Text
+                    style={[styles.rolloverBtnSub, { color: theme.mutedText }]}
+                  >
+                    Start fresh at 0 while keeping the list.
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleRolloverStartNewGoals}
+                  style={({ pressed }) => [
+                    styles.rolloverBtn,
                     {
                       backgroundColor: pressed
                         ? theme.primaryPressed
@@ -1228,11 +1366,36 @@ export default function App() {
                 >
                   <Text
                     style={[
-                      styles.modalBtnText,
+                      styles.rolloverBtnTitle,
                       { color: theme.primaryTextOn },
                     ]}
                   >
-                    Start fresh
+                    Start new goals
+                  </Text>
+                  <Text
+                    style={[
+                      styles.rolloverBtnSub,
+                      { color: theme.primaryTextOn, opacity: 0.9 },
+                    ]}
+                  >
+                    Clear your goals list for a clean slate.
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleRolloverDecideLater}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    {
+                      alignSelf: "flex-end",
+                      marginTop: 6,
+                      backgroundColor: pressed ? theme.border : theme.bg,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
+                    Decide later
                   </Text>
                 </Pressable>
               </View>
@@ -2083,7 +2246,6 @@ export default function App() {
             >
               {!!editGoal && (
                 <>
-                  {/* Title only (no “Edit Progress” header) */}
                   <Text
                     style={[styles.editTitle, { color: theme.text }]}
                     numberOfLines={2}
@@ -2093,7 +2255,6 @@ export default function App() {
 
                   {editGoal.type === "count" ? (
                     <>
-                      {/* Tiny range caption */}
                       {(() => {
                         const cur = Number(editValue);
                         const curSafe = Number.isFinite(cur)
@@ -2153,7 +2314,6 @@ export default function App() {
                         );
                       })()}
 
-                      {/* Minimal stepper */}
                       <View
                         style={[styles.stepperRow, ANDROID && styles.noGap]}
                       >
@@ -2224,7 +2384,6 @@ export default function App() {
                         </Pressable>
                       </View>
 
-                      {/* Minimal actions */}
                       <View
                         style={[styles.modalActions, ANDROID && styles.noGap]}
                       >
@@ -2273,55 +2432,89 @@ export default function App() {
                     </>
                   ) : (
                     <>
-                      {/* Milestone: minimal toggle */}
-                      <View
-                        style={[
-                          styles.milestoneMiniRow,
-                          ANDROID && styles.noGap,
-                        ]}
-                      >
-                        <Pressable
-                          onPress={() => setMilestoneComplete(false)}
-                          style={({ pressed }) => [
-                            styles.miniPill,
-                            {
-                              backgroundColor: pressed
-                                ? theme.border
-                                : theme.bg,
-                              borderColor: theme.border,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[styles.miniPillText, { color: theme.text }]}
-                          >
-                            Not yet
-                          </Text>
-                        </Pressable>
+                      {(() => {
+                        const isDone = (editGoal?.progress ?? 0) === 1;
 
-                        <Pressable
-                          onPress={() => setMilestoneComplete(true)}
-                          style={({ pressed }) => [
-                            styles.miniPill,
-                            ANDROID && styles.ml10,
-                            {
-                              backgroundColor: pressed
-                                ? theme.primaryPressed
-                                : theme.primary,
-                              borderColor: theme.primary,
-                            },
-                          ]}
-                        >
-                          <Text
+                        return (
+                          <View
                             style={[
-                              styles.miniPillText,
-                              { color: theme.primaryTextOn },
+                              styles.milestoneMiniRow,
+                              ANDROID && styles.noGap,
                             ]}
                           >
-                            Done
-                          </Text>
-                        </Pressable>
-                      </View>
+                            <Pressable
+                              onPress={() => setMilestoneComplete(false)}
+                              style={({ pressed }) => {
+                                const selected = !isDone;
+                                return [
+                                  styles.miniPill,
+                                  {
+                                    backgroundColor: selected
+                                      ? pressed
+                                        ? theme.primaryPressed
+                                        : theme.primary
+                                      : pressed
+                                      ? theme.border
+                                      : theme.bg,
+                                    borderColor: selected
+                                      ? theme.primary
+                                      : theme.border,
+                                  },
+                                ];
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.miniPillText,
+                                  {
+                                    color: !isDone
+                                      ? theme.primaryTextOn
+                                      : theme.text,
+                                  },
+                                ]}
+                              >
+                                Not yet
+                              </Text>
+                            </Pressable>
+
+                            <Pressable
+                              onPress={() => setMilestoneComplete(true)}
+                              style={({ pressed }) => {
+                                const selected = isDone;
+                                return [
+                                  styles.miniPill,
+                                  ANDROID && styles.ml10,
+                                  {
+                                    backgroundColor: selected
+                                      ? pressed
+                                        ? theme.primaryPressed
+                                        : theme.primary
+                                      : pressed
+                                      ? theme.border
+                                      : theme.bg,
+                                    borderColor: selected
+                                      ? theme.primary
+                                      : theme.border,
+                                  },
+                                ];
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.miniPillText,
+                                  {
+                                    color: isDone
+                                      ? theme.primaryTextOn
+                                      : theme.text,
+                                  },
+                                ]}
+                              >
+                                Done
+                              </Text>
+                            </Pressable>
+                          </View>
+                        );
+                      })()}
 
                       <View
                         style={[styles.modalActions, ANDROID && styles.noGap]}
@@ -2362,7 +2555,7 @@ const styles = StyleSheet.create({
   listContent: { paddingHorizontal: 16, paddingBottom: 24 },
 
   header: { paddingTop: 8, paddingBottom: 10 },
-  appTitle: { fontSize: 30, fontWeight: "950", letterSpacing: 0.2 },
+  appTitle: { fontSize: 30, fontWeight: "900", letterSpacing: 0.2 },
   yearText: { marginTop: 4, fontSize: 13, fontWeight: "800" },
 
   tabRow: { marginTop: 14, flexDirection: "row", gap: 10 },
@@ -2374,7 +2567,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  tabText: { fontSize: 13, fontWeight: "950", letterSpacing: 0.2 },
+  tabText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
 
   ringCard: (theme) => ({
     marginTop: 16,
@@ -2386,7 +2579,7 @@ const styles = StyleSheet.create({
     borderColor: theme.border,
     alignItems: "center",
   }),
-  bigPct: { fontSize: 22, fontWeight: "950", letterSpacing: 0.2 },
+  bigPct: { fontSize: 22, fontWeight: "900", letterSpacing: 0.2 },
   bigPctSub: { marginTop: 4, fontSize: 12, fontWeight: "700" },
 
   actionsRow: { marginTop: 14, flexDirection: "row", gap: 10 },
@@ -2397,7 +2590,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  primaryBtnText: { fontSize: 14, fontWeight: "950", letterSpacing: 0.2 },
+  primaryBtnText: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
   secondaryBtn: {
     paddingVertical: 12,
     paddingHorizontal: 14,
@@ -2407,7 +2600,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minWidth: 110,
   },
-  secondaryBtnText: { fontSize: 14, fontWeight: "950", letterSpacing: 0.2 },
+  secondaryBtnText: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
 
   divider: (theme) => ({
     marginTop: 16,
@@ -2449,7 +2642,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
   },
-  monthTitle: { fontSize: 34, fontWeight: "950", letterSpacing: 0.2 },
+  monthTitle: {
+    fontSize: 28,
+    fontWeight: "950",
+    letterSpacing: 0.2,
+    flexShrink: 1,
+  },
 
   daysRow: { flexDirection: "row", width: SQUARE * 5 },
   dayCell: { width: SQUARE, alignItems: "center", justifyContent: "center" },
@@ -2484,7 +2682,7 @@ const styles = StyleSheet.create({
   },
   undoBtnText: {
     fontSize: 13,
-    fontWeight: "950",
+    fontWeight: "900",
     letterSpacing: 0.2,
   },
 
@@ -2495,9 +2693,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   modalCard: { borderWidth: 1, borderRadius: 22, padding: 16 },
-  modalTitle: { fontSize: 18, fontWeight: "950" },
-  modalSub: { marginTop: 6, fontSize: 13, fontWeight: "650" },
-  editGoalTitle: { marginTop: 10, fontSize: 16, fontWeight: "950" },
+  modalTitle: { fontSize: 18, fontWeight: "900" },
+  modalSub: { marginTop: 6, fontSize: 13, fontWeight: "600" },
+
+  // ✅ Rollover stacked choices
+  rolloverStack: { marginTop: 14, gap: 10 },
+  rolloverBtn: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+  rolloverBtnTitle: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
+  rolloverBtnSub: { marginTop: 4, fontSize: 12, fontWeight: "700" },
 
   label: {
     marginTop: 12,
@@ -2543,7 +2751,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  pillText: { fontSize: 13, fontWeight: "950", letterSpacing: 0.2 },
+  pillText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
 
   inlineInfo: {
     marginTop: 10,
@@ -2552,7 +2760,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  inlineInfoText: { fontSize: 12, fontWeight: "750" },
+  inlineInfoText: { fontSize: 12, fontWeight: "700" },
 
   countRow: {
     marginTop: 8,
@@ -2570,7 +2778,7 @@ const styles = StyleSheet.create({
   },
   iconBtnText: {
     fontSize: 22,
-    fontWeight: "950",
+    fontWeight: "900",
     letterSpacing: 0.2,
     marginTop: -1,
   },
@@ -2614,7 +2822,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   themeSwatch: { width: 16, height: 16, borderRadius: 6 },
-  themeHint: { marginTop: 10, fontSize: 12, fontWeight: "750" },
+  themeHint: { marginTop: 10, fontSize: 12, fontWeight: "700" },
 
   milestoneRow: { marginTop: 14, flexDirection: "row", gap: 10 },
   milestoneBtn: {
@@ -2625,7 +2833,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  milestoneText: { fontSize: 13, fontWeight: "950", letterSpacing: 0.2 },
+  milestoneText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
 
   modalActions: {
     marginTop: 16,
@@ -2641,36 +2849,26 @@ const styles = StyleSheet.create({
     minWidth: 92,
     alignItems: "center",
   },
-  modalBtnText: { fontSize: 13, fontWeight: "950", letterSpacing: 0.2 },
+  modalBtnText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
 
-  // -------------------------
-  // ANDROID-ONLY PATCH STYLES
-  // -------------------------
-  noGap: { gap: 0 },
-
-  ml10: { marginLeft: 10 },
-  mr10: { marginRight: 10 },
-
-  themeGridAndroid: { justifyContent: "space-between" },
-
-  themeCardAndroid: {
-    width: "48%",
-    marginBottom: 12,
-  },
-
-  swatchRowAndroid: { justifyContent: "space-between" },
-
-  themeHintAndroid: { marginTop: 8 },
-  editTitle: {
-    fontSize: 16,
-    fontWeight: "950",
-    letterSpacing: 0.2,
-  },
-  editHint: {
+  // Edit Progress modal
+  editTitle: { fontSize: 16, fontWeight: "900", letterSpacing: 0.2 },
+  editMetaRow: {
     marginTop: 6,
-    fontSize: 12,
-    fontWeight: "750",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
+  editHint: { marginTop: 6, fontSize: 12, fontWeight: "700" },
+
+  progressTrack: {
+    marginTop: 8,
+    height: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  progressFill: { height: "100%", borderRadius: 999 },
 
   stepperRow: {
     marginTop: 12,
@@ -2688,7 +2886,7 @@ const styles = StyleSheet.create({
   },
   stepperBtnText: {
     fontSize: 22,
-    fontWeight: "950",
+    fontWeight: "900",
     letterSpacing: 0.2,
     marginTop: -1,
   },
@@ -2716,26 +2914,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  miniPillText: {
-    fontSize: 13,
-    fontWeight: "950",
-    letterSpacing: 0.2,
+  miniPillText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
+
+  // -------------------------
+  // ANDROID-ONLY PATCH STYLES
+  // -------------------------
+  noGap: { gap: 0 },
+
+  ml10: { marginLeft: 10 },
+  mr10: { marginRight: 10 },
+
+  themeGridAndroid: { justifyContent: "space-between" },
+
+  themeCardAndroid: {
+    width: "48%",
+    marginBottom: 12,
   },
-  editMetaRow: {
-    marginTop: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  progressTrack: {
-    marginTop: 8,
-    height: 10,
-    borderRadius: 999,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
-  },
+
+  swatchRowAndroid: { justifyContent: "space-between" },
+
+  themeHintAndroid: { marginTop: 8 },
 });
