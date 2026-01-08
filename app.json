@@ -2,7 +2,7 @@
   "expo": {
     "name": "Yearly Tracker",
     "slug": "ResolutionTracker",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,14 +14,14 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.andresbotia.ResolutionTracker",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.andresbotia.yearlytracker",
-      "versionCode": 11,
+      "versionCode": 12,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#F5F7FA"
