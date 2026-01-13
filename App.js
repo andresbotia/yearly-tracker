@@ -173,9 +173,13 @@ function monthName(d) {
   return d.toLocaleString(undefined, { month: "long" });
 }
 
-function lastNDays(n) {
+function lastNDays(n, baseDate = new Date()) {
   const out = [];
-  const today = new Date();
+  const today = new Date(baseDate);
+
+  // helps avoid DST edge weirdness around midnight
+  today.setHours(12, 0, 0, 0);
+
   for (let i = n - 1; i >= 0; i--) {
     const dt = new Date(today);
     dt.setDate(today.getDate() - i);
@@ -186,6 +190,7 @@ function lastNDays(n) {
   }
   return out;
 }
+
 
 function isHex6(v) {
   const s = String(v ?? "").trim();
@@ -301,6 +306,10 @@ export default function App() {
   const [pickerValue, setPickerValue] = useState("#ffffff"); // final chosen value (js)
   const [pickerInitHex, setPickerInitHex] = useState("#ffffff");
 
+  const [todayTick, setTodayTick] = useState(Date.now());
+  const lastDayKeyRef = useRef(dateKey(new Date()));
+
+
   // const pickerShared = useSharedValue("#ffffff"); // keeps picker stable when overlay opens
 
   // Only allow one habit swipe-open at a time
@@ -321,6 +330,15 @@ export default function App() {
     openHabitSwipeRef.current = null;
     openHabitSwipeId.current = null;
   }
+  function refreshDayIfNeeded() {
+      const nowKey = dateKey(new Date());
+      if (nowKey !== lastDayKeyRef.current) {
+        lastDayKeyRef.current = nowKey;
+        setTodayTick(Date.now());       // forces header + dates to recompute
+        closeOpenHabitSwipe();          // optional: avoids swipe state weirdness across days
+      }
+   }  
+
 
   // Always returns a safe "#rrggbb"
   function safeHex6(input, fallback = "#ffffff") {
@@ -409,7 +427,8 @@ export default function App() {
     () => makeTheme(themeChoice, customThemes),
     [themeChoice, customThemes]
   );
-  const dates = useMemo(() => lastNDays(5), [activeTab]);
+  const dates = useMemo(() => lastNDays(5, new Date(todayTick)), [activeTab, todayTick]);
+
 
   const [goalDragging, setGoalDragging] = useState(false);
   const [habitDragging, setHabitDragging] = useState(false);
@@ -882,7 +901,12 @@ export default function App() {
   useEffect(() => {
     if (!ready) return;
 
+    refreshDayIfNeeded(); // run once when ready
+
     const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+         refreshDayIfNeeded();
+      }
       if (state === "background") {
         pushWidgets(goals, habits);
       }
@@ -890,6 +914,34 @@ export default function App() {
 
     return () => sub.remove?.();
   }, [ready, goals, habits, themeChoice]);
+
+  useEffect(() => {
+  if (!ready) return;
+
+  let t;
+
+  const scheduleNextMidnight = () => {
+    const now = new Date();
+
+    // next midnight local time (+1s buffer)
+    const next = new Date(now);
+    next.setHours(24, 0, 1, 0);
+
+    const ms = next.getTime() - now.getTime();
+
+    t = setTimeout(() => {
+      refreshDayIfNeeded();
+      scheduleNextMidnight();
+    }, ms);
+  };
+
+  scheduleNextMidnight();
+
+  return () => {
+    if (t) clearTimeout(t);
+  };
+}, [ready]);
+
 
   useEffect(() => {
     if (activeTab !== "habits") return;
@@ -1386,7 +1438,7 @@ export default function App() {
                 ellipsizeMode="tail"
                 style={[styles.monthTitle, { color: theme.text }]}
               >
-                {monthName(new Date())}
+                {monthName(new Date(todayTick))}
               </Text>
             </View>
 
