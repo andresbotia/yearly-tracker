@@ -1,4 +1,4 @@
-package com.andresbotia.yearlytracker.widgets
+﻿package com.andresbotia.yearlytracker.widgets
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -55,8 +55,8 @@ class ProgressWidgetProvider : AppWidgetProvider() {
       views.setTextViewText(R.id.widget_title, title)
       views.setTextViewText(R.id.widget_subtitle, subtitle)
 
-      // Deep link (we’ll wire up scheme in a later step)
-      val deepLink = Uri.parse("yearlytracker://progress")
+      // Deep link (weâ€™ll wire up scheme in a later step)
+      val deepLink = Uri.parse("exp+yearly-tracker://progress")
       val clickIntent = Intent(Intent.ACTION_VIEW, deepLink).apply {
         `package` = context.packageName
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)

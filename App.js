@@ -32,7 +32,7 @@ import Reanimated, {
 import DraggableFlatList from "react-native-draggable-flatlist";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { updateProgressWidget } from "./native/widgetBridge.android";
+import { pushProgressWidgetPayload } from "./native/widgetBridge.android";
 
 import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
@@ -483,7 +483,7 @@ export default function App() {
 
   function pushWidgets(nextGoals, nextHabits) {
     const payload = buildWidgetPayload(nextGoals, nextHabits);
-  
+
     // iOS: keep existing behavior exactly
     if (Platform.OS === "ios") {
       if (!WidgetBridge?.setWidgetPayload) return;
@@ -494,7 +494,7 @@ export default function App() {
       }
       return;
     }
-  
+
     // Android: update the Android Home Screen widget
     if (Platform.OS === "android") {
       try {
@@ -506,7 +506,6 @@ export default function App() {
       }
     }
   }
-  
 
   function playEditOpenAnim() {
     editAnim.setValue(0);

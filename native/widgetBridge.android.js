@@ -1,14 +1,13 @@
-import { NativeModules } from "react-native";
+import { NativeModules, Platform } from "react-native";
 
-const { WidgetBridge } = NativeModules;
+const MOD = NativeModules?.WidgetBridge;
 
-export async function updateProgressWidget(title, subtitle) {
-  const json = JSON.stringify({
-    title,
-    subtitle,
-    updatedAt: Date.now(),
-  });
+export async function pushProgressWidgetPayload(payload) {
+  if (Platform.OS !== "android") return;
+  if (!MOD?.saveProgressWidgetJson || !MOD?.refreshProgressWidget) return;
 
-  await WidgetBridge.saveProgressWidgetJson(json);
-  await WidgetBridge.refreshProgressWidget();
+  const json = typeof payload === "string" ? payload : JSON.stringify(payload);
+
+  await MOD.saveProgressWidgetJson(json);
+  await MOD.refreshProgressWidget();
 }
