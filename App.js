@@ -32,7 +32,7 @@ import Reanimated, {
 import DraggableFlatList from "react-native-draggable-flatlist";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { pushProgressWidgetPayload } from "./native/widgetBridge.android";
+import { pushWidgetPayloadAndroid } from "./native/widgetBridge.android";
 
 import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
@@ -483,21 +483,24 @@ export default function App() {
 
   function pushWidgets(nextGoals, nextHabits) {
     try {
-      // Build ONE payload object (same as iOS widgets use)
+      // Build ONE payload object (same shape iOS widgets use)
       const payloadObj = buildWidgetPayload(nextGoals, nextHabits);
       const payloadJson = JSON.stringify(payloadObj);
 
-      // iOS widgets (existing behavior)
+      // iOS widgets
       if (Platform.OS === "ios" && WidgetBridge?.setWidgetPayload) {
         WidgetBridge.setWidgetPayload(payloadJson);
       }
 
-      // Android widgets (new)
+      // Android widgets
       if (Platform.OS === "android") {
-        // fire-and-forget; don't block UI
-        pushAndroidWidgetPayload(payloadObj).catch((e) => {
+        pushWidgetPayloadAndroid(payloadObj).catch((e) => {
           console.log("Android widget sync failed:", e);
         });
+      }
+      if (Platform.OS === "android") {
+        console.log("NativeModules keys:", Object.keys(NativeModules));
+        console.log("WidgetBridgeAndroid:", NativeModules.WidgetBridgeAndroid);
       }
     } catch (e) {
       console.log("Widget sync failed:", e);
