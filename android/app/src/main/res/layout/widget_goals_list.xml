@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/root"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:padding="12dp"
+  android:background="@android:color/transparent">
+
+  <TextView
+    android:id="@+id/title"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Goals"
+    android:textStyle="bold"
+    android:textSize="14sp"
+    android:textColor="@android:color/white"/>
+
+  <LinearLayout
+    android:id="@+id/rows"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginTop="10dp">
+
+    <!-- row0 -->
+    <LinearLayout
+      android:id="@+id/row0"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:paddingTop="6dp"
+      android:paddingBottom="6dp">
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+          android:id="@+id/text0"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="Goal title"
+          android:textSize="13sp"
+          android:textStyle="bold"
+          android:singleLine="true"
+          android:ellipsize="end"
+          android:textColor="@android:color/white"/>
+
+        <TextView
+          android:id="@+id/pct0"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="--%"
+          android:textSize="12sp"
+          android:alpha="0.75"
+          android:textColor="@android:color/white"/>
+      </LinearLayout>
+
+      <ProgressBar
+        android:id="@+id/prog0"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="6dp"
+        android:max="100"/>
+    </LinearLayout>
+
+    <!-- row1 -->
+    <LinearLayout
+      android:id="@+id/row1"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:paddingTop="6dp"
+      android:paddingBottom="6dp">
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+          android:id="@+id/text1"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="Goal title"
+          android:textSize="13sp"
+          android:textStyle="bold"
+          android:singleLine="true"
+          android:ellipsize="end"
+          android:textColor="@android:color/white"/>
+
+        <TextView
+          android:id="@+id/pct1"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="--%"
+          android:textSize="12sp"
+          android:alpha="0.75"
+          android:textColor="@android:color/white"/>
+      </LinearLayout>
+
+      <ProgressBar
+        android:id="@+id/prog1"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="6dp"
+        android:max="100"/>
+    </LinearLayout>
+
+    <!-- row2 -->
+    <LinearLayout
+      android:id="@+id/row2"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:paddingTop="6dp"
+      android:paddingBottom="6dp">
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+          android:id="@+id/text2"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="Goal title"
+          android:textSize="13sp"
+          android:textStyle="bold"
+          android:singleLine="true"
+          android:ellipsize="end"
+          android:textColor="@android:color/white"/>
+
+        <TextView
+          android:id="@+id/pct2"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="--%"
+          android:textSize="12sp"
+          android:alpha="0.75"
+          android:textColor="@android:color/white"/>
+      </LinearLayout>
+
+      <ProgressBar
+        android:id="@+id/prog2"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="6dp"
+        android:max="100"/>
+    </LinearLayout>
+
+    <!-- row3 -->
+    <LinearLayout
+      android:id="@+id/row3"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:paddingTop="6dp"
+      android:paddingBottom="6dp">
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+          android:id="@+id/text3"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="Goal title"
+          android:textSize="13sp"
+          android:textStyle="bold"
+          android:singleLine="true"
+          android:ellipsize="end"
+          android:textColor="@android:color/white"/>
+
+        <TextView
+          android:id="@+id/pct3"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="--%"
+          android:textSize="12sp"
+          android:alpha="0.75"
+          android:textColor="@android:color/white"/>
+      </LinearLayout>
+
+      <ProgressBar
+        android:id="@+id/prog3"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="6dp"
+        android:max="100"/>
+    </LinearLayout>
+
+    <!-- row4 -->
+    <LinearLayout
+      android:id="@+id/row4"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:paddingTop="6dp"
+      android:paddingBottom="6dp">
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+          android:id="@+id/text4"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="Goal title"
+          android:textSize="13sp"
+          android:textStyle="bold"
+          android:singleLine="true"
+          android:ellipsize="end"
+          android:textColor="@android:color/white"/>
+
+        <TextView
+          android:id="@+id/pct4"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="--%"
+          android:textSize="12sp"
+          android:alpha="0.75"
+          android:textColor="@android:color/white"/>
+      </LinearLayout>
+
+      <ProgressBar
+        android:id="@+id/prog4"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="6dp"
+        android:max="100"/>
+    </LinearLayout>
+
+    <!-- row5 -->
+    <LinearLayout
+      android:id="@+id/row5"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:paddingTop="6dp"
+      android:paddingBottom="6dp">
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+          android:id="@+id/text5"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="Goal title"
+          android:textSize="13sp"
+          android:textStyle="bold"
+          android:singleLine="true"
+          android:ellipsize="end"
+          android:textColor="@android:color/white"/>
+
+        <TextView
+          android:id="@+id/pct5"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="--%"
+          android:textSize="12sp"
+          android:alpha="0.75"
+          android:textColor="@android:color/white"/>
+      </LinearLayout>
+
+      <ProgressBar
+        android:id="@+id/prog5"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="6dp"
+        android:max="100"/>
+    </LinearLayout>
+
+  </LinearLayout>
+</LinearLayout>

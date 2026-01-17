@@ -12,13 +12,13 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
   override fun getName(): String = "WidgetBridge"
 
   @ReactMethod
-  fun saveProgressWidgetJson(json: String, promise: Promise) {
+  fun saveWidgetPayloadJson(json: String, promise: Promise) {
     try {
       val prefs = reactApplicationContext.getSharedPreferences(
-        ProgressWidgetProvider.PREFS_NAME,
+        SharedWidgetStore.PREFS_NAME,
         Context.MODE_PRIVATE
       )
-      prefs.edit().putString(ProgressWidgetProvider.KEY_JSON, json).apply()
+      prefs.edit().putString(SharedWidgetStore.KEY_PAYLOAD_JSON, json).apply()
       promise.resolve(true)
     } catch (e: Exception) {
       promise.reject("SAVE_FAILED", e)
@@ -26,9 +26,13 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun refreshProgressWidget(promise: Promise) {
+  fun refreshAllWidgets(promise: Promise) {
     try {
-      ProgressWidgetProvider.requestUpdate(reactApplicationContext)
+      // Update all widget types
+      YearlyProgressWidgetProvider.updateAll(reactApplicationContext)
+      HabitsWidgetProvider.updateAll(reactApplicationContext)
+      GoalHighlightWidgetProvider.updateAll(reactApplicationContext)
+      GoalsListWidgetProvider.updateAll(reactApplicationContext)
       promise.resolve(true)
     } catch (e: Exception) {
       promise.reject("REFRESH_FAILED", e)

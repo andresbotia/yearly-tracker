@@ -482,28 +482,25 @@ export default function App() {
   }
 
   function pushWidgets(nextGoals, nextHabits) {
-    const payload = buildWidgetPayload(nextGoals, nextHabits);
+    try {
+      // Build ONE payload object (same as iOS widgets use)
+      const payloadObj = buildWidgetPayload(nextGoals, nextHabits);
+      const payloadJson = JSON.stringify(payloadObj);
 
-    // iOS: keep existing behavior exactly
-    if (Platform.OS === "ios") {
-      if (!WidgetBridge?.setWidgetPayload) return;
-      try {
-        WidgetBridge.setWidgetPayload(JSON.stringify(payload));
-      } catch (e) {
-        console.log("Widget sync failed:", e);
+      // iOS widgets (existing behavior)
+      if (Platform.OS === "ios" && WidgetBridge?.setWidgetPayload) {
+        WidgetBridge.setWidgetPayload(payloadJson);
       }
-      return;
-    }
 
-    // Android: update the Android Home Screen widget
-    if (Platform.OS === "android") {
-      try {
-        // For now, map your payload -> the simple Android widget fields we built:
-        const percent = Math.round((payload.yearlyProgress || 0) * 100);
-        updateProgressWidget("Yearly Tracker", `Progress: ${percent}%`);
-      } catch (e) {
-        console.log("Android widget sync failed:", e);
+      // Android widgets (new)
+      if (Platform.OS === "android") {
+        // fire-and-forget; don't block UI
+        pushAndroidWidgetPayload(payloadObj).catch((e) => {
+          console.log("Android widget sync failed:", e);
+        });
       }
+    } catch (e) {
+      console.log("Widget sync failed:", e);
     }
   }
 

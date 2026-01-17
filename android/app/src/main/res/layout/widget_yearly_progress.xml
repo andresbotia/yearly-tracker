@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/root"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:padding="12dp"
+  android:background="@android:color/transparent">
+
+  <TextView
+    android:id="@+id/title"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Yearly Tracker Progress"
+    android:textStyle="bold"
+    android:textSize="14sp"
+    android:textColor="@android:color/white"/>
+
+  <TextView
+    android:id="@+id/pct"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="--%"
+    android:textStyle="bold"
+    android:textSize="28sp"
+    android:textColor="@android:color/white"
+    android:layout_marginTop="8dp"/>
+
+  <ProgressBar
+    android:id="@+id/progress"
+    style="?android:attr/progressBarStyleHorizontal"
+    android:layout_width="match_parent"
+    android:layout_height="10dp"
+    android:layout_marginTop="10dp"
+    android:max="100"/>
+</LinearLayout>

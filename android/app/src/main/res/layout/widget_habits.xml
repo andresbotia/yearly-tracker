@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/root"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:padding="12dp"
+  android:background="@android:color/transparent">
+
+  <TextView
+    android:id="@+id/title"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Habits Today"
+    android:textStyle="bold"
+    android:textSize="14sp"
+    android:textColor="@android:color/white"/>
+
+  <LinearLayout
+    android:id="@+id/rows"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginTop="10dp">
+
+    <!-- row0 -->
+    <LinearLayout
+      android:id="@+id/row0"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:gravity="center_vertical"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp">
+
+      <ImageView
+        android:id="@+id/dot0"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:src="@drawable/habit_dot_empty"/>
+
+      <TextView
+        android:id="@+id/text0"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="Habit title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"/>
+
+      <TextView
+        android:id="@+id/sym0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.75"/>
+    </LinearLayout>
+
+    <!-- row1 -->
+    <LinearLayout
+      android:id="@+id/row1"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:gravity="center_vertical"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp">
+
+      <ImageView
+        android:id="@+id/dot1"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:src="@drawable/habit_dot_empty"/>
+
+      <TextView
+        android:id="@+id/text1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="Habit title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"/>
+
+      <TextView
+        android:id="@+id/sym1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.75"/>
+    </LinearLayout>
+
+    <!-- row2 -->
+    <LinearLayout
+      android:id="@+id/row2"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:gravity="center_vertical"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp">
+
+      <ImageView
+        android:id="@+id/dot2"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:src="@drawable/habit_dot_empty"/>
+
+      <TextView
+        android:id="@+id/text2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="Habit title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"/>
+
+      <TextView
+        android:id="@+id/sym2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.75"/>
+    </LinearLayout>
+
+    <!-- row3 -->
+    <LinearLayout
+      android:id="@+id/row3"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:gravity="center_vertical"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp">
+
+      <ImageView
+        android:id="@+id/dot3"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:src="@drawable/habit_dot_empty"/>
+
+      <TextView
+        android:id="@+id/text3"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="Habit title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"/>
+
+      <TextView
+        android:id="@+id/sym3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.75"/>
+    </LinearLayout>
+
+    <!-- row4 -->
+    <LinearLayout
+      android:id="@+id/row4"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:gravity="center_vertical"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp">
+
+      <ImageView
+        android:id="@+id/dot4"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:src="@drawable/habit_dot_empty"/>
+
+      <TextView
+        android:id="@+id/text4"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="Habit title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"/>
+
+      <TextView
+        android:id="@+id/sym4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.75"/>
+    </LinearLayout>
+
+    <!-- row5 -->
+    <LinearLayout
+      android:id="@+id/row5"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:gravity="center_vertical"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp">
+
+      <ImageView
+        android:id="@+id/dot5"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:src="@drawable/habit_dot_empty"/>
+
+      <TextView
+        android:id="@+id/text5"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="Habit title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"/>
+
+      <TextView
+        android:id="@+id/sym5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.75"/>
+    </LinearLayout>
+
+    <!-- row6 -->
+    <LinearLayout
+      android:id="@+id/row6"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:gravity="center_vertical"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp">
+
+      <ImageView
+        android:id="@+id/dot6"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:src="@drawable/habit_dot_empty"/>
+
+      <TextView
+        android:id="@+id/text6"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="Habit title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"/>
+
+      <TextView
+        android:id="@+id/sym6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.75"/>
+    </LinearLayout>
+
+    <!-- row7 -->
+    <LinearLayout
+      android:id="@+id/row7"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:gravity="center_vertical"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp">
+
+      <ImageView
+        android:id="@+id/dot7"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:src="@drawable/habit_dot_empty"/>
+
+      <TextView
+        android:id="@+id/text7"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="Habit title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"/>
+
+      <TextView
+        android:id="@+id/sym7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.75"/>
+    </LinearLayout>
+
+    <!-- row8 -->
+    <LinearLayout
+      android:id="@+id/row8"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="0dp"
+      android:orientation="horizontal"
+      android:gravity="center_vertical"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp">
+
+      <ImageView
+        android:id="@+id/dot8"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:src="@drawable/habit_dot_empty"/>
+
+      <TextView
+        android:id="@+id/text8"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="Habit title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"/>
+
+      <TextView
+        android:id="@+id/sym8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.75"/>
+    </LinearLayout>
+
+    <!-- row9 -->
+    <LinearLayout
+      android:id="@+id/row9"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:gravity="center_vertical"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp">
+
+      <ImageView
+        android:id="@+id/dot9"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:src="@drawable/habit_dot_empty"/>
+
+      <TextView
+        android:id="@+id/text9"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:text="Habit title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="@android:color/white"/>
+
+      <TextView
+        android:id="@+id/sym9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:alpha="0.75"/>
+    </LinearLayout>
+
+  </LinearLayout>
+</LinearLayout>
