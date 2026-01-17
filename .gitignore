@@ -64,6 +64,8 @@ android/.idea/
 android/**/*.iml
 android/**/*.hprof
 android/.cxx/
+android/app/debug.keystore
+
 
 # Bundle artifacts
 *.jsbundle

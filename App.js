@@ -32,6 +32,7 @@ import Reanimated, {
 import DraggableFlatList from "react-native-draggable-flatlist";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { updateProgressWidget } from "./native/widgetBridge.android";
 
 import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
@@ -57,7 +58,6 @@ import {
   saveCustomThemes,
 } from "./utils/storage";
 import { Ionicons } from "@expo/vector-icons";
-
 
 const HABITS_KEY = "yt_habits_v1";
 const HABITS_WELCOME_SEEN_KEY = "yt_habits_welcome_seen_v1";
@@ -191,7 +191,6 @@ function lastNDays(n, baseDate = new Date()) {
   return out;
 }
 
-
 function isHex6(v) {
   const s = String(v ?? "").trim();
   return /^#?[0-9a-fA-F]{6}$/.test(s);
@@ -309,7 +308,6 @@ export default function App() {
   const [todayTick, setTodayTick] = useState(Date.now());
   const lastDayKeyRef = useRef(dateKey(new Date()));
 
-
   // const pickerShared = useSharedValue("#ffffff"); // keeps picker stable when overlay opens
 
   // Only allow one habit swipe-open at a time
@@ -331,14 +329,13 @@ export default function App() {
     openHabitSwipeId.current = null;
   }
   function refreshDayIfNeeded() {
-      const nowKey = dateKey(new Date());
-      if (nowKey !== lastDayKeyRef.current) {
-        lastDayKeyRef.current = nowKey;
-        setTodayTick(Date.now());       // forces header + dates to recompute
-        closeOpenHabitSwipe();          // optional: avoids swipe state weirdness across days
-      }
-   }  
-
+    const nowKey = dateKey(new Date());
+    if (nowKey !== lastDayKeyRef.current) {
+      lastDayKeyRef.current = nowKey;
+      setTodayTick(Date.now()); // forces header + dates to recompute
+      closeOpenHabitSwipe(); // optional: avoids swipe state weirdness across days
+    }
+  }
 
   // Always returns a safe "#rrggbb"
   function safeHex6(input, fallback = "#ffffff") {
@@ -427,8 +424,10 @@ export default function App() {
     () => makeTheme(themeChoice, customThemes),
     [themeChoice, customThemes]
   );
-  const dates = useMemo(() => lastNDays(5, new Date(todayTick)), [activeTab, todayTick]);
-
+  const dates = useMemo(
+    () => lastNDays(5, new Date(todayTick)),
+    [activeTab, todayTick]
+  );
 
   const [goalDragging, setGoalDragging] = useState(false);
   const [habitDragging, setHabitDragging] = useState(false);
@@ -483,16 +482,31 @@ export default function App() {
   }
 
   function pushWidgets(nextGoals, nextHabits) {
-    if (Platform.OS !== "ios") return;
-    if (!WidgetBridge?.setWidgetPayload) return;
-
-    try {
-      const payload = buildWidgetPayload(nextGoals, nextHabits);
-      WidgetBridge.setWidgetPayload(JSON.stringify(payload));
-    } catch (e) {
-      console.log("Widget sync failed:", e);
+    const payload = buildWidgetPayload(nextGoals, nextHabits);
+  
+    // iOS: keep existing behavior exactly
+    if (Platform.OS === "ios") {
+      if (!WidgetBridge?.setWidgetPayload) return;
+      try {
+        WidgetBridge.setWidgetPayload(JSON.stringify(payload));
+      } catch (e) {
+        console.log("Widget sync failed:", e);
+      }
+      return;
+    }
+  
+    // Android: update the Android Home Screen widget
+    if (Platform.OS === "android") {
+      try {
+        // For now, map your payload -> the simple Android widget fields we built:
+        const percent = Math.round((payload.yearlyProgress || 0) * 100);
+        updateProgressWidget("Yearly Tracker", `Progress: ${percent}%`);
+      } catch (e) {
+        console.log("Android widget sync failed:", e);
+      }
     }
   }
+  
 
   function playEditOpenAnim() {
     editAnim.setValue(0);
@@ -743,8 +757,6 @@ export default function App() {
     setColorPickerOpen(true);
   }
 
-  
-
   function onPickerChangeJS(c) {
     const next = safeHex6(c?.hex, pickerValue || pickerStartHex || "#ffffff");
     setPickerValue(next);
@@ -905,7 +917,7 @@ export default function App() {
 
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-         refreshDayIfNeeded();
+        refreshDayIfNeeded();
       }
       if (state === "background") {
         pushWidgets(goals, habits);
@@ -916,32 +928,31 @@ export default function App() {
   }, [ready, goals, habits, themeChoice]);
 
   useEffect(() => {
-  if (!ready) return;
+    if (!ready) return;
 
-  let t;
+    let t;
 
-  const scheduleNextMidnight = () => {
-    const now = new Date();
+    const scheduleNextMidnight = () => {
+      const now = new Date();
 
-    // next midnight local time (+1s buffer)
-    const next = new Date(now);
-    next.setHours(24, 0, 1, 0);
+      // next midnight local time (+1s buffer)
+      const next = new Date(now);
+      next.setHours(24, 0, 1, 0);
 
-    const ms = next.getTime() - now.getTime();
+      const ms = next.getTime() - now.getTime();
 
-    t = setTimeout(() => {
-      refreshDayIfNeeded();
-      scheduleNextMidnight();
-    }, ms);
-  };
+      t = setTimeout(() => {
+        refreshDayIfNeeded();
+        scheduleNextMidnight();
+      }, ms);
+    };
 
-  scheduleNextMidnight();
+    scheduleNextMidnight();
 
-  return () => {
-    if (t) clearTimeout(t);
-  };
-}, [ready]);
-
+    return () => {
+      if (t) clearTimeout(t);
+    };
+  }, [ready]);
 
   useEffect(() => {
     if (activeTab !== "habits") return;
@@ -2553,36 +2564,46 @@ export default function App() {
                             },
                           ]}
                         >
-                          <View style={[styles.themeHeader, ANDROID && styles.noGap]}>
-  <View style={styles.themeNameWrap}>
-    <Text
-      numberOfLines={1}
-      ellipsizeMode="tail"
-      style={[styles.themeName, { color: "#000" }]}
-    >
-      {t.name}
-    </Text>
-  </View>
+                          <View
+                            style={[
+                              styles.themeHeader,
+                              ANDROID && styles.noGap,
+                            ]}
+                          >
+                            <View style={styles.themeNameWrap}>
+                              <Text
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                                style={[styles.themeName, { color: "#000" }]}
+                              >
+                                {t.name}
+                              </Text>
+                            </View>
 
-  {isCustom && (
-    <Pressable
-      onPress={(e) => {
-        e?.stopPropagation?.();
-        deleteCustomTheme(t._customId);
-      }}
-      style={({ pressed }) => [
-        styles.trashIconBtn,
-        { backgroundColor: pressed ? "#eee" : "#fff" },
-      ]}
-      hitSlop={10}
-      accessibilityRole="button"
-      accessibilityLabel={`Delete theme ${t.name}`}
-    >
-      <Ionicons name="trash-outline" size={18} color="#111" />
-    </Pressable>
-  )}
-</View>
-
+                            {isCustom && (
+                              <Pressable
+                                onPress={(e) => {
+                                  e?.stopPropagation?.();
+                                  deleteCustomTheme(t._customId);
+                                }}
+                                style={({ pressed }) => [
+                                  styles.trashIconBtn,
+                                  {
+                                    backgroundColor: pressed ? "#eee" : "#fff",
+                                  },
+                                ]}
+                                hitSlop={10}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Delete theme ${t.name}`}
+                              >
+                                <Ionicons
+                                  name="trash-outline"
+                                  size={18}
+                                  color="#111"
+                                />
+                              </Pressable>
+                            )}
+                          </View>
 
                           <View
                             style={[
@@ -3736,13 +3757,15 @@ const styles = StyleSheet.create({
 
   themeHeader: {
     flexDirection: "row",
-  alignItems: "center",
-  gap: 10,
+    alignItems: "center",
+    gap: 10,
   },
-  themeName: { fontSize: 14,
-  fontWeight: "900",
-  letterSpacing: 0.2,
-  flexShrink: 1, },
+  themeName: {
+    fontSize: 14,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+    flexShrink: 1,
+  },
   swatchRow: {
     flexDirection: "row",
     gap: 6,
@@ -3912,14 +3935,14 @@ const styles = StyleSheet.create({
     maxHeight: 420,
   },
   trashIconBtn: {
-  width: 36,          
-  height: 36,
-  borderRadius: 10,
-  borderWidth: 1,
-  borderColor: "#111",
-  alignItems: "center",
-  justifyContent: "center",
-},
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#111",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   themeCreateScroll: {
     marginTop: 8,
     maxHeight: 520, // keeps it inside the modal; user can scroll
@@ -4055,9 +4078,9 @@ const styles = StyleSheet.create({
   },
 
   themeNameWrap: {
-  flex: 1,
-  minWidth: 0,  
-},
+    flex: 1,
+    minWidth: 0,
+  },
 
   picker: {
     width: "100%",
