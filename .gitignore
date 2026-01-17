@@ -9,7 +9,7 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native / keys
 .kotlin/
 *.orig.*
 *.jks
@@ -17,6 +17,7 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+*.pem
 
 # Metro
 .metro-health-check*
@@ -28,7 +29,6 @@ yarn-error.*
 
 # macOS
 .DS_Store
-*.pem
 
 # local env files
 .env*.local
@@ -36,39 +36,34 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-# generated native folders
-# NOTE: We track ios because we added a Widget Extension + native bridge code.
-# If you haven't customized Android, you can keep /android ignored (see below).
-
-# iOS build artifacts (keep repo clean)
+# ----------------------------
+# iOS (we TRACK ios/ but ignore local/build artifacts)
+# ----------------------------
 ios/Pods/
 ios/build/
 ios/DerivedData/
 ios/xcuserdata/
 ios/**/*.xcuserstate
 ios/.xcode.env.local
+ios/**/.xcode.env
+ios/**/*.bak.*
+ios/**/*.DISABLED
 *.ipa
 *.xcarchive
 *.dSYM*
 *.dSYM.zip
 
-# Android (OPTIONAL)
-# If you are NOT customizing Android native code, keep it ignored:
-android/
-# If you ARE customizing Android native code, comment the line above and ignore artifacts instead:
-# android/.gradle/
-# android/build/
-# android/app/build/
-# android/local.properties
+# ----------------------------
+# Android (we TRACK android/ but ignore artifacts)
+# ----------------------------
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/**/*.iml
+android/**/*.hprof
+android/.cxx/
 
-
-# iOS local artifacts
-ios/**/.xcode.env
-ios/**/*.bak.*
-ios/**/*.DISABLED
-
-# iOS local artifacts
-ios/**/.xcode.env
-ios/**/*.bak.*
-ios/**/*.DISABLED
+# Bundle artifacts
+*.jsbundle
