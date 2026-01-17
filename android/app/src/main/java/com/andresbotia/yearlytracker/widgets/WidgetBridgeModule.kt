@@ -13,7 +13,7 @@ import com.facebook.react.bridge.ReactMethod
 class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
 
-  override fun getName(): String = "WidgetBridge"
+  override fun getName(): String = "WidgetBridgeAndroid"
 
   // JS -> Native
   // nativeWidgetBridgeAndroid.pushProgressWidgetPayload(jsonString)
