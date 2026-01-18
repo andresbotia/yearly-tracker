@@ -1,7 +1,9 @@
 // native/widgetBridge.android.js
 import { NativeModules, Platform } from "react-native";
 
-const M = NativeModules.WidgetBridgeAndroid;
+function getM() {
+  return NativeModules?.WidgetBridgeAndroid;
+}
 
 function assertAndroid() {
   if (Platform.OS !== "android") return false;
@@ -15,13 +17,11 @@ function assertAndroid() {
   return true;
 }
 
-function getM() {
-  return NativeModules.WidgetBridgeAndroid;
-}
-// ✅ Backwards-compatible wrapper (prevents your current crash)
+// Backwards-compatible wrapper (routes by widgetType)
 export function pushWidgetPayloadAndroid(payloadObj) {
   if (!assertAndroid()) return;
   const M = getM();
+
   const widgetType = payloadObj?.widgetType;
   const json = JSON.stringify(payloadObj);
 
@@ -38,23 +38,27 @@ export function pushWidgetPayloadAndroid(payloadObj) {
   }
 }
 
-// Explicit methods (nice to have)
+// Explicit methods (also use getM every time)
 export function pushProgressWidgetPayloadAndroid(payloadObj) {
   if (!assertAndroid()) return;
+  const M = getM();
   return M.pushProgressWidgetPayload?.(JSON.stringify(payloadObj));
 }
 
 export function pushGoalsListWidgetPayloadAndroid(payloadObj) {
   if (!assertAndroid()) return;
+  const M = getM();
   return M.pushGoalsListWidgetPayload?.(JSON.stringify(payloadObj));
 }
 
 export function pushHabitsWidgetPayloadAndroid(payloadObj) {
   if (!assertAndroid()) return;
+  const M = getM();
   return M.pushHabitsWidgetPayload?.(JSON.stringify(payloadObj));
 }
 
 export function pushGoalHighlightWidgetPayloadAndroid(payloadObj) {
   if (!assertAndroid()) return;
+  const M = getM();
   return M.pushGoalHighlightWidgetPayload?.(JSON.stringify(payloadObj));
 }

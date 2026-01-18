@@ -27,37 +27,58 @@
         <data android:scheme="exp+yearly-tracker"/>
       </intent-filter>
     </activity>
-  <receiver android:name=".widgets.YearlyProgressWidgetProvider" android:exported="false">
+  <receiver
+  android:name=".widgets.YearlyProgressWidgetProvider"
+  android:exported="false"
+  android:label="@string/widget_yearly_progress_label">
   <intent-filter>
     <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
     <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
   </intent-filter>
-  <meta-data android:name="android.appwidget.provider" android:resource="@xml/yearly_progress_widget_info" />
+  <meta-data
+    android:name="android.appwidget.provider"
+    android:resource="@xml/yearly_progress_widget_info" />
 </receiver>
 
-<receiver android:name=".widgets.HabitsWidgetProvider" android:exported="false">
+<receiver
+  android:name=".widgets.HabitsWidgetProvider"
+  android:exported="false"
+  android:label="@string/widget_habits_label">
   <intent-filter>
     <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
     <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
   </intent-filter>
-  <meta-data android:name="android.appwidget.provider" android:resource="@xml/habits_widget_info" />
+  <meta-data
+    android:name="android.appwidget.provider"
+    android:resource="@xml/habits_widget_info" />
 </receiver>
 
-<receiver android:name=".widgets.GoalHighlightWidgetProvider" android:exported="false">
+<receiver
+  android:name=".widgets.GoalHighlightWidgetProvider"
+  android:exported="false"
+  android:label="@string/widget_goal_highlight_label">
   <intent-filter>
     <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
     <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
   </intent-filter>
-  <meta-data android:name="android.appwidget.provider" android:resource="@xml/goal_highlight_widget_info" />
+  <meta-data
+    android:name="android.appwidget.provider"
+    android:resource="@xml/goal_highlight_widget_info" />
 </receiver>
 
-<receiver android:name=".widgets.GoalsListWidgetProvider" android:exported="false">
+<receiver
+  android:name=".widgets.GoalsListWidgetProvider"
+  android:exported="false"
+  android:label="@string/widget_goals_list_label">
   <intent-filter>
     <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
     <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
   </intent-filter>
-  <meta-data android:name="android.appwidget.provider" android:resource="@xml/goals_list_widget_info" />
+  <meta-data
+    android:name="android.appwidget.provider"
+    android:resource="@xml/goals_list_widget_info" />
 </receiver>
+
 
 
 

@@ -5,4 +5,6 @@
   android:minHeight="110dp"
   android:resizeMode="horizontal|vertical"
   android:updatePeriodMillis="1800000"
-  android:widgetCategory="home_screen" />
+  android:widgetCategory="home_screen"
+  android:previewImage="@drawable/widget_goal_highlight_preview"
+  android:label="@string/widget_goal_highlight_label" />
