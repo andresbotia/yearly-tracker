@@ -58,6 +58,7 @@ import {
   saveCustomThemes,
 } from "./utils/storage";
 import { Ionicons } from "@expo/vector-icons";
+import Constants from "expo-constants";
 
 const HABITS_KEY = "yt_habits_v1";
 const HABITS_WELCOME_SEEN_KEY = "yt_habits_welcome_seen_v1";
@@ -113,6 +114,55 @@ function sortGoals(goals) {
   });
 
   return [...inProgress, ...completed];
+}
+
+function NativeDebugPanel() {
+  const info = useMemo(() => {
+    console.log("RN bridgeless flags", {
+      hasBatchedBridge: !!global.__fbBatchedBridge,
+      hasTurboModuleProxy: !!global.__turboModuleProxy,
+      bridgeless: global.RN$Bridgeless,
+    });
+    const keys = Object.keys(NativeModules || {});
+    return {
+      platform: Platform.OS,
+      appOwnership: Constants.appOwnership,
+      executionEnvironment: Constants.executionEnvironment,
+      androidPackage: Constants.expoConfig?.android?.package,
+      nativeModulesCount: keys.length,
+      nativeModulesSample: keys.slice(0, 30),
+      widgetBridge: NativeModules?.WidgetBridgeAndroid ? "FOUND" : "MISSING",
+      widgetBridgeKeys: NativeModules?.WidgetBridgeAndroid
+        ? Object.keys(NativeModules.WidgetBridgeAndroid)
+        : [],
+    };
+  }, []);
+
+  return (
+    <ScrollView style={{ padding: 12 }}>
+      <Text style={{ fontWeight: "700", fontSize: 18 }}>
+        Native Bridge Debug
+      </Text>
+      <Text>Platform: {info.platform}</Text>
+      <Text>appOwnership: {String(info.appOwnership)}</Text>
+      <Text>executionEnvironment: {String(info.executionEnvironment)}</Text>
+      <Text>expoConfig.android.package: {String(info.androidPackage)}</Text>
+      <Text>NativeModules count: {info.nativeModulesCount}</Text>
+      <Text>WidgetBridgeAndroid: {info.widgetBridge}</Text>
+
+      <Text style={{ marginTop: 10, fontWeight: "700" }}>
+        NativeModules sample:
+      </Text>
+      <Text selectable>
+        {JSON.stringify(info.nativeModulesSample, null, 2)}
+      </Text>
+
+      <Text style={{ marginTop: 10, fontWeight: "700" }}>
+        WidgetBridgeAndroid keys:
+      </Text>
+      <Text selectable>{JSON.stringify(info.widgetBridgeKeys, null, 2)}</Text>
+    </ScrollView>
+  );
 }
 
 function makeStarterGoals() {
@@ -483,24 +533,20 @@ export default function App() {
 
   function pushWidgets(nextGoals, nextHabits) {
     try {
-      // Build ONE payload object (same shape iOS widgets use)
-      const payloadObj = buildWidgetPayload(nextGoals, nextHabits);
-      const payloadJson = JSON.stringify(payloadObj);
+      const basePayload = buildWidgetPayload(nextGoals, nextHabits);
 
-      // iOS widgets
+      // iOS: keep the exact shape you already use
+      const iosJson = JSON.stringify(basePayload);
+
+      // Android: add widgetType for routing
+      const androidPayload = { ...basePayload, widgetType: "yearly_progress" };
+
       if (Platform.OS === "ios" && WidgetBridge?.setWidgetPayload) {
-        WidgetBridge.setWidgetPayload(payloadJson);
+        WidgetBridge.setWidgetPayload(iosJson);
       }
 
-      // Android widgets
       if (Platform.OS === "android") {
-        pushWidgetPayloadAndroid(payloadObj).catch((e) => {
-          console.log("Android widget sync failed:", e);
-        });
-      }
-      if (Platform.OS === "android") {
-        console.log("NativeModules keys:", Object.keys(NativeModules));
-        console.log("WidgetBridgeAndroid:", NativeModules.WidgetBridgeAndroid);
+        pushWidgetPayloadAndroid(androidPayload);
       }
     } catch (e) {
       console.log("Widget sync failed:", e);
@@ -1585,6 +1631,7 @@ export default function App() {
                     >
                       Add Habit
                     </Text>
+                    <NativeDebugPanel />
                   </Pressable>
 
                   <Pressable
