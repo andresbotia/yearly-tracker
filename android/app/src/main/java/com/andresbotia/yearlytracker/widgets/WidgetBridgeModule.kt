@@ -14,16 +14,18 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
 
   override fun getName(): String = "WidgetBridgeAndroid"
+  private val tag = "WidgetBridge"
 
   // JS -> Native
   // nativeWidgetBridgeAndroid.pushProgressWidgetPayload(jsonString)
   @ReactMethod
   fun pushProgressWidgetPayload(json: String) {
     try {
-      savePayload(reactContext, "yearly_progress", json)
+      Log.d(tag, "pushProgressWidgetPayload length=${json.length}")
+      savePayload(reactContext, SharedWidgetStore.KEY_YEARLY_PROGRESS, json)
       requestUpdate(reactContext, YearlyProgressWidgetProvider::class.java)
     } catch (e: Exception) {
-      Log.e("WidgetBridge", "pushProgressWidgetPayload failed", e)
+      Log.e(tag, "pushProgressWidgetPayload failed", e)
     }
   }
 
@@ -31,10 +33,11 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
   @ReactMethod
   fun pushGoalsListWidgetPayload(json: String) {
     try {
-      savePayload(reactContext, "goals_list", json)
+      Log.d(tag, "pushGoalsListWidgetPayload length=${json.length}")
+      savePayload(reactContext, SharedWidgetStore.KEY_GOALS_LIST, json)
       requestUpdate(reactContext, GoalsListWidgetProvider::class.java)
     } catch (e: Exception) {
-      Log.e("WidgetBridge", "pushGoalsListWidgetPayload failed", e)
+      Log.e(tag, "pushGoalsListWidgetPayload failed", e)
     }
   }
 
@@ -42,10 +45,11 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
   @ReactMethod
   fun pushHabitsWidgetPayload(json: String) {
     try {
-      savePayload(reactContext, "habits", json)
+      Log.d(tag, "pushHabitsWidgetPayload length=${json.length}")
+      savePayload(reactContext, SharedWidgetStore.KEY_HABITS, json)
       requestUpdate(reactContext, HabitsWidgetProvider::class.java)
     } catch (e: Exception) {
-      Log.e("WidgetBridge", "pushHabitsWidgetPayload failed", e)
+      Log.e(tag, "pushHabitsWidgetPayload failed", e)
     }
   }
 
@@ -53,10 +57,25 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
   @ReactMethod
   fun pushGoalHighlightWidgetPayload(json: String) {
     try {
-      savePayload(reactContext, "goal_highlight", json)
+      Log.d(tag, "pushGoalHighlightWidgetPayload length=${json.length}")
+      savePayload(reactContext, SharedWidgetStore.KEY_GOAL_HIGHLIGHT, json)
       requestUpdate(reactContext, GoalHighlightWidgetProvider::class.java)
     } catch (e: Exception) {
-      Log.e("WidgetBridge", "pushGoalHighlightWidgetPayload failed", e)
+      Log.e(tag, "pushGoalHighlightWidgetPayload failed", e)
+    }
+  }
+
+  @ReactMethod
+  fun setDebugWidgetText(text: String) {
+    try {
+      Log.d(tag, "setDebugWidgetText length=${text.length}")
+      saveDebugText(reactContext, text)
+      requestUpdate(reactContext, YearlyProgressWidgetProvider::class.java)
+      requestUpdate(reactContext, GoalsListWidgetProvider::class.java)
+      requestUpdate(reactContext, HabitsWidgetProvider::class.java)
+      requestUpdate(reactContext, GoalHighlightWidgetProvider::class.java)
+    } catch (e: Exception) {
+      Log.e(tag, "setDebugWidgetText failed", e)
     }
   }
 }
@@ -68,16 +87,27 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
 private const val WIDGET_PREFS = "yearly_tracker_widget_payloads"
 
 private fun savePayload(context: Context, key: String, json: String) {
-  context
+  val success = context
     .getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
     .edit()
     .putString(key, json)
-    .apply()
+    .commit()
+  Log.d("WidgetBridge", "Saved payload key=$key success=$success")
+}
+
+private fun saveDebugText(context: Context, text: String) {
+  val success = context
+    .getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
+    .edit()
+    .putString(SharedWidgetStore.KEY_DEBUG_TEXT, text)
+    .commit()
+  Log.d("WidgetBridge", "Saved debug text success=$success")
 }
 
 private fun requestUpdate(context: Context, provider: Class<out AppWidgetProvider>) {
   val manager = AppWidgetManager.getInstance(context)
   val ids = manager.getAppWidgetIds(ComponentName(context, provider))
+  Log.d("WidgetBridge", "requestUpdate ${provider.simpleName} ids=${ids.contentToString()}")
   if (ids.isEmpty()) return
 
   val intent = Intent(context, provider).apply {

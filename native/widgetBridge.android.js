@@ -62,3 +62,9 @@ export function pushGoalHighlightWidgetPayloadAndroid(payloadObj) {
   const M = getM();
   return M.pushGoalHighlightWidgetPayload?.(JSON.stringify(payloadObj));
 }
+
+export function setDebugWidgetTextAndroid(text) {
+  if (!assertAndroid()) return;
+  const M = getM();
+  return M.setDebugWidgetText?.(String(text));
+}
