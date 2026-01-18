@@ -573,9 +573,13 @@ export default function App() {
     if (!ready) return;
     if (Platform.OS !== "android") return;
 
-    // one-time end-to-end sanity check: JS -> Native -> SharedPreferences -> WidgetProvider -> RemoteViews
     try {
-      setDebugWidgetTextAndroid(`DBG ${Date.now()}`);
+      if (__DEV__) {
+        setDebugWidgetTextAndroid(`DBG ${Date.now()}`);
+      } else {
+        // Clear it so titles go back to normal in production builds
+        setDebugWidgetTextAndroid("");
+      }
     } catch (e) {
       console.log("setDebugWidgetTextAndroid failed", e);
     }
@@ -1659,7 +1663,6 @@ export default function App() {
                     >
                       Add Habit
                     </Text>
-                    <NativeDebugPanel />
                   </Pressable>
 
                   <Pressable

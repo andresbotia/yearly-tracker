@@ -1,3 +1,4 @@
+// android/app/src/main/java/com/andresbotia/yearlytracker/widgets/GoalsListWidgetProvider.kt
 package com.andresbotia.yearlytracker.widgets
 
 import android.appwidget.AppWidgetManager
@@ -6,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import android.view.View
 import android.widget.RemoteViews
 import com.andresbotia.yearlytracker.R
 import org.json.JSONArray
@@ -16,6 +18,10 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
 
   companion object {
     private const val TAG = "GoalsListWidget"
+
+    private const val MAX_LINES = 6
+    private const val SMALL_VISIBLE_LINES = 4
+    private const val LARGE_VISIBLE_LINES = 6
 
     const val ACTION_REFRESH_ALL =
       "com.andresbotia.yearlytracker.widgets.GOALS_LIST_REFRESH_ALL"
@@ -43,58 +49,106 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
 
       val payloadObj = SharedWidgetStore.parsePayload(payloadJson)
       val theme = payloadObj?.optString("theme", null)
-      val debugText = SharedWidgetStore.loadDebugText(context)
 
       val goals: JSONArray = payloadObj?.optJSONArray("goals") ?: JSONArray()
 
       for (id in ids) {
         val options = mgr.getAppWidgetOptions(id)
         val layoutId = WidgetUi.chooseLayout(
-  options,
-  R.layout.widget_goals_list_small,
-  R.layout.widget_goals_list_large
-)
-
+          options,
+          R.layout.widget_goals_list_small,
+          R.layout.widget_goals_list_large
+        )
 
         val views = RemoteViews(context.packageName, layoutId)
 
         // Background
-        views.setInt(
+        views.safeSetInt(
           R.id.root,
           "setBackgroundColor",
           SharedWidgetStore.themeBgColor(theme)
         )
 
-        // Title: always set (debug if present else label)
-        views.setTextViewText(R.id.title, debugText ?: "Goals")
+        // Title: always default (do NOT override with debug text)
+        views.safeSetText(R.id.title, "Goals")
 
-        if (layoutId == R.layout.widget_goals_list_small) {
-          // Fill 2 lines (top goals)
-          val g1 = goals.optJSONObject(0)
-          val g2 = goals.optJSONObject(1)
-          views.setTextViewText(R.id.line1, formatGoalLine(g1))
-          views.setTextViewText(R.id.line2, formatGoalLine(g2))
-        } else {
-          // Large layout: Fill 4 lines (top goals)
-          val g1 = goals.optJSONObject(0)
-          val g2 = goals.optJSONObject(1)
-          val g3 = goals.optJSONObject(2)
-          val g4 = goals.optJSONObject(3)
+        val visibleLines =
+          if (layoutId == R.layout.widget_goals_list_large) LARGE_VISIBLE_LINES else SMALL_VISIBLE_LINES
 
-          // These IDs must exist in widget_goals_list.xml
-          views.setTextViewText(R.id.line1, formatGoalLine(g1))
-          views.setTextViewText(R.id.line2, formatGoalLine(g2))
-          views.setTextViewText(R.id.line3, formatGoalLine(g3))
-          views.setTextViewText(R.id.line4, formatGoalLine(g4))
-        }
+        renderGoalsIntoViews(
+          views = views,
+          goals = goals,
+          visibleLines = visibleLines
+        )
 
         // Click -> open app
-        views.setOnClickPendingIntent(
+        views.safeSetOnClick(
           R.id.root,
           WidgetUi.launchAppPendingIntent(context, 3001 + id)
         )
 
         mgr.updateAppWidget(id, views)
+      }
+    }
+
+    private fun renderGoalsIntoViews(
+      views: RemoteViews,
+      goals: JSONArray,
+      visibleLines: Int
+    ) {
+      val count = goals.length()
+
+      // If empty: show a single placeholder line, hide the rest.
+      if (count <= 0) {
+        // line1 placeholder
+        views.safeSetText(R.id.line1, "—")
+        views.safeSetVisibility(R.id.line1, View.VISIBLE)
+
+        // hide line2..line6
+        for (i in 2..MAX_LINES) {
+          val lineId = lineIdByIndex(i)
+          views.safeSetVisibility(lineId, View.GONE)
+        }
+
+        // hide moreLine
+        views.safeSetVisibility(R.id.moreLine, View.GONE)
+        return
+      }
+
+      // Show up to visibleLines, capped by MAX_LINES.
+      val showLines = minOf(visibleLines, MAX_LINES)
+
+      for (i in 1..MAX_LINES) {
+        val lineId = lineIdByIndex(i)
+        val shouldShow = i <= showLines && (i - 1) < count
+        if (shouldShow) {
+          val g = goals.optJSONObject(i - 1)
+          views.safeSetText(lineId, formatGoalLine(g))
+          views.safeSetVisibility(lineId, View.VISIBLE)
+        } else {
+          views.safeSetVisibility(lineId, View.GONE)
+        }
+      }
+
+      // Overflow line
+      val overflow = count - showLines
+      if (overflow > 0) {
+        views.safeSetText(R.id.moreLine, "… +$overflow more")
+        views.safeSetVisibility(R.id.moreLine, View.VISIBLE)
+      } else {
+        views.safeSetVisibility(R.id.moreLine, View.GONE)
+      }
+    }
+
+    private fun lineIdByIndex(i: Int): Int {
+      return when (i) {
+        1 -> R.id.line1
+        2 -> R.id.line2
+        3 -> R.id.line3
+        4 -> R.id.line4
+        5 -> R.id.line5
+        6 -> R.id.line6
+        else -> R.id.line1
       }
     }
 
@@ -104,6 +158,36 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
       val pct01 = g.optDouble("percent", 0.0)
       val pct = (SharedWidgetStore.clamp01(pct01) * 100.0).roundToInt()
       return "$title • $pct%"
+    }
+
+    // ---- RemoteViews safe helpers (prevents crash if an ID is missing in some layout) ----
+
+    private fun RemoteViews.safeSetText(viewId: Int, text: String) {
+      try {
+        setTextViewText(viewId, text)
+      } catch (_: Throwable) {
+      }
+    }
+
+    private fun RemoteViews.safeSetVisibility(viewId: Int, visibility: Int) {
+      try {
+        setViewVisibility(viewId, visibility)
+      } catch (_: Throwable) {
+      }
+    }
+
+    private fun RemoteViews.safeSetOnClick(viewId: Int, pi: android.app.PendingIntent) {
+      try {
+        setOnClickPendingIntent(viewId, pi)
+      } catch (_: Throwable) {
+      }
+    }
+
+    private fun RemoteViews.safeSetInt(viewId: Int, methodName: String, value: Int) {
+      try {
+        setInt(viewId, methodName, value)
+      } catch (_: Throwable) {
+      }
     }
   }
 
