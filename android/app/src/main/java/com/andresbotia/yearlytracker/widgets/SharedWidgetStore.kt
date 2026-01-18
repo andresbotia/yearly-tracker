@@ -5,12 +5,21 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object SharedWidgetStore {
-  const val PREFS_NAME = "widget_prefs"
-  const val KEY_PAYLOAD_JSON = "widget_payload_json"
+  const val PREFS_NAME = "yearly_tracker_widget_payloads"
+  const val KEY_YEARLY_PROGRESS = "yearly_progress"
+  const val KEY_GOALS_LIST = "goals_list"
+  const val KEY_HABITS = "habits"
+  const val KEY_GOAL_HIGHLIGHT = "goal_highlight"
+  const val KEY_DEBUG_TEXT = "debug_text"
 
-  fun loadPayloadJson(context: Context): String {
+  fun loadPayloadJson(context: Context, key: String): String {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    return prefs.getString(KEY_PAYLOAD_JSON, null) ?: ""
+    return prefs.getString(key, null) ?: ""
+  }
+
+  fun loadDebugText(context: Context): String? {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getString(KEY_DEBUG_TEXT, null)
   }
 
   fun parsePayload(json: String): JSONObject? {

@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.widget.RemoteViews
 import com.andresbotia.yearlytracker.R
 import org.json.JSONArray
@@ -13,14 +14,23 @@ import org.json.JSONObject
 class GoalsListWidgetProvider : AppWidgetProvider() {
 
   companion object {
+    private const val TAG = "GoalsListWidget"
     fun updateAll(context: Context) {
       val mgr = AppWidgetManager.getInstance(context)
       val ids = mgr.getAppWidgetIds(ComponentName(context, GoalsListWidgetProvider::class.java))
+      Log.d(TAG, "updateAll ids=${ids.contentToString()}")
       onUpdateStatic(context, mgr, ids)
     }
 
     private fun onUpdateStatic(context: Context, mgr: AppWidgetManager, ids: IntArray) {
-      val payloadObj = SharedWidgetStore.parsePayload(SharedWidgetStore.loadPayloadJson(context))
+      Log.d(TAG, "onUpdateStatic ids=${ids.contentToString()}")
+      val payloadJson = SharedWidgetStore.loadPayloadJson(context, SharedWidgetStore.KEY_GOALS_LIST)
+      if (payloadJson.isBlank()) {
+        Log.w(TAG, "No payload JSON found for goals list.")
+      } else {
+        Log.d(TAG, "Loaded payload JSON length=${payloadJson.length}")
+      }
+      val payloadObj = SharedWidgetStore.parsePayload(payloadJson)
       val theme = payloadObj?.optString("theme", null)
       val goals = payloadObj?.optJSONArray("goals")
 
@@ -64,11 +74,13 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
   }
 
   override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+    Log.d(TAG, "onUpdate ids=${appWidgetIds.contentToString()}")
     onUpdateStatic(context, appWidgetManager, appWidgetIds)
   }
 
   override fun onReceive(context: Context, intent: Intent) {
     super.onReceive(context, intent)
+    Log.d(TAG, "onReceive action=${intent.action}")
     if (intent.action == YearlyProgressWidgetProvider.ACTION_REFRESH_ALL) {
       updateAll(context)
     }
