@@ -472,11 +472,11 @@ export default function App() {
 
   const theme = useMemo(
     () => makeTheme(themeChoice, customThemes),
-    [themeChoice, customThemes]
+    [themeChoice, customThemes],
   );
   const dates = useMemo(
     () => lastNDays(5, new Date(todayTick)),
-    [activeTab, todayTick]
+    [activeTab, todayTick],
   );
 
   const [goalDragging, setGoalDragging] = useState(false);
@@ -546,6 +546,8 @@ export default function App() {
       }
 
       if (Platform.OS === "android") {
+        console.log("ANDROID WIDGET PAYLOAD", JSON.stringify(androidPayload));
+
         pushWidgetPayloadAndroid(androidPayload);
       }
     } catch (e) {
@@ -771,7 +773,7 @@ export default function App() {
   async function deleteCustomTheme(id) {
     await hapticLight();
     const next = (customThemes || []).filter(
-      (t) => String(t.id) !== String(id)
+      (t) => String(t.id) !== String(id),
     );
     await persistCustomThemes(next);
 
@@ -1121,7 +1123,7 @@ export default function App() {
     const nextProgress = clamp(Math.floor(n), 0, t);
 
     const next = goals.map((g) =>
-      g.id === editGoal.id ? { ...g, progress: nextProgress } : g
+      g.id === editGoal.id ? { ...g, progress: nextProgress } : g,
     );
 
     const willBeComplete = t > 0 && nextProgress >= t;
@@ -1139,7 +1141,7 @@ export default function App() {
     else await hapticLight();
 
     const next = goals.map((g) =>
-      g.id === editGoal.id ? { ...g, progress: done ? 1 : 0 } : g
+      g.id === editGoal.id ? { ...g, progress: done ? 1 : 0 } : g,
     );
     await persistGoals(next);
     closeEdit();
@@ -1151,7 +1153,7 @@ export default function App() {
     setGoalDetailsTitle(String(goal.title || ""));
     setGoalDetailsType(goal.type === "boolean" ? "boolean" : "count");
     setGoalDetailsTargetText(
-      goal.type === "count" && goal.target ? String(goal.target) : "10"
+      goal.type === "count" && goal.target ? String(goal.target) : "10",
     );
     setGoalDetailsOpen(true);
   }
@@ -1292,7 +1294,7 @@ export default function App() {
     if (!t) return;
 
     const next = habits.map((h) =>
-      h.id === habitEditHabit.id ? { ...h, title: t } : h
+      h.id === habitEditHabit.id ? { ...h, title: t } : h,
     );
 
     await saveHabits(next);
@@ -3094,8 +3096,8 @@ export default function App() {
                     {colorPickerTarget === "primary"
                       ? "Pick Primary"
                       : colorPickerTarget === "bg"
-                      ? "Pick Background"
-                      : "Pick Text"}
+                        ? "Pick Background"
+                        : "Pick Text"}
                   </Text>
 
                   <Text style={[styles.pickerSub, { color: theme.mutedText }]}>
@@ -3248,7 +3250,7 @@ export default function App() {
                           : 0;
                         const target = Math.max(
                           0,
-                          Number(editGoal.target || 0)
+                          Number(editGoal.target || 0),
                         );
                         const pct =
                           target > 0 ? Math.round((curSafe / target) * 100) : 0;
@@ -3289,7 +3291,7 @@ export default function App() {
                                   {
                                     width: `${Math.max(
                                       0,
-                                      Math.min(100, pct)
+                                      Math.min(100, pct),
                                     )}%`,
                                     backgroundColor: theme.primary,
                                   },
@@ -3436,8 +3438,8 @@ export default function App() {
                                         ? theme.primaryPressed
                                         : theme.primary
                                       : pressed
-                                      ? theme.border
-                                      : theme.bg,
+                                        ? theme.border
+                                        : theme.bg,
                                     borderColor: selected
                                       ? theme.primary
                                       : theme.border,
@@ -3472,8 +3474,8 @@ export default function App() {
                                         ? theme.primaryPressed
                                         : theme.primary
                                       : pressed
-                                      ? theme.border
-                                      : theme.bg,
+                                        ? theme.border
+                                        : theme.bg,
                                     borderColor: selected
                                       ? theme.primary
                                       : theme.border,

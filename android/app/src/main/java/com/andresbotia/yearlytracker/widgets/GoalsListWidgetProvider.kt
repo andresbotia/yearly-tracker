@@ -1,5 +1,6 @@
 package com.andresbotia.yearlytracker.widgets
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
@@ -8,13 +9,24 @@ import android.content.Intent
 import android.util.Log
 import android.widget.RemoteViews
 import com.andresbotia.yearlytracker.R
-import org.json.JSONArray
 import org.json.JSONObject
 
 class GoalsListWidgetProvider : AppWidgetProvider() {
 
   companion object {
     private const val TAG = "GoalsListWidget"
+
+    const val ACTION_REFRESH_ALL = "com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL"
+    const val ACTION_REFRESH = "com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_GOALS_LIST"
+
+    fun requestUpdateAll(context: Context) {
+      Log.d(TAG, "requestUpdateAll explicit broadcast")
+      val intent = Intent(context, GoalsListWidgetProvider::class.java).apply {
+        action = ACTION_REFRESH_ALL
+      }
+      context.sendBroadcast(intent)
+    }
+
     fun updateAll(context: Context) {
       val mgr = AppWidgetManager.getInstance(context)
       val ids = mgr.getAppWidgetIds(ComponentName(context, GoalsListWidgetProvider::class.java))
@@ -24,12 +36,14 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
 
     private fun onUpdateStatic(context: Context, mgr: AppWidgetManager, ids: IntArray) {
       Log.d(TAG, "onUpdateStatic ids=${ids.contentToString()}")
+
       val payloadJson = SharedWidgetStore.loadPayloadJson(context, SharedWidgetStore.KEY_GOALS_LIST)
       if (payloadJson.isBlank()) {
         Log.w(TAG, "No payload JSON found for goals list.")
       } else {
         Log.d(TAG, "Loaded payload JSON length=${payloadJson.length}")
       }
+
       val payloadObj = SharedWidgetStore.parsePayload(payloadJson)
       val theme = payloadObj?.optString("theme", null)
       val goals = payloadObj?.optJSONArray("goals")
@@ -63,10 +77,16 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
           views.setProgressBar(progId, 100, pct, false)
         }
 
-        views.setOnClickPendingIntent(
-          R.id.root,
-          WidgetUi.deepLinkPendingIntent(context, "exp+yearly-tracker://goals", 1004)
+        val refreshIntent = Intent(context, GoalsListWidgetProvider::class.java).apply {
+          action = ACTION_REFRESH
+        }
+        val refreshPi = PendingIntent.getBroadcast(
+          context,
+          2001,
+          refreshIntent,
+          PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        views.setOnClickPendingIntent(R.id.root, refreshPi)
 
         mgr.updateAppWidget(id, views)
       }
@@ -81,8 +101,8 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
   override fun onReceive(context: Context, intent: Intent) {
     super.onReceive(context, intent)
     Log.d(TAG, "onReceive action=${intent.action}")
-    if (intent.action == YearlyProgressWidgetProvider.ACTION_REFRESH_ALL) {
-      updateAll(context)
+    when (intent.action) {
+      ACTION_REFRESH_ALL, ACTION_REFRESH -> updateAll(context)
     }
   }
 }

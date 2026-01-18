@@ -1,5 +1,6 @@
 package com.andresbotia.yearlytracker.widgets
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
@@ -15,6 +16,18 @@ class GoalHighlightWidgetProvider : AppWidgetProvider() {
 
   companion object {
     private const val TAG = "GoalHighlightWidget"
+
+    const val ACTION_REFRESH_ALL = "com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL"
+    const val ACTION_REFRESH = "com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_GOAL_HIGHLIGHT"
+
+    fun requestUpdateAll(context: Context) {
+      Log.d(TAG, "requestUpdateAll explicit broadcast")
+      val intent = Intent(context, GoalHighlightWidgetProvider::class.java).apply {
+        action = ACTION_REFRESH_ALL
+      }
+      context.sendBroadcast(intent)
+    }
+
     fun updateAll(context: Context) {
       val mgr = AppWidgetManager.getInstance(context)
       val ids = mgr.getAppWidgetIds(ComponentName(context, GoalHighlightWidgetProvider::class.java))
@@ -25,16 +38,17 @@ class GoalHighlightWidgetProvider : AppWidgetProvider() {
     private fun pickHighlight(goals: JSONArray?): JSONObject? {
       if (goals == null || goals.length() == 0) return null
 
-      // Prefer top in-progress (percent < 1), else top overall
       var topInProgress: JSONObject? = null
       var topOverall: JSONObject? = null
 
       for (i in 0 until goals.length()) {
         val g = goals.optJSONObject(i) ?: continue
         val pct = SharedWidgetStore.clamp01(g.optDouble("percent", 0.0))
+
         if (topOverall == null || pct > SharedWidgetStore.clamp01(topOverall!!.optDouble("percent", 0.0))) {
           topOverall = g
         }
+
         if (pct < 1.0) {
           if (topInProgress == null || pct > SharedWidgetStore.clamp01(topInProgress!!.optDouble("percent", 0.0))) {
             topInProgress = g
@@ -47,12 +61,14 @@ class GoalHighlightWidgetProvider : AppWidgetProvider() {
 
     private fun onUpdateStatic(context: Context, mgr: AppWidgetManager, ids: IntArray) {
       Log.d(TAG, "onUpdateStatic ids=${ids.contentToString()}")
+
       val payloadJson = SharedWidgetStore.loadPayloadJson(context, SharedWidgetStore.KEY_GOAL_HIGHLIGHT)
       if (payloadJson.isBlank()) {
         Log.w(TAG, "No payload JSON found for goal highlight.")
       } else {
         Log.d(TAG, "Loaded payload JSON length=${payloadJson.length}")
       }
+
       val payloadObj = SharedWidgetStore.parsePayload(payloadJson)
       val theme = payloadObj?.optString("theme", null)
       val goals = payloadObj?.optJSONArray("goals")
@@ -74,10 +90,16 @@ class GoalHighlightWidgetProvider : AppWidgetProvider() {
           views.setProgressBar(R.id.progress, 100, pct, false)
         }
 
-        views.setOnClickPendingIntent(
-          R.id.root,
-          WidgetUi.deepLinkPendingIntent(context, "exp+yearly-tracker://goals", 1003)
+        val refreshIntent = Intent(context, GoalHighlightWidgetProvider::class.java).apply {
+          action = ACTION_REFRESH
+        }
+        val refreshPi = PendingIntent.getBroadcast(
+          context,
+          4001,
+          refreshIntent,
+          PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        views.setOnClickPendingIntent(R.id.root, refreshPi)
 
         mgr.updateAppWidget(id, views)
       }
@@ -92,8 +114,8 @@ class GoalHighlightWidgetProvider : AppWidgetProvider() {
   override fun onReceive(context: Context, intent: Intent) {
     super.onReceive(context, intent)
     Log.d(TAG, "onReceive action=${intent.action}")
-    if (intent.action == YearlyProgressWidgetProvider.ACTION_REFRESH_ALL) {
-      updateAll(context)
+    when (intent.action) {
+      ACTION_REFRESH_ALL, ACTION_REFRESH -> updateAll(context)
     }
   }
 }

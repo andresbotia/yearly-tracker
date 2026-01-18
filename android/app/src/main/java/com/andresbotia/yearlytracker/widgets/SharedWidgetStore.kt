@@ -6,6 +6,7 @@ import org.json.JSONObject
 
 object SharedWidgetStore {
   const val PREFS_NAME = "yearly_tracker_widget_payloads"
+
   const val KEY_YEARLY_PROGRESS = "yearly_progress"
   const val KEY_GOALS_LIST = "goals_list"
   const val KEY_HABITS = "habits"
@@ -24,7 +25,11 @@ object SharedWidgetStore {
 
   fun parsePayload(json: String): JSONObject? {
     if (json.isBlank()) return null
-    return try { JSONObject(json) } catch (_: Exception) { null }
+    return try {
+      JSONObject(json)
+    } catch (_: Exception) {
+      null
+    }
   }
 
   fun clamp01(x: Double): Double = when {
@@ -35,15 +40,16 @@ object SharedWidgetStore {
 
   fun pctInt01(x: Double): Int = (clamp01(x) * 100.0).toInt()
 
-  // Matches your iOS-ish theme container colors (approx)
+  // Theme background approximation (ARGB ints)
   fun themeBgColor(theme: String?): Int {
     return when ((theme ?: "").lowercase()) {
-      "ocean", "oceanblue", "blue" -> 0x38008CD9  // translucent blue
-      "dark" -> 0x40000000
-      "light" -> 0x2EFFFFFF
-      else -> 0x1F1A1A1F
-    }.toInt()
+      "ocean", "oceanblue", "blue" -> 0x38008CD9.toInt()
+      "dark" -> 0x40000000.toInt()
+      "light" -> 0x2EFFFFFF.toInt()
+      else -> 0x1F1A1A1F.toInt()
+    }
   }
 
-  fun jsonArray(obj: JSONObject, key: String): JSONArray = obj.optJSONArray(key) ?: JSONArray()
+  fun jsonArray(obj: JSONObject, key: String): JSONArray =
+    obj.optJSONArray(key) ?: JSONArray()
 }
