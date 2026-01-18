@@ -1,10 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
   android:initialLayout="@layout/widget_progress"
   android:minWidth="110dp"
   android:minHeight="110dp"
   android:resizeMode="horizontal|vertical"
-  android:updatePeriodMillis="1800000"
   android:widgetCategory="home_screen"
   android:previewImage="@drawable/widget_yearly_progress_preview"
-  android:label="@string/widget_yearly_progress_label" />
+  android:label="@string/widget_yearly_progress_label"
+  android:targetCellWidth="2"
+  android:targetCellHeight="2" />

@@ -32,7 +32,10 @@ import Reanimated, {
 import DraggableFlatList from "react-native-draggable-flatlist";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { pushWidgetPayloadAndroid } from "./native/widgetBridge.android";
+import {
+  pushWidgetPayloadAndroid,
+  setDebugWidgetTextAndroid,
+} from "./native/widgetBridge.android";
 
 import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
@@ -535,25 +538,48 @@ export default function App() {
     try {
       const basePayload = buildWidgetPayload(nextGoals, nextHabits);
 
-      // iOS: keep the exact shape you already use
+      // iOS: keep exact shape you already use
       const iosJson = JSON.stringify(basePayload);
-
-      // Android: add widgetType for routing
-      const androidPayload = { ...basePayload, widgetType: "yearly_progress" };
 
       if (Platform.OS === "ios" && WidgetBridge?.setWidgetPayload) {
         WidgetBridge.setWidgetPayload(iosJson);
+        return;
       }
 
       if (Platform.OS === "android") {
-        console.log("ANDROID WIDGET PAYLOAD", JSON.stringify(androidPayload));
+        // ✅ push the SAME payload to each widget key
+        pushWidgetPayloadAndroid({
+          ...basePayload,
+          widgetType: "yearly_progress",
+        });
+        pushWidgetPayloadAndroid({ ...basePayload, widgetType: "goals_list" });
+        pushWidgetPayloadAndroid({ ...basePayload, widgetType: "habits" });
+        pushWidgetPayloadAndroid({
+          ...basePayload,
+          widgetType: "goal_highlight",
+        });
 
-        pushWidgetPayloadAndroid(androidPayload);
+        console.log(
+          "ANDROID WIDGET PAYLOAD (base)",
+          JSON.stringify(basePayload),
+        );
       }
     } catch (e) {
       console.log("Widget sync failed:", e);
     }
   }
+
+  useEffect(() => {
+    if (!ready) return;
+    if (Platform.OS !== "android") return;
+
+    // one-time end-to-end sanity check: JS -> Native -> SharedPreferences -> WidgetProvider -> RemoteViews
+    try {
+      setDebugWidgetTextAndroid(`DBG ${Date.now()}`);
+    } catch (e) {
+      console.log("setDebugWidgetTextAndroid failed", e);
+    }
+  }, [ready]);
 
   function playEditOpenAnim() {
     editAnim.setValue(0);

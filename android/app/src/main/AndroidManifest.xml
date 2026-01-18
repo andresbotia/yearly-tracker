@@ -4,6 +4,7 @@
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
@@ -11,15 +12,35 @@
       <data android:scheme="https"/>
     </intent>
   </queries>
-  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme" android:supportsRtl="true" android:enableOnBackInvokedCallback="false">
+
+  <application
+    android:name=".MainApplication"
+    android:label="@string/app_name"
+    android:icon="@mipmap/ic_launcher"
+    android:roundIcon="@mipmap/ic_launcher_round"
+    android:allowBackup="true"
+    android:theme="@style/AppTheme"
+    android:supportsRtl="true"
+    android:enableOnBackInvokedCallback="false">
+
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
-    <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true" android:screenOrientation="portrait">
+
+    <activity
+      android:name=".MainActivity"
+      android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode"
+      android:launchMode="singleTask"
+      android:windowSoftInputMode="adjustResize"
+      android:theme="@style/Theme.App.SplashScreen"
+      android:exported="true"
+      android:screenOrientation="portrait">
+
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
+
       <intent-filter>
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
@@ -27,60 +48,70 @@
         <data android:scheme="exp+yearly-tracker"/>
       </intent-filter>
     </activity>
-  <receiver
-  android:name=".widgets.YearlyProgressWidgetProvider"
-  android:exported="false"
-  android:label="@string/widget_yearly_progress_label">
-  <intent-filter>
-    <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-    <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
-  </intent-filter>
-  <meta-data
-    android:name="android.appwidget.provider"
-    android:resource="@xml/yearly_progress_widget_info" />
-</receiver>
 
-<receiver
-  android:name=".widgets.HabitsWidgetProvider"
-  android:exported="false"
-  android:label="@string/widget_habits_label">
-  <intent-filter>
-    <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-    <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
-  </intent-filter>
-  <meta-data
-    android:name="android.appwidget.provider"
-    android:resource="@xml/habits_widget_info" />
-</receiver>
+    <receiver
+      android:name=".widgets.YearlyProgressWidgetProvider"
+      android:exported="false"
+      android:label="@string/widget_yearly_progress_label">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
+        <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_yearly_progress_info" />
+    </receiver>
 
-<receiver
-  android:name=".widgets.GoalHighlightWidgetProvider"
-  android:exported="false"
-  android:label="@string/widget_goal_highlight_label">
-  <intent-filter>
-    <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-    <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
-  </intent-filter>
-  <meta-data
-    android:name="android.appwidget.provider"
-    android:resource="@xml/goal_highlight_widget_info" />
-</receiver>
+    <receiver
+      android:name=".widgets.HabitsWidgetProvider"
+      android:exported="false"
+      android:label="@string/widget_habits_label">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <!-- generic refresh (optional but recommended) -->
+        <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
+        <!-- provider-specific refresh -->
+        <action android:name="com.andresbotia.yearlytracker.widgets.HABITS_REFRESH_ALL" />
+        <action android:name="com.andresbotia.yearlytracker.widgets.HABITS_REFRESH" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/habits_widget_info" />
+    </receiver>
 
-<receiver
-  android:name=".widgets.GoalsListWidgetProvider"
-  android:exported="false"
-  android:label="@string/widget_goals_list_label">
-  <intent-filter>
-    <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-    <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
-  </intent-filter>
-  <meta-data
-    android:name="android.appwidget.provider"
-    android:resource="@xml/goals_list_widget_info" />
-</receiver>
+    <receiver
+      android:name=".widgets.GoalHighlightWidgetProvider"
+      android:exported="false"
+      android:label="@string/widget_goal_highlight_label">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <!-- provider uses the generic refresh-all -->
+        <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
+        <!-- provider-specific refresh -->
+        <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_GOAL_HIGHLIGHT" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/goal_highlight_widget_info" />
+    </receiver>
 
-
-
+    <receiver
+      android:name=".widgets.GoalsListWidgetProvider"
+      android:exported="false"
+      android:label="@string/widget_goals_list_label">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <!-- generic refresh (optional but recommended) -->
+        <action android:name="com.andresbotia.yearlytracker.widgets.ACTION_REFRESH_ALL" />
+        <!-- provider-specific refresh -->
+        <action android:name="com.andresbotia.yearlytracker.widgets.GOALS_LIST_REFRESH_ALL" />
+        <action android:name="com.andresbotia.yearlytracker.widgets.GOALS_LIST_REFRESH" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/goals_list_widget_info" />
+    </receiver>
 
   </application>
 </manifest>

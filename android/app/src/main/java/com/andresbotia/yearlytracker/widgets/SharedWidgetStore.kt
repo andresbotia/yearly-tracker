@@ -3,6 +3,7 @@ package com.andresbotia.yearlytracker.widgets
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.math.roundToInt
 
 object SharedWidgetStore {
   const val PREFS_NAME = "yearly_tracker_widget_payloads"
@@ -38,7 +39,7 @@ object SharedWidgetStore {
     else -> x
   }
 
-  fun pctInt01(x: Double): Int = (clamp01(x) * 100.0).toInt()
+  fun pctInt01(x: Double): Int = (clamp01(x) * 100.0).roundToInt()
 
   // Theme background approximation (ARGB ints)
   fun themeBgColor(theme: String?): Int {

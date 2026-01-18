@@ -99,7 +99,11 @@ class GoalHighlightWidgetProvider : AppWidgetProvider() {
           refreshIntent,
           PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.root, refreshPi)
+        views.setOnClickPendingIntent(
+  R.id.root,
+  WidgetUi.launchAppPendingIntent(context, 2004)
+)
+
 
         mgr.updateAppWidget(id, views)
       }

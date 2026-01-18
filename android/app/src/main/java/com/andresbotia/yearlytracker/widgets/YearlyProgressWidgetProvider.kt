@@ -75,7 +75,13 @@ class YearlyProgressWidgetProvider : AppWidgetProvider() {
         views.setTextViewText(R.id.pct, "${pct}%")
         views.setProgressBar(R.id.progress, 100, pct, false)
 
-        // Tap widget -> force refresh (debug)
+        // ✅ Tap widget -> open app via deep link
+        views.setOnClickPendingIntent(
+          R.id.root,
+          WidgetUi.deepLinkPendingIntent(context, "exp+yearly-tracker://goals", 2001)
+        )
+
+        // (Optional but useful) Tap title -> force refresh
         val refreshIntent = Intent(context, YearlyProgressWidgetProvider::class.java).apply {
           action = ACTION_REFRESH
         }
@@ -85,7 +91,7 @@ class YearlyProgressWidgetProvider : AppWidgetProvider() {
           refreshIntent,
           PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.root, refreshPending)
+        views.setOnClickPendingIntent(R.id.title, refreshPending)
 
         mgr.updateAppWidget(id, views)
       }
