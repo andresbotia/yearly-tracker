@@ -45,9 +45,6 @@ class YearlyProgressWidgetProvider : AppWidgetProvider() {
         context,
         SharedWidgetStore.KEY_YEARLY_PROGRESS
       )
-      Log.d(TAG, "payload keys=${payloadObj?.keys()?.asSequence()?.toList()}")
-Log.d(TAG, "yearlyProgress raw=${payloadObj?.optDouble("yearlyProgress", -1.0)}")
-
 
       if (payloadJson.isBlank()) {
         Log.w(TAG, "No payload JSON found for yearly progress.")
@@ -56,6 +53,16 @@ Log.d(TAG, "yearlyProgress raw=${payloadObj?.optDouble("yearlyProgress", -1.0)}"
       }
 
       val payloadObj = SharedWidgetStore.parsePayload(payloadJson)
+
+      // ✅ Debug logs must be AFTER payloadObj is defined
+      run {
+        val keys = mutableListOf<String>()
+        val it = payloadObj?.keys()
+        while (it != null && it.hasNext()) keys.add(it.next())
+        Log.d(TAG, "payload keys=$keys")
+        Log.d(TAG, "yearlyProgress raw=${payloadObj?.optDouble("yearlyProgress", -1.0)}")
+      }
+
       val theme = payloadObj?.optString("theme", null)
       val pct = SharedWidgetStore.pctInt01(payloadObj?.optDouble("yearlyProgress", 0.0) ?: 0.0)
       val debugText = SharedWidgetStore.loadDebugText(context)
@@ -64,10 +71,9 @@ Log.d(TAG, "yearlyProgress raw=${payloadObj?.optDouble("yearlyProgress", -1.0)}"
         val views = RemoteViews(context.packageName, R.layout.widget_yearly_progress)
 
         views.setInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme))
-views.setTextViewText(R.id.title, debugText ?: "NO_DEBUG")
-views.setTextViewText(R.id.pct, "${pct}%")
-views.setProgressBar(R.id.progress, 100, pct, false)
-
+        views.setTextViewText(R.id.title, debugText ?: "NO_DEBUG")
+        views.setTextViewText(R.id.pct, "${pct}%")
+        views.setProgressBar(R.id.progress, 100, pct, false)
 
         // Tap widget -> force refresh (debug)
         val refreshIntent = Intent(context, YearlyProgressWidgetProvider::class.java).apply {
