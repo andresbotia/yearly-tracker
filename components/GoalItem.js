@@ -5,6 +5,8 @@ import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 
+const ANDROID = Platform.OS === "android";
+
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
@@ -53,8 +55,8 @@ export default function GoalItem({
     goal.type === "count" && goal.target
       ? `${goal.progress}/${goal.target}`
       : goal.progress === 1
-      ? "Completed"
-      : "Not yet";
+        ? "Completed"
+        : "Not yet";
 
   async function hapticLight() {
     try {
@@ -67,8 +69,8 @@ export default function GoalItem({
       variant === "danger"
         ? theme.danger
         : variant === "primary"
-        ? theme.primary
-        : theme.text;
+          ? theme.primary
+          : theme.text;
 
     const bg = hexToRgba(baseColor, 0.1);
     const bgPressed = hexToRgba(baseColor, 0.18);
@@ -94,8 +96,12 @@ export default function GoalItem({
     );
   };
 
-  const cardBg = isComplete ? hexToRgba(theme.primary, 0.06) : theme.card;
-  const cardBorder = isComplete ? hexToRgba(theme.primary, 0.45) : theme.border;
+  // iOS can keep the nice border treatment.
+  // Android: border strokes can look “off” (mismatched) — so we remove border and use a subtle overlay for completed.
+  const cardBgIOS = isComplete ? hexToRgba(theme.primary, 0.06) : theme.card;
+  const cardBorderIOS = isComplete
+    ? hexToRgba(theme.primary, 0.45)
+    : theme.border;
 
   return (
     <Pressable
@@ -104,13 +110,23 @@ export default function GoalItem({
       disabled={!onDrag}
       style={({ pressed }) => [
         styles.card,
-        {
-          backgroundColor: cardBg,
-          borderColor: cardBorder,
-          ...(Platform.OS === "android"
-            ? { elevation: dragging ? 6 : 2 }
-            : null),
-        },
+        ANDROID
+          ? {
+              // ✅ Android: no border stroke
+              borderWidth: 0,
+              borderColor: "transparent",
+              // ✅ Android: keep the surface color consistent
+              backgroundColor: theme.card,
+              // keep your lift
+              elevation: dragging ? 6 : 2,
+              // ✅ make sure overlay is clipped to rounded corners
+              overflow: "hidden",
+            }
+          : {
+              backgroundColor: cardBgIOS,
+              borderColor: cardBorderIOS,
+              borderWidth: 1,
+            },
         (pressed || dragging) && {
           opacity: 0.97,
           transform: [{ scale: 0.99 }],
@@ -119,6 +135,17 @@ export default function GoalItem({
       accessibilityRole="button"
       accessibilityLabel={`Goal: ${goal.title}. Long press to reorder.`}
     >
+      {/* ✅ Android-only: completed state shown via a subtle tinted overlay (no border) */}
+      {ANDROID && isComplete ? (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.completedOverlayAndroid,
+            { backgroundColor: theme.primary },
+          ]}
+        />
+      ) : null}
+
       <View style={styles.rowTop}>
         {/* Invisible drag hotspot (still keeps reordering), no circle/icon */}
         <Pressable
@@ -215,7 +242,7 @@ export default function GoalItem({
             onProgress?.(goal);
           }}
           android_ripple={
-            Platform.OS === "android"
+            ANDROID
               ? { color: hexToRgba(theme.primaryTextOn, 0.18) }
               : undefined
           }
@@ -260,6 +287,7 @@ export default function GoalItem({
 
 const styles = StyleSheet.create({
   card: {
+    position: "relative",
     borderWidth: 1,
     borderRadius: 20,
     padding: 16,
@@ -272,6 +300,13 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 8 },
       },
     }),
+  },
+
+  // Android-only completed overlay (clipped by card overflow:hidden on Android)
+  completedOverlayAndroid: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.06, // tweak: 0.05–0.10
+    borderRadius: 20,
   },
 
   rowTop: {
