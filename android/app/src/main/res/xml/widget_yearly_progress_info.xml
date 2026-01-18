@@ -2,10 +2,12 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
   android:initialLayout="@layout/widget_yearly_progress"
   android:minWidth="110dp"
-  android:minHeight="110dp"
+  android:minHeight="40dp"
+  android:minResizeWidth="110dp"
+  android:minResizeHeight="40dp"
   android:resizeMode="horizontal|vertical"
   android:widgetCategory="home_screen"
   android:previewImage="@drawable/widget_yearly_progress_preview"
   android:label="@string/widget_yearly_progress_label"
-  android:targetCellWidth="4"
-  android:targetCellHeight="3" />
+  android:targetCellWidth="2"
+  android:targetCellHeight="2" />

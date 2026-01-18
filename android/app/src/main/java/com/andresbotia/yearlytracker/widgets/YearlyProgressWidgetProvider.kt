@@ -54,7 +54,7 @@ class YearlyProgressWidgetProvider : AppWidgetProvider() {
 
       val payloadObj = SharedWidgetStore.parsePayload(payloadJson)
 
-      // ✅ Debug logs must be AFTER payloadObj is defined
+      // Debug logs must be AFTER payloadObj is defined
       run {
         val keys = mutableListOf<String>()
         val it = payloadObj?.keys()
@@ -71,17 +71,25 @@ class YearlyProgressWidgetProvider : AppWidgetProvider() {
         val views = RemoteViews(context.packageName, R.layout.widget_yearly_progress)
 
         views.setInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme))
-        views.setTextViewText(R.id.title, debugText ?: "NO_DEBUG")
+
+        // Title: ignore DBG* debug text; otherwise use it; else default label
+        val title = if (!debugText.isNullOrBlank() && !debugText.startsWith("DBG")) {
+          debugText
+        } else {
+          "Yearly Progress"
+        }
+        views.setTextViewText(R.id.title, title)
+
         views.setTextViewText(R.id.pct, "${pct}%")
         views.setProgressBar(R.id.progress, 100, pct, false)
 
-        // ✅ Tap widget -> open app via deep link
+        // Tap widget -> open app via deep link
         views.setOnClickPendingIntent(
           R.id.root,
           WidgetUi.deepLinkPendingIntent(context, "exp+yearly-tracker://goals", 2001)
         )
 
-        // (Optional but useful) Tap title -> force refresh
+        // (Optional) Tap title -> force refresh
         val refreshIntent = Intent(context, YearlyProgressWidgetProvider::class.java).apply {
           action = ACTION_REFRESH
         }
