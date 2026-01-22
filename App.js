@@ -1395,63 +1395,66 @@ export default function App() {
       </Text>
       <Text style={[styles.yearText, { color: theme.mutedText }]}>{year}</Text>
 
-      <View style={[styles.tabRow, ANDROID && styles.noGap]}>
-        <Pressable
-          onPress={() => {
-            closeOpenHabitSwipe();
-            setActiveTab("habits");
-          }}
-          style={[
-            styles.tabPill,
-            {
-              backgroundColor:
-                activeTab === "habits" ? theme.primary : theme.card,
-              borderColor:
-                activeTab === "habits" ? theme.primary : theme.border,
-            },
-          ]}
-        >
-          <Text
+      {activeTab !== "history" && (
+        <View style={[styles.tabRow, ANDROID && styles.noGap]}>
+          <Pressable
+            onPress={() => {
+              closeOpenHabitSwipe();
+              setActiveTab("habits");
+            }}
             style={[
-              styles.tabText,
+              styles.tabPill,
               {
-                color:
-                  activeTab === "habits" ? theme.primaryTextOn : theme.text,
+                backgroundColor:
+                  activeTab === "habits" ? theme.primary : theme.card,
+                borderColor:
+                  activeTab === "habits" ? theme.primary : theme.border,
               },
             ]}
           >
-            Habits
-          </Text>
-        </Pressable>
+            <Text
+              style={[
+                styles.tabText,
+                {
+                  color:
+                    activeTab === "habits" ? theme.primaryTextOn : theme.text,
+                },
+              ]}
+            >
+              Habits
+            </Text>
+          </Pressable>
 
-        <Pressable
-          onPress={() => {
-            closeOpenHabitSwipe();
-            setActiveTab("goals");
-          }}
-          style={[
-            styles.tabPill,
-            ANDROID && styles.ml10,
-            {
-              backgroundColor:
-                activeTab === "goals" ? theme.primary : theme.card,
-              borderColor: activeTab === "goals" ? theme.primary : theme.border,
-            },
-          ]}
-        >
-          <Text
+          <Pressable
+            onPress={() => {
+              closeOpenHabitSwipe();
+              setActiveTab("goals");
+            }}
             style={[
-              styles.tabText,
+              styles.tabPill,
+              ANDROID && styles.ml10,
               {
-                color: activeTab === "goals" ? theme.primaryTextOn : theme.text,
+                backgroundColor:
+                  activeTab === "goals" ? theme.primary : theme.card,
+                borderColor:
+                  activeTab === "goals" ? theme.primary : theme.border,
               },
             ]}
           >
-            Goals
-          </Text>
-        </Pressable>
-
-      </View>
+            <Text
+              style={[
+                styles.tabText,
+                {
+                  color:
+                    activeTab === "goals" ? theme.primaryTextOn : theme.text,
+                },
+              ]}
+            >
+              Goals
+            </Text>
+          </Pressable>
+        </View>
+      )}
 
       {activeTab === "goals" ? (
         <>
