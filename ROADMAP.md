@@ -7,13 +7,13 @@
   - Goal Progress (Square)
   - Habit Streak (Square)
   - Year So Far (Story)
+
+## v1.0.4 — Heatmap & Insights
+
 - Template Packs
   - Packs modal with preview + add
   - Adds goals + habits
   - Dedup by title
-
-## v1.0.4 — Heatmap & Insights
-
 - GitHub-style habit heatmap (year view)
 - Basic habit stats (streak, 7/30 consistency)
 

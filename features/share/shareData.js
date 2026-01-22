@@ -52,6 +52,7 @@ export function getWeeklyRecap({ habits = [], baseDate = new Date() }) {
   let bad = 0;
   const perHabit = habits.map((h) => {
     let goodCount = 0;
+    let badCount = 0;
     days.forEach((d) => {
       const v = (h.checks || {})[dateKey(d)] || 0;
       if (v === 1) {
@@ -59,9 +60,15 @@ export function getWeeklyRecap({ habits = [], baseDate = new Date() }) {
         goodCount += 1;
       } else if (v === 2) {
         bad += 1;
+        badCount += 1;
       }
     });
-    return { title: h.title, goodCount };
+    return {
+      title: h.title,
+      goodCount,
+      badCount,
+      completedCount: goodCount + badCount,
+    };
   });
 
   const totalChecks = good + bad;
@@ -70,8 +77,8 @@ export function getWeeklyRecap({ habits = [], baseDate = new Date() }) {
     totalSlots > 0 ? Math.round((totalChecks / totalSlots) * 100) : 0;
 
   const topHabits = perHabit
-    .filter((h) => h.goodCount > 0)
-    .sort((a, b) => b.goodCount - a.goodCount)
+    .filter((h) => h.completedCount > 0)
+    .sort((a, b) => b.completedCount - a.completedCount)
     .slice(0, 3);
 
   return {
