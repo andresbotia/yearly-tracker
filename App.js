@@ -63,6 +63,21 @@ import {
 } from "./utils/storage";
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
+import ViewShot from "react-native-view-shot";
+import {
+  getWeeklyRecap,
+  getGoalProgress,
+  getHabitStreak,
+  getYearSoFar,
+} from "./features/share/shareData";
+import {
+  ShareWeeklyRecapCard,
+  ShareGoalProgressCard,
+  ShareHabitStreakCard,
+  ShareYearSoFarCard,
+} from "./features/share/ShareCards";
+import { captureAndShare } from "./features/share/shareCapture";
+import { TEMPLATE_PACKS } from "./features/templates/packs";
 
 const HABITS_KEY = "yt_habits_v1";
 const HABITS_WELCOME_SEEN_KEY = "yt_habits_welcome_seen_v1";
@@ -72,6 +87,44 @@ const LABEL_W = 140;
 const LABEL_GAP = 10;
 
 const ANDROID = Platform.OS === "android";
+
+const SHARE_CARD_SIZES = {
+  story: { width: 1080, height: 1920 },
+  square: { width: 1080, height: 1080 },
+};
+
+const SHARE_OPTIONS = [
+  {
+    id: "weekly_story",
+    label: "Weekly recap (Story)",
+    kind: "weekly",
+    size: "story",
+  },
+  {
+    id: "weekly_square",
+    label: "Weekly recap (Square)",
+    kind: "weekly",
+    size: "square",
+  },
+  {
+    id: "goal_square",
+    label: "Goal progress (Square)",
+    kind: "goal",
+    size: "square",
+  },
+  {
+    id: "habit_square",
+    label: "Habit streak (Square)",
+    kind: "habit",
+    size: "square",
+  },
+  {
+    id: "year_story",
+    label: "Year so far (Story)",
+    kind: "year",
+    size: "story",
+  },
+];
 
 const GOAL_TEMPLATES = [
   { label: "Read books", title: "Read 20 books", type: "count", target: "20" },
@@ -442,6 +495,13 @@ export default function App() {
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareOptionId, setShareOptionId] = useState("weekly_story");
+  const [shareGoalId, setShareGoalId] = useState(null);
+  const [shareHabitId, setShareHabitId] = useState(null);
+  const [shareWatermarkOn, setShareWatermarkOn] = useState(true);
+  const [shareBusy, setShareBusy] = useState(false);
+  const shareShotRef = useRef(null);
 
   const [habitsWelcomeOpen, setHabitsWelcomeOpen] = useState(false);
   const [habitsWelcomeSeen, setHabitsWelcomeSeen] = useState(true);
@@ -474,6 +534,8 @@ export default function App() {
   // Undo toast
   const [undo, setUndo] = useState(null); // { kind: 'goal'|'habit', item, index }
   const undoTimerRef = useRef(null);
+  const [toast, setToast] = useState(null); // { message }
+  const toastTimerRef = useRef(null);
 
   // Annual rollover modal + source year
   const [yearRolloverOpen, setYearRolloverOpen] = useState(false);
@@ -490,6 +552,8 @@ export default function App() {
   const [habitEditOpen, setHabitEditOpen] = useState(false);
   const [habitEditHabit, setHabitEditHabit] = useState(null);
   const [habitEditTitle, setHabitEditTitle] = useState("");
+  const [templatePacksOpen, setTemplatePacksOpen] = useState(false);
+  const [templatePackPreview, setTemplatePackPreview] = useState(null);
 
   const theme = useMemo(
     () => makeTheme(themeChoice, customThemes),
@@ -561,6 +625,79 @@ export default function App() {
 
     return { complete, inProgress, nextGoal, nextPct };
   }, [goals]);
+
+  const shareOption = useMemo(
+    () => SHARE_OPTIONS.find((opt) => opt.id === shareOptionId) || SHARE_OPTIONS[0],
+    [shareOptionId],
+  );
+  const shareSize = shareOption
+    ? SHARE_CARD_SIZES[shareOption.size]
+    : SHARE_CARD_SIZES.square;
+
+  const selectedShareGoal = useMemo(() => {
+    if (!goals.length) return null;
+    const found = goals.find((g) => g.id === shareGoalId);
+    return found || goals[0];
+  }, [goals, shareGoalId]);
+
+  const selectedShareHabit = useMemo(() => {
+    if (!habits.length) return null;
+    const found = habits.find((h) => h.id === shareHabitId);
+    return found || habits[0];
+  }, [habits, shareHabitId]);
+
+  const weeklyRecapData = useMemo(
+    () => getWeeklyRecap({ habits, baseDate: todayDate }),
+    [habits, todayDate],
+  );
+  const goalProgressData = useMemo(
+    () => getGoalProgress(selectedShareGoal),
+    [selectedShareGoal],
+  );
+  const habitStreakData = useMemo(
+    () => getHabitStreak(selectedShareHabit, todayDate),
+    [selectedShareHabit, todayDate],
+  );
+  const yearSoFarData = useMemo(
+    () => getYearSoFar({ habits, goals, baseDate: todayDate }),
+    [habits, goals, todayDate],
+  );
+
+  const shareCard = useMemo(() => {
+    if (!shareOption) return null;
+    const props = {
+      width: shareSize.width,
+      height: shareSize.height,
+      theme,
+      watermarkOn: shareWatermarkOn,
+    };
+    if (shareOption.kind === "weekly") {
+      return <ShareWeeklyRecapCard {...props} data={weeklyRecapData} />;
+    }
+    if (shareOption.kind === "goal") {
+      return <ShareGoalProgressCard {...props} data={goalProgressData} />;
+    }
+    if (shareOption.kind === "habit") {
+      return <ShareHabitStreakCard {...props} data={habitStreakData} />;
+    }
+    if (shareOption.kind === "year") {
+      return <ShareYearSoFarCard {...props} data={yearSoFarData} />;
+    }
+    return null;
+  }, [
+    shareOption,
+    shareSize,
+    theme,
+    shareWatermarkOn,
+    weeklyRecapData,
+    goalProgressData,
+    habitStreakData,
+    yearSoFarData,
+  ]);
+
+  const shareDisabled =
+    (shareOption?.kind === "goal" && !selectedShareGoal) ||
+    (shareOption?.kind === "habit" && !selectedShareHabit);
 
   const WidgetBridge = useMemo(() => {
     if (Platform.OS !== "ios") return null;
@@ -723,6 +860,18 @@ export default function App() {
       setUndo(null);
       undoTimerRef.current = null;
     }, 4500);
+  }
+
+  function showToast(message) {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+    setToast({ message: String(message || "") });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 2800);
   }
 
   async function performUndo() {
@@ -1107,6 +1256,16 @@ export default function App() {
     setHabitsWelcomeSeenFlag();
   }, [activeTab, habitsWelcomeSeen, welcomeOpen]);
 
+  useEffect(() => {
+    if (!shareOpen) return;
+    if (shareOption?.kind === "goal" && !shareGoalId && goals.length) {
+      setShareGoalId(goals[0].id);
+    }
+    if (shareOption?.kind === "habit" && !shareHabitId && habits.length) {
+      setShareHabitId(habits[0].id);
+    }
+  }, [shareOpen, shareOption, shareGoalId, shareHabitId, goals, habits]);
+
   async function persistGoals(nextGoals) {
     const ordered = sortGoals(nextGoals);
     setGoals(ordered);
@@ -1147,6 +1306,77 @@ export default function App() {
       progress: 0,
       createdAt: Date.now(),
     };
+  }
+
+  function normTitle(t) {
+    return String(t || "").trim().toLowerCase();
+  }
+
+  async function handleAddTemplatePack(pack) {
+    if (!pack) return;
+    await hapticLight();
+
+    const existingGoals = new Set(goals.map((g) => normTitle(g.title)));
+    const existingHabits = new Set(habits.map((h) => normTitle(h.title)));
+
+    const newGoals = [];
+    const newHabits = [];
+
+    (pack.goals || []).forEach((g) => {
+      const key = normTitle(g.title);
+      if (!key || existingGoals.has(key)) return;
+      existingGoals.add(key);
+      newGoals.push({
+        id: uid(),
+        title: g.title.trim(),
+        type: g.type,
+        target: g.type === "count" ? Number(g.target) || 0 : null,
+        progress: 0,
+        createdAt: Date.now(),
+      });
+    });
+
+    (pack.habits || []).forEach((h) => {
+      const key = normTitle(h.title);
+      if (!key || existingHabits.has(key)) return;
+      existingHabits.add(key);
+      newHabits.push({ id: uid(), title: h.title.trim(), checks: {} });
+    });
+
+    if (newGoals.length) {
+      await persistGoals([...newGoals, ...goals]);
+    }
+    if (newHabits.length) {
+      await saveHabits([...newHabits, ...habits]);
+    }
+
+    setTemplatePacksOpen(false);
+    setTemplatePackPreview(null);
+    await hapticSuccess();
+
+    showToast(
+      `Added ${pack.name}: ${newHabits.length} habits, ${newGoals.length} goals`
+    );
+  }
+
+  async function handleSharePress() {
+    if (!shareOption) return;
+    if (shareOption.kind === "goal" && !selectedShareGoal) {
+      showToast("Add a goal to share.");
+      return;
+    }
+    if (shareOption.kind === "habit" && !selectedShareHabit) {
+      showToast("Add a habit to share.");
+      return;
+    }
+
+    setShareBusy(true);
+    const ok = await captureAndShare(shareShotRef, {
+      message: "Made with Yearly Tracker",
+    });
+    setShareBusy(false);
+    if (ok) await hapticSuccess();
+    else showToast("Share failed. Try again.");
   }
 
   async function handleAddGoal() {
@@ -1679,13 +1909,33 @@ export default function App() {
                     : theme.primary,
                 },
               ]}
-            >
-              <Text
-                style={[styles.primaryBtnText, { color: theme.primaryTextOn }]}
               >
-                Add Goal
-              </Text>
-            </Pressable>
+                <Text
+                  style={[styles.primaryBtnText, { color: theme.primaryTextOn }]}
+                >
+                  Add Goal
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setShareOpen(true)}
+                style={({ pressed }) => [
+                  styles.secondaryBtn,
+                  ANDROID && styles.ml10,
+                  {
+                    backgroundColor: pressed ? theme.border : theme.card,
+                    borderColor: theme.border,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Share"
+              >
+                <View style={styles.shareBtnInner}>
+                  <Ionicons name="share-outline" size={16} color={theme.text} />
+                  <Text style={[styles.secondaryBtnText, { color: theme.text }]}>
+                    Share
+                  </Text>
+                </View>
+              </Pressable>
           </View>
 
           <View style={styles.divider(theme)} />
@@ -1974,6 +2224,25 @@ export default function App() {
             </Pressable>
           </View>
         )}
+        {!!toast && (
+          <View
+            style={[
+              styles.toastWrap,
+              {
+                borderColor: theme.border,
+                backgroundColor: theme.card,
+                bottom: undo ? 84 : 16,
+              },
+            ]}
+          >
+            <Text
+              style={[styles.toastText, { color: theme.text }]}
+              numberOfLines={2}
+            >
+              {toast.message}
+            </Text>
+          </View>
+        )}
         {/* ✅ Annual rollover */}
         <Modal
           visible={yearRolloverOpen}
@@ -2145,6 +2414,9 @@ export default function App() {
                 </Text>
                 <Text style={[styles.bullet, { color: theme.text }]}>
                   • Swipe a habit left to edit or delete it.
+                </Text>
+                <Text style={[styles.bullet, { color: theme.text }]}>
+                  • Tap the month name to view your habit history.
                 </Text>
                 <Text style={[styles.bullet, { color: theme.text }]}>
                   • Press and hold a habit to reorder it.
@@ -2644,6 +2916,36 @@ export default function App() {
                 ))}
               </ScrollView>
 
+              <View style={styles.packRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.label, { color: theme.mutedText }]}>
+                    Template Packs
+                  </Text>
+                  <Text
+                    style={[
+                      styles.packSub,
+                      { color: theme.mutedText },
+                    ]}
+                  >
+                    Add a full set of habits and goals in one tap.
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setTemplatePacksOpen(true)}
+                  style={({ pressed }) => [
+                    styles.packBtn,
+                    {
+                      borderColor: theme.border,
+                      backgroundColor: pressed ? theme.border : theme.card,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.packBtnText, { color: theme.text }]}>
+                    Browse
+                  </Text>
+                </Pressable>
+              </View>
+
               <Text style={[styles.label, { color: theme.mutedText }]}>
                 Title
               </Text>
@@ -2785,6 +3087,461 @@ export default function App() {
                     ]}
                   >
                     Save
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+        {/* Share */}
+        <Modal
+          visible={shareOpen}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setShareOpen(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View
+              style={[
+                styles.modalCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Share
+              </Text>
+              <Text
+                style={[
+                  styles.modalSub,
+                  { color: theme.mutedText, marginTop: 8, lineHeight: 18 },
+                ]}
+              >
+                Export a shareable card from your progress.
+              </Text>
+
+              <Text style={[styles.label, { color: theme.mutedText }]}>
+                Card type
+              </Text>
+              <View
+                style={[
+                  styles.shareOptionsRow,
+                  ANDROID && styles.noGap,
+                ]}
+              >
+                {SHARE_OPTIONS.map((opt) => {
+                  const selected = shareOption?.id === opt.id;
+                  return (
+                    <Pressable
+                      key={opt.id}
+                      onPress={() => setShareOptionId(opt.id)}
+                      style={({ pressed }) => [
+                        styles.shareOptionChip,
+                        {
+                          backgroundColor: selected
+                            ? pressed
+                              ? theme.primaryPressed
+                              : theme.primary
+                            : pressed
+                              ? theme.border
+                              : theme.bg,
+                          borderColor: selected ? theme.primary : theme.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.shareOptionText,
+                          {
+                            color: selected
+                              ? theme.primaryTextOn
+                              : theme.text,
+                          },
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {shareOption?.kind === "goal" && (
+                <>
+                  <Text style={[styles.label, { color: theme.mutedText }]}>
+                    Goal
+                  </Text>
+                  {goals.length ? (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={[
+                        styles.sharePickRow,
+                        ANDROID && styles.noGap,
+                      ]}
+                    >
+                      {goals.map((g) => {
+                        const selected = g.id === selectedShareGoal?.id;
+                        return (
+                          <Pressable
+                            key={g.id}
+                            onPress={() => setShareGoalId(g.id)}
+                            style={({ pressed }) => [
+                              styles.sharePickChip,
+                              {
+                                backgroundColor: selected
+                                  ? pressed
+                                    ? theme.primaryPressed
+                                    : theme.primary
+                                  : pressed
+                                    ? theme.border
+                                    : theme.bg,
+                                borderColor: selected
+                                  ? theme.primary
+                                  : theme.border,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.sharePickText,
+                                {
+                                  color: selected
+                                    ? theme.primaryTextOn
+                                    : theme.text,
+                                },
+                              ]}
+                            >
+                              {g.title}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  ) : (
+                    <Text
+                      style={[
+                        styles.emptyHint,
+                        { color: theme.mutedText },
+                      ]}
+                    >
+                      Add a goal to share this card.
+                    </Text>
+                  )}
+                </>
+              )}
+
+              {shareOption?.kind === "habit" && (
+                <>
+                  <Text style={[styles.label, { color: theme.mutedText }]}>
+                    Habit
+                  </Text>
+                  {habits.length ? (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={[
+                        styles.sharePickRow,
+                        ANDROID && styles.noGap,
+                      ]}
+                    >
+                      {habits.map((h) => {
+                        const selected = h.id === selectedShareHabit?.id;
+                        return (
+                          <Pressable
+                            key={h.id}
+                            onPress={() => setShareHabitId(h.id)}
+                            style={({ pressed }) => [
+                              styles.sharePickChip,
+                              {
+                                backgroundColor: selected
+                                  ? pressed
+                                    ? theme.primaryPressed
+                                    : theme.primary
+                                  : pressed
+                                    ? theme.border
+                                    : theme.bg,
+                                borderColor: selected
+                                  ? theme.primary
+                                  : theme.border,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.sharePickText,
+                                {
+                                  color: selected
+                                    ? theme.primaryTextOn
+                                    : theme.text,
+                                },
+                              ]}
+                            >
+                              {h.title}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  ) : (
+                    <Text
+                      style={[
+                        styles.emptyHint,
+                        { color: theme.mutedText },
+                      ]}
+                    >
+                      Add a habit to share this card.
+                    </Text>
+                  )}
+                </>
+              )}
+
+              <View style={[styles.shareToggleRow, ANDROID && styles.noGap]}>
+                <Text style={[styles.shareToggleLabel, { color: theme.text }]}>
+                  Watermark
+                </Text>
+                <Pressable
+                  onPress={() => setShareWatermarkOn((v) => !v)}
+                  style={({ pressed }) => [
+                    styles.shareToggleBtn,
+                    {
+                      backgroundColor: pressed ? theme.border : theme.bg,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.shareToggleText, { color: theme.text }]}>
+                    {shareWatermarkOn ? "On" : "Off"}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
+                <Pressable
+                  onPress={() => setShareOpen(false)}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    {
+                      backgroundColor: pressed ? theme.border : theme.bg,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
+                    Cancel
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleSharePress}
+                  disabled={shareBusy || shareDisabled}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    ANDROID && styles.ml10,
+                    {
+                      backgroundColor: pressed
+                        ? theme.primaryPressed
+                        : theme.primary,
+                      borderColor: theme.primary,
+                      opacity: shareBusy || shareDisabled ? 0.6 : 1,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.modalBtnText,
+                      { color: theme.primaryTextOn },
+                    ]}
+                  >
+                    {shareBusy ? "Preparing..." : "Share"}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <ViewShot
+                ref={shareShotRef}
+                options={{
+                  format: "png",
+                  quality: 1,
+                  result: "tmpfile",
+                  width: shareSize.width,
+                  height: shareSize.height,
+                }}
+                style={[
+                  styles.shareShot,
+                  { width: shareSize.width, height: shareSize.height },
+                ]}
+                collapsable={false}
+              >
+                {shareCard}
+              </ViewShot>
+            </View>
+          </View>
+        </Modal>
+        {/* Template Packs */}
+        <Modal
+          visible={templatePacksOpen}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setTemplatePacksOpen(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View
+              style={[
+                styles.modalCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Template Packs
+              </Text>
+              <Text
+                style={[
+                  styles.modalSub,
+                  { color: theme.mutedText, marginTop: 8, lineHeight: 18 },
+                ]}
+              >
+                Add a preset set of habits and goals with one tap.
+              </Text>
+
+              <ScrollView
+                style={{ marginTop: 12, maxHeight: 420 }}
+                contentContainerStyle={styles.packList}
+              >
+                {TEMPLATE_PACKS.map((pack) => {
+                  const isPreview = templatePackPreview === pack.id;
+                  return (
+                    <View
+                      key={pack.id}
+                      style={[
+                        styles.packCard,
+                        {
+                          backgroundColor: theme.bg,
+                          borderColor: theme.border,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.packTitle, { color: theme.text }]}>
+                        {pack.name}
+                      </Text>
+                      <Text
+                        style={[styles.packDesc, { color: theme.mutedText }]}
+                      >
+                        {pack.description}
+                      </Text>
+                      <Text
+                        style={[styles.packMeta, { color: theme.mutedText }]}
+                      >
+                        {pack.habits.length} habits, {pack.goals.length} goals
+                      </Text>
+
+                      {isPreview && (
+                        <View style={styles.packPreview}>
+                          <Text
+                            style={[
+                              styles.packPreviewTitle,
+                              { color: theme.text },
+                            ]}
+                          >
+                            Habits
+                          </Text>
+                          {(pack.habits || []).map((h) => (
+                            <Text
+                              key={h.title}
+                              style={[
+                                styles.packPreviewItem,
+                                { color: theme.mutedText },
+                              ]}
+                            >
+                              - {h.title}
+                            </Text>
+                          ))}
+                          <Text
+                            style={[
+                              styles.packPreviewTitle,
+                              { color: theme.text, marginTop: 8 },
+                            ]}
+                          >
+                            Goals
+                          </Text>
+                          {(pack.goals || []).map((g) => (
+                            <Text
+                              key={g.title}
+                              style={[
+                                styles.packPreviewItem,
+                                { color: theme.mutedText },
+                              ]}
+                            >
+                              - {g.title}
+                            </Text>
+                          ))}
+                        </View>
+                      )}
+
+                      <View style={[styles.packActions, ANDROID && styles.noGap]}>
+                        <Pressable
+                          onPress={() =>
+                            setTemplatePackPreview(
+                              isPreview ? null : pack.id
+                            )
+                          }
+                          style={({ pressed }) => [
+                            styles.modalBtn,
+                            {
+                              backgroundColor: pressed
+                                ? theme.border
+                                : theme.bg,
+                              borderColor: theme.border,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[styles.modalBtnText, { color: theme.text }]}
+                          >
+                            {isPreview ? "Hide" : "Preview"}
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() => handleAddTemplatePack(pack)}
+                          style={({ pressed }) => [
+                            styles.modalBtn,
+                            ANDROID && styles.ml10,
+                            {
+                              backgroundColor: pressed
+                                ? theme.primaryPressed
+                                : theme.primary,
+                              borderColor: theme.primary,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.modalBtnText,
+                              { color: theme.primaryTextOn },
+                            ]}
+                          >
+                            Add Pack
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+
+              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
+                <Pressable
+                  onPress={() => setTemplatePacksOpen(false)}
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    {
+                      backgroundColor: pressed ? theme.border : theme.bg,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
+                    Close
                   </Text>
                 </Pressable>
               </View>
@@ -3896,6 +4653,11 @@ const styles = StyleSheet.create({
     minWidth: 110,
   },
   secondaryBtnText: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
+  shareBtnInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
 
   divider: (theme) => ({
     marginTop: 16,
@@ -3941,6 +4703,45 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 0.2,
   },
+  shareOptionsRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  shareOptionChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  shareOptionText: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
+  sharePickRow: { paddingRight: 10, gap: 10 },
+  sharePickChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight: 10,
+  },
+  sharePickText: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
+  shareToggleRow: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  shareToggleLabel: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
+  shareToggleBtn: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  shareToggleText: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
+  shareShot: { position: "absolute", left: -9999, top: -9999 },
+  emptyHint: { marginTop: 8, fontSize: 12, fontWeight: "700" },
 
   habitsHeaderGrid: {
     marginTop: 12,
@@ -4006,6 +4807,16 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 0.2,
   },
+  toastWrap: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  toastText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
 
   modalBackdrop: {
     flex: 1,
@@ -4061,6 +4872,35 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 0.2,
   },
+  packRow: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  packSub: { marginTop: 6, fontSize: 12, fontWeight: "700" },
+  packBtn: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  packBtnText: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
+  packList: { paddingBottom: 10, gap: 12 },
+  packCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 12,
+  },
+  packTitle: { fontSize: 15, fontWeight: "900", letterSpacing: 0.2 },
+  packDesc: { marginTop: 4, fontSize: 12, fontWeight: "700" },
+  packMeta: { marginTop: 6, fontSize: 12, fontWeight: "800" },
+  packPreview: { marginTop: 10 },
+  packPreviewTitle: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
+  packPreviewItem: { marginTop: 4, fontSize: 12, fontWeight: "700" },
+  packActions: { marginTop: 12, flexDirection: "row", gap: 10 },
 
   typeRow: { marginTop: 10, flexDirection: "row", gap: 10 },
   pill: {
