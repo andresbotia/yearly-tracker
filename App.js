@@ -40,6 +40,7 @@ import {
 import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
 import HabitRow from "./components/HabitRow";
+import HabitHistory from "./components/HabitHistory";
 import {
   THEMES,
   makeTheme,
@@ -325,6 +326,7 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [activeTab, setActiveTab] = useState("habits");
   const [goals, setGoals] = useState([]);
+  const [historyYear, setHistoryYear] = useState(year);
 
   // Theme selection can be:
   // - built-in id (string)
@@ -477,6 +479,7 @@ export default function App() {
     () => makeTheme(themeChoice, customThemes),
     [themeChoice, customThemes],
   );
+  const todayDate = useMemo(() => new Date(todayTick), [todayTick]);
   const dates = useMemo(
     () => lastNDays(5, new Date(todayTick)),
     [activeTab, todayTick],
@@ -1447,6 +1450,7 @@ export default function App() {
             Goals
           </Text>
         </Pressable>
+
       </View>
 
       {activeTab === "goals" ? (
@@ -1517,17 +1521,29 @@ export default function App() {
             </Pressable>
           </View>
         </>
-      ) : (
+      ) : activeTab === "habits" ? (
         <>
           <View style={styles.habitsHeaderGrid}>
             <View style={{ width: LABEL_W, paddingRight: LABEL_GAP }}>
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[styles.monthTitle, { color: theme.text }]}
+              <Pressable
+                onPress={() => {
+                  setHistoryYear(todayDate.getFullYear());
+                  setActiveTab("history");
+                }}
+                style={({ pressed }) => [
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="View habit history for this month"
               >
-                {monthName(new Date(todayTick))}
-              </Text>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[styles.monthTitle, { color: theme.text }]}
+                >
+                  {monthName(new Date(todayTick))}
+                </Text>
+              </Pressable>
             </View>
 
             <View style={styles.daysRow}>
@@ -1543,7 +1559,7 @@ export default function App() {
 
           <View style={styles.divider(theme)} />
         </>
-      )}
+      ) : null}
     </View>
   );
 
@@ -1606,6 +1622,17 @@ export default function App() {
               />
             )}
           />
+        ) : activeTab === "history" ? (
+          <ScrollView contentContainerStyle={styles.listContent}>
+            {topHeader}
+            <HabitHistory
+              theme={theme}
+              habits={habits}
+              historyYear={historyYear}
+              onBack={() => setActiveTab("habits")}
+              todayDate={todayDate}
+            />
+          </ScrollView>
         ) : (
           <DraggableFlatList
             activationDistance={12}
@@ -3671,6 +3698,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     flexShrink: 1,
   },
+
 
   daysRow: { flexDirection: "row", width: SQUARE * 5 },
   dayCell: { width: SQUARE, alignItems: "center", justifyContent: "center" },
