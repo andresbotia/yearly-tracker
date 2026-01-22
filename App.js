@@ -245,6 +245,22 @@ function lastNDays(n, baseDate = new Date()) {
   return out;
 }
 
+function streakFromChecks(checks, baseDate = new Date()) {
+  let streak = 0;
+  const today = new Date(baseDate);
+  today.setHours(12, 0, 0, 0);
+
+  for (let i = 0; i < 366; i++) {
+    const dt = new Date(today);
+    dt.setDate(today.getDate() - i);
+    const k = dateKey(dt);
+    const v = (checks || {})[k] || 0;
+    if (v > 0) streak += 1;
+    else break;
+  }
+  return streak;
+}
+
 function isHex6(v) {
   const s = String(v ?? "").trim();
   return /^#?[0-9a-fA-F]{6}$/.test(s);
@@ -498,6 +514,53 @@ export default function App() {
     if (!hideCompleted) return goals;
     return goals.filter((g) => !isGoalComplete(g));
   }, [goals, hideCompleted]);
+
+  const todayKey = useMemo(() => dateKey(todayDate), [todayDate]);
+
+  const habitsSummary = useMemo(() => {
+    let good = 0;
+    let bad = 0;
+    let missed = 0;
+    habits.forEach((h) => {
+      const v = (h.checks || {})[todayKey] || 0;
+      if (v === 1) good += 1;
+      else if (v === 2) bad += 1;
+      else missed += 1;
+    });
+    return { good, bad, missed };
+  }, [habits, todayKey]);
+
+  const habitsMaxStreak = useMemo(() => {
+    if (!habits.length) return 0;
+    return habits.reduce((max, h) => {
+      const next = streakFromChecks(h.checks || {}, todayDate);
+      return Math.max(max, next);
+    }, 0);
+  }, [habits, todayDate]);
+
+  const goalsSummary = useMemo(() => {
+    const complete = goals.filter((g) => isGoalComplete(g)).length;
+    const inProgress = goals.length - complete;
+    let nextGoal = null;
+    let nextPct = 0;
+
+    if (inProgress > 0) {
+      let best = null;
+      let bestPct = -1;
+      goals.forEach((g) => {
+        if (isGoalComplete(g)) return;
+        const pct = goalPercent(g);
+        if (pct > bestPct) {
+          best = g;
+          bestPct = pct;
+        }
+      });
+      nextGoal = best;
+      nextPct = Math.round(bestPct);
+    }
+
+    return { complete, inProgress, nextGoal, nextPct };
+  }, [goals]);
 
   const WidgetBridge = useMemo(() => {
     if (Platform.OS !== "ios") return null;
@@ -1388,6 +1451,15 @@ export default function App() {
     pushWidgets(goals, habits);
   }
 
+  const todaySummaryText = `Today: ${habitsSummary.good} good • ${habitsSummary.bad} bad • ${habitsSummary.missed} missed`;
+  const streakSummaryText = `Streak: ${habitsMaxStreak} day${
+    habitsMaxStreak === 1 ? "" : "s"
+  }`;
+  const goalsSummaryText = `${goalsSummary.complete} complete • ${goalsSummary.inProgress} in progress`;
+  const nextGoalText = goalsSummary.nextGoal
+    ? `Next goal: ${goalsSummary.nextGoal.title} (${goalsSummary.nextPct}%)`
+    : `Next goal: ${goals.length ? "All complete" : "Add a goal"}`;
+
   const topHeader = (
     <View style={styles.header}>
       <Text style={[styles.appTitle, { color: theme.text }]}>
@@ -1456,6 +1528,105 @@ export default function App() {
         </View>
       )}
 
+      {activeTab !== "history" && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipScroll}
+          contentContainerStyle={[styles.chipRow, ANDROID && styles.noGap]}
+        >
+          {activeTab === "habits" ? (
+            <>
+              <View
+                style={[
+                  styles.chip,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                ]}
+              >
+                <Ionicons
+                  name="calendar-outline"
+                  size={16}
+                  color={theme.primary}
+                  style={styles.chipIcon}
+                />
+                <Text
+                  style={[styles.chipText, { color: theme.text }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {todaySummaryText}
+                </Text>
+              </View>
+              {/* <View
+                style={[
+                  styles.chip,
+                  ANDROID && styles.ml10,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                ]}
+              >
+                <Ionicons
+                  name="flame-outline"
+                  size={16}
+                  color={theme.primary}
+                  style={styles.chipIcon}
+                />
+                <Text
+                  style={[styles.chipText, { color: theme.text }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {streakSummaryText}
+                </Text>
+              </View> */}
+            </>
+          ) : (
+            <>
+              {/* <View
+                style={[
+                  styles.chip,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                ]}
+              >
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={16}
+                  color={theme.primary}
+                  style={styles.chipIcon}
+                />
+                <Text
+                  style={[styles.chipText, { color: theme.text }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {goalsSummaryText}
+                </Text>
+              </View> */}
+              {/* <View
+                style={[
+                  styles.chip,
+                  ANDROID && styles.ml10,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                ]}
+              >
+                <Ionicons
+                  name="flag-outline"
+                  size={16}
+                  color={theme.primary}
+                  style={styles.chipIcon}
+                />
+                <Text
+                  style={[styles.chipText, { color: theme.text }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {nextGoalText}
+                </Text>
+              </View> */}
+            </>
+          )}
+        </ScrollView>
+      )}
+
       {activeTab === "goals" ? (
         <>
           <View style={styles.ringCard(theme)}>
@@ -1466,13 +1637,34 @@ export default function App() {
               theme={theme}
               label="Year completion"
             />
+
             <View style={{ marginTop: 12, alignItems: "center" }}>
-              <Text style={[styles.bigPct, { color: theme.text }]}>
+              {/* <Text style={[styles.bigPct, { color: theme.text }]}>
                 {Math.round(yearlyPercent)}%
               </Text>
               <Text style={[styles.bigPctSub, { color: theme.mutedText }]}>
                 average across goals
-              </Text>
+              </Text> */}
+              <View
+                style={[
+                  styles.chip,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                ]}
+              >
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={16}
+                  color={theme.primary}
+                  style={styles.chipIcon}
+                />
+                <Text
+                  style={[styles.chipText, { color: theme.text }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {goalsSummaryText}
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -1533,9 +1725,7 @@ export default function App() {
                   setHistoryYear(todayDate.getFullYear());
                   setActiveTab("history");
                 }}
-                style={({ pressed }) => [
-                  { opacity: pressed ? 0.7 : 1 },
-                ]}
+                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
                 accessibilityRole="button"
                 accessibilityLabel="View habit history for this month"
               >
@@ -1547,6 +1737,37 @@ export default function App() {
                   {monthName(new Date(todayTick))}
                 </Text>
               </Pressable>
+
+              <View style={[styles.legendRow, ANDROID && styles.noGap]}>
+                <View style={styles.legendItem}>
+                  <View
+                    style={[
+                      styles.legendDot,
+                      {
+                        backgroundColor: theme.primary,
+                        borderColor: theme.primary,
+                      },
+                    ]}
+                  />
+                  <Text style={[styles.legendText, { color: theme.mutedText }]}>
+                    Good
+                  </Text>
+                </View>
+                <View style={[styles.legendItem, ANDROID && styles.ml10]}>
+                  <View
+                    style={[
+                      styles.legendDot,
+                      {
+                        backgroundColor: theme.danger,
+                        borderColor: theme.danger,
+                      },
+                    ]}
+                  />
+                  <Text style={[styles.legendText, { color: theme.mutedText }]}>
+                    Bad
+                  </Text>
+                </View>
+              </View>
             </View>
 
             <View style={styles.daysRow}>
@@ -3612,6 +3833,30 @@ const styles = StyleSheet.create({
   },
   tabText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
 
+  chipScroll: { marginTop: 10 },
+  chipRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 6,
+    paddingRight: 6,
+  },
+  chip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.2,
+    flexShrink: 1,
+  },
+  chipIcon: { marginRight: 8 },
+
   ringCard: (theme) => ({
     marginTop: 16,
     borderRadius: 22,
@@ -3622,6 +3867,13 @@ const styles = StyleSheet.create({
     borderColor: theme.border,
     alignItems: "center",
   }),
+  ringCard2: {
+    marginTop: 16,
+    borderRadius: 22,
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+    alignItems: "center",
+  },
   bigPct: { fontSize: 22, fontWeight: "900", letterSpacing: 0.2 },
   bigPctSub: { marginTop: 4, fontSize: 12, fontWeight: "700" },
 
@@ -3702,6 +3954,21 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
 
+  legendRow: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  legendItem: { flexDirection: "row", alignItems: "center" },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+    borderWidth: 1,
+    marginRight: 6,
+  },
+  legendText: { fontSize: 11, fontWeight: "800", letterSpacing: 0.2 },
 
   daysRow: { flexDirection: "row", width: SQUARE * 5 },
   dayCell: { width: SQUARE, alignItems: "center", justifyContent: "center" },

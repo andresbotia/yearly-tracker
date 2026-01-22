@@ -166,7 +166,7 @@ export default function HabitHistory({
                     {habits.map((habit, index) => {
                       const doneCount = month.days.reduce((acc, d) => {
                         const v = (habit.checks || {})[d.key] || 0;
-                        return v === 1 ? acc + 1 : acc;
+                        return v > 0 ? acc + 1 : acc;
                       }, 0);
 
                       return (
