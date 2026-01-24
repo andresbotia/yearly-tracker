@@ -616,7 +616,8 @@ export default function App() {
   }, [goals]);
 
   const shareOption = useMemo(
-    () => SHARE_OPTIONS.find((opt) => opt.id === shareOptionId) || SHARE_OPTIONS[0],
+    () =>
+      SHARE_OPTIONS.find((opt) => opt.id === shareOptionId) || SHARE_OPTIONS[0],
     [shareOptionId],
   );
   const shareSize = shareOption
@@ -749,10 +750,10 @@ export default function App() {
           widgetType: "goal_highlight",
         });
 
-        console.log(
-          "ANDROID WIDGET PAYLOAD (base)",
-          JSON.stringify(basePayload),
-        );
+        // console.log(
+        //   "ANDROID WIDGET PAYLOAD (base)",
+        //   JSON.stringify(basePayload),
+        // );
       }
     } catch (e) {
       console.log("Widget sync failed:", e);
@@ -1297,22 +1298,30 @@ export default function App() {
 
   async function handleSharePress() {
     if (!shareOption) return;
-    if (shareOption.kind === "goal" && !selectedShareGoal) {
-      showToast("Add a goal to share.");
-      return;
-    }
-    if (shareOption.kind === "habit" && !selectedShareHabit) {
-      showToast("Add a habit to share.");
-      return;
-    }
+
+    // Prevent double-taps
+    if (shareBusy) return;
 
     setShareBusy(true);
+
+    // Let the UI settle before capture (keeps Android happy)
+    await new Promise((r) => requestAnimationFrame(r));
+    await new Promise((r) => requestAnimationFrame(r));
+
     const ok = await captureAndShare(shareShotRef, {
       message: "Made with Yearly Tracker",
     });
+
     setShareBusy(false);
-    if (ok) await hapticSuccess();
-    else showToast("Share failed. Try again.");
+
+    if (ok) {
+      await hapticSuccess();
+
+      // Optional: close AFTER the share sheet is triggered successfully
+      // setShareOpen(false);
+    } else {
+      showToast("Share failed. Try again.");
+    }
   }
 
   async function handleAddGoal() {
@@ -1852,7 +1861,7 @@ export default function App() {
                 Add Goal
               </Text>
             </Pressable>
-            <Pressable
+            {/* <Pressable
               onPress={() => setShareOpen(true)}
               style={({ pressed }) => [
                 styles.shareIconBtn,
@@ -1866,7 +1875,7 @@ export default function App() {
               accessibilityLabel="Share"
             >
               <Ionicons name="share-outline" size={18} color={theme.text} />
-            </Pressable>
+            </Pressable> */}
           </View>
 
           <View style={styles.divider(theme)} />

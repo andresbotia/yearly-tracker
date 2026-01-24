@@ -22,7 +22,7 @@
     },
     "android": {
       "package": "com.andresbotia.yearlytracker",
-      "versionCode": 16,
+      "versionCode": 18,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#F5F7FA"
