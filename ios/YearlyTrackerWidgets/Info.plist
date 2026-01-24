@@ -15,7 +15,7 @@
     <key>RCTNewArchEnabled</key>
     <true/>
     <key>CFBundleVersion</key>
-    <string>6</string>
+    <string>7</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0.3</string>
   </dict>
