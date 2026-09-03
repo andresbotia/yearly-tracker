@@ -1,12 +1,13 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
+import { useFontsLoaded } from "../../utils/fonts";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
-export function asciiBar(percent, width = 24, fill = "█", empty = "░") {
+export function asciiBar(percent, width = 24, fill = "+", empty = ".") {
   const pct = clamp(Number(percent) || 0, 0, 100);
   const filled = Math.round((pct / 100) * width);
   return `${fill.repeat(filled)}${empty.repeat(Math.max(0, width - filled))}`;
@@ -17,8 +18,9 @@ export default function EditorialProgress({
   theme,
   label,
   width = 24,
-  fontsLoaded = false,
+  fontsLoaded,
 }) {
+  const loaded = useFontsLoaded() || !!fontsLoaded;
   const pct = clamp(Number(percent) || 0, 0, 100);
   const bar = asciiBar(pct, width);
   const ink = theme?.text || "#1c1916";
@@ -35,7 +37,7 @@ export default function EditorialProgress({
         <Text
           style={[
             styles.label,
-            { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
+            { color: muted, fontFamily: fontFamily("data", loaded) },
           ]}
         >
           {label}
@@ -44,7 +46,7 @@ export default function EditorialProgress({
       <Text
         style={[
           styles.bar,
-          { color: ink, fontFamily: fontFamily("data", fontsLoaded) },
+          { color: ink, fontFamily: fontFamily("data", loaded) },
         ]}
         numberOfLines={1}
       >
@@ -53,7 +55,7 @@ export default function EditorialProgress({
       <Text
         style={[
           styles.pct,
-          { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
+          { color: ink, fontFamily: fontFamily("display", loaded) },
         ]}
       >
         {Math.round(pct)}%

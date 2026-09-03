@@ -37,13 +37,23 @@ import {
   setDebugWidgetTextAndroid,
 } from "./native/widgetBridge.android";
 
+import { useFonts } from "expo-font";
+import { Fraunces_700Bold } from "@expo-google-fonts/fraunces";
+import { SourceSerif4_400Regular } from "@expo-google-fonts/source-serif-4";
+import { IBMPlexMono_400Regular } from "@expo-google-fonts/ibm-plex-mono";
+
 import GoalItem from "./components/GoalItem";
 import HabitRow from "./components/HabitRow";
 import HabitHistory from "./components/HabitHistory";
 import ArtHero from "./components/art/ArtHero";
-import EditorialProgress from "./components/editorial/EditorialProgress";
+import EditorialProgress, {
+  asciiBar,
+} from "./components/editorial/EditorialProgress";
 import MetadataLabel from "./components/editorial/MetadataLabel";
 import SectionRule from "./components/editorial/SectionRule";
+import EditorialButton from "./components/editorial/EditorialButton";
+import EditorialEmpty from "./components/editorial/EditorialEmpty";
+import ThemeGallery from "./components/theme/ThemeGallery";
 import {
   THEMES,
   makeTheme,
@@ -51,6 +61,8 @@ import {
   buildPaletteFromPrimary,
   ensurePaletteComplete,
 } from "./utils/theme";
+import { FontsProvider } from "./utils/fonts";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "./utils/tokens";
 import {
   loadGoalsWithMeta,
   saveGoals,
@@ -64,7 +76,7 @@ import {
   loadCustomThemes,
   saveCustomThemes,
 } from "./utils/storage";
-import { Ionicons } from "@expo/vector-icons";
+
 import Constants from "expo-constants";
 import {
   getWeeklyRecap,
@@ -394,6 +406,11 @@ function normalizeHex6(input) {
 
 export default function App() {
   const year = new Date().getFullYear();
+  const [fontsLoaded] = useFonts({
+    Fraunces_700Bold,
+    SourceSerif4_400Regular,
+    IBMPlexMono_400Regular,
+  });
 
   const [ready, setReady] = useState(false);
   const [activeTab, setActiveTab] = useState("habits");
@@ -1646,36 +1663,50 @@ export default function App() {
     ? `Next goal: ${goalsSummary.nextGoal.title} (${goalsSummary.nextPct}%)`
     : `Next goal: ${goals.length ? "All complete" : "Add a goal"}`;
 
+  const openThemePicker = () => {
+    setCustomizeOpen(true);
+    setThemePage("pick");
+  };
+
   const topHeader = (
     <View style={styles.header}>
-      <Text style={[styles.appTitle, { color: theme.text }]}>
+      <MetadataLabel theme={theme}>
+        {`YEARLY TRACKER  /  ${year}`}
+      </MetadataLabel>
+      <Text
+        style={[
+          styles.appTitle,
+          {
+            color: theme.text,
+            fontFamily: fontFamily("display", fontsLoaded),
+          },
+        ]}
+      >
         Yearly Tracker
       </Text>
-      <Text style={[styles.yearText, { color: theme.mutedText }]}>{year}</Text>
 
       {activeTab !== "history" && (
-        <View style={[styles.tabRow, ANDROID && styles.noGap]}>
+        <View style={styles.tabRow}>
           <Pressable
             onPress={() => {
               closeOpenHabitSwipe();
               setActiveTab("habits");
             }}
             style={[
-              styles.tabPill,
-              {
-                backgroundColor:
-                  activeTab === "habits" ? theme.primary : theme.card,
-                borderColor:
-                  activeTab === "habits" ? theme.primary : theme.border,
+              styles.tabItem,
+              activeTab === "habits" && {
+                borderBottomColor: theme.text,
               },
             ]}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === "habits" }}
           >
             <Text
               style={[
                 styles.tabText,
                 {
-                  color:
-                    activeTab === "habits" ? theme.primaryTextOn : theme.text,
+                  color: activeTab === "habits" ? theme.text : theme.mutedText,
+                  fontFamily: fontFamily("data", fontsLoaded),
                 },
               ]}
             >
@@ -1689,22 +1720,20 @@ export default function App() {
               setActiveTab("goals");
             }}
             style={[
-              styles.tabPill,
-              ANDROID && styles.ml10,
-              {
-                backgroundColor:
-                  activeTab === "goals" ? theme.primary : theme.card,
-                borderColor:
-                  activeTab === "goals" ? theme.primary : theme.border,
+              styles.tabItem,
+              activeTab === "goals" && {
+                borderBottomColor: theme.text,
               },
             ]}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === "goals" }}
           >
             <Text
               style={[
                 styles.tabText,
                 {
-                  color:
-                    activeTab === "goals" ? theme.primaryTextOn : theme.text,
+                  color: activeTab === "goals" ? theme.text : theme.mutedText,
+                  fontFamily: fontFamily("data", fontsLoaded),
                 },
               ]}
             >
@@ -1714,153 +1743,62 @@ export default function App() {
         </View>
       )}
 
-      {activeTab !== "history" && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipScroll}
-          contentContainerStyle={[styles.chipRow, ANDROID && styles.noGap]}
-        >
-          {activeTab === "habits" ? (
-            <>
-              <View
-                style={[
-                  styles.chip,
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                ]}
-              >
-                <Ionicons
-                  name="calendar-outline"
-                  size={16}
-                  color={theme.primary}
-                  style={styles.chipIcon}
-                />
-                <Text
-                  style={[styles.chipText, { color: theme.text }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {todaySummaryText}
-                </Text>
-              </View>
-              {/* <View
-                style={[
-                  styles.chip,
-                  ANDROID && styles.ml10,
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                ]}
-              >
-                <Ionicons
-                  name="flame-outline"
-                  size={16}
-                  color={theme.primary}
-                  style={styles.chipIcon}
-                />
-                <Text
-                  style={[styles.chipText, { color: theme.text }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {streakSummaryText}
-                </Text>
-              </View> */}
-            </>
-          ) : (
-            <>
-              {/* <View
-                style={[
-                  styles.chip,
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                ]}
-              >
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={16}
-                  color={theme.primary}
-                  style={styles.chipIcon}
-                />
-                <Text
-                  style={[styles.chipText, { color: theme.text }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {goalsSummaryText}
-                </Text>
-              </View> */}
-              {/* <View
-                style={[
-                  styles.chip,
-                  ANDROID && styles.ml10,
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                ]}
-              >
-                <Ionicons
-                  name="flag-outline"
-                  size={16}
-                  color={theme.primary}
-                  style={styles.chipIcon}
-                />
-                <Text
-                  style={[styles.chipText, { color: theme.text }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {nextGoalText}
-                </Text>
-              </View> */}
-            </>
-          )}
-        </ScrollView>
-      )}
-
       {activeTab === "goals" ? (
         <>
-          <View style={{ marginTop: 18 }}>
+          <View style={{ marginTop: SPACE.md }}>
             <MetadataLabel theme={theme}>
               {`YEARLY  /  ${year}  DAY ${dayOfYear(todayDate)}`}
             </MetadataLabel>
           </View>
 
-          <ArtHero theme={theme} />
+          <ArtHero theme={theme} fontsLoaded={fontsLoaded} />
 
-          <View style={{ marginTop: 18 }}>
+          <View style={{ marginTop: SPACE.md }}>
             <EditorialProgress
               percent={yearlyPercent}
               theme={theme}
               label="Year progress"
+              fontsLoaded={fontsLoaded}
             />
             <Text
               style={[
                 styles.bigPctSub,
-                { color: theme.mutedText, marginTop: 8 },
+                {
+                  color: theme.mutedText,
+                  marginTop: SPACE.xs,
+                  fontFamily: fontFamily("data", fontsLoaded),
+                },
               ]}
             >
               {goalsSummaryText}
             </Text>
           </View>
 
-          <View style={[styles.actionsRow, ANDROID && styles.noGap]}>
-            <Pressable
+          <View style={styles.actionsRow}>
+            <EditorialButton
+              label="Add goal"
+              theme={theme}
+              variant="secondary"
               onPress={() => setAddOpen(true)}
-              style={({ pressed }) => [
-                styles.editorialAction,
-                {
-                  borderColor: theme.text,
-                  opacity: pressed ? 0.65 : 1,
-                },
-              ]}
-            >
-              <Text
-                style={[styles.editorialActionText, { color: theme.text }]}
-              >
-                Add goal
-              </Text>
-            </Pressable>
+              style={{ flex: 1 }}
+            />
+            <EditorialButton
+              label="Share"
+              theme={theme}
+              variant="ghost"
+              onPress={() => setShareOpen(true)}
+            />
+            <EditorialButton
+              label="Theme"
+              theme={theme}
+              variant="ghost"
+              onPress={openThemePicker}
+            />
           </View>
 
           <SectionRule theme={theme} />
 
-          <View style={[styles.sectionHeaderRow, ANDROID && styles.noGap]}>
+          <View style={styles.sectionHeaderRow}>
             <MetadataLabel theme={theme}>Goals</MetadataLabel>
 
             <Pressable
@@ -1872,7 +1810,15 @@ export default function App() {
               accessibilityRole="button"
               accessibilityLabel="Toggle hide completed goals"
             >
-              <Text style={[styles.editorialToggle, { color: theme.text }]}>
+              <Text
+                style={[
+                  styles.editorialToggle,
+                  {
+                    color: theme.text,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+              >
                 {hideCompleted ? "Show completed" : "Hide completed"}
               </Text>
             </Pressable>
@@ -1880,6 +1826,14 @@ export default function App() {
         </>
       ) : activeTab === "habits" ? (
         <>
+          <View style={{ marginTop: SPACE.md }}>
+            <MetadataLabel theme={theme}>
+              {`LEDGER  /  ${monthName(new Date(todayTick)).toUpperCase()}  DAY ${dayOfYear(todayDate)}`}
+            </MetadataLabel>
+          </View>
+
+          <ArtHero theme={theme} fontsLoaded={fontsLoaded} />
+
           <View style={styles.habitsHeaderGrid}>
             <View style={{ width: LABEL_W, paddingRight: LABEL_GAP }}>
               <Pressable
@@ -1894,56 +1848,64 @@ export default function App() {
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="tail"
-                  style={[styles.monthTitle, { color: theme.text }]}
+                  style={[
+                    styles.monthTitle,
+                    {
+                      color: theme.text,
+                      fontFamily: fontFamily("display", fontsLoaded),
+                    },
+                  ]}
                 >
                   {monthName(new Date(todayTick))}
                 </Text>
               </Pressable>
 
-              <View style={[styles.legendRow, ANDROID && styles.noGap]}>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[
-                      styles.legendDot,
-                      {
-                        backgroundColor: theme.primary,
-                        borderColor: theme.primary,
-                      },
-                    ]}
-                  />
-                  <Text style={[styles.legendText, { color: theme.mutedText }]}>
-                    Good
-                  </Text>
-                </View>
-                <View style={[styles.legendItem, ANDROID && styles.ml10]}>
-                  <View
-                    style={[
-                      styles.legendDot,
-                      {
-                        backgroundColor: theme.danger,
-                        borderColor: theme.danger,
-                      },
-                    ]}
-                  />
-                  <Text style={[styles.legendText, { color: theme.mutedText }]}>
-                    Bad
-                  </Text>
-                </View>
-              </View>
+              <Text
+                style={[
+                  styles.legendText,
+                  {
+                    color: theme.mutedText,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+              >
+                . empty   + good   × bad
+              </Text>
+              <Text
+                style={[
+                  styles.legendText,
+                  {
+                    color: theme.mutedText,
+                    marginTop: 4,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+                numberOfLines={2}
+              >
+                {todaySummaryText}
+              </Text>
             </View>
 
             <View style={styles.daysRow}>
               {dates.map((d) => (
                 <View key={d.key} style={styles.dayCell}>
-                  <Text style={[styles.dayNum, { color: theme.mutedText }]}>
-                    {d.num}
+                  <Text
+                    style={[
+                      styles.dayNum,
+                      {
+                        color: theme.mutedText,
+                        fontFamily: fontFamily("data", fontsLoaded),
+                      },
+                    ]}
+                  >
+                    {String(d.num).padStart(2, "0")}
                   </Text>
                 </View>
               ))}
             </View>
           </View>
 
-          <View style={styles.divider(theme)} />
+          <SectionRule theme={theme} />
         </>
       ) : null}
     </View>
@@ -1951,9 +1913,26 @@ export default function App() {
 
   if (!ready) {
     return (
-      <GestureHandlerRootView style={styles.safe}>
-        <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} />
-      </GestureHandlerRootView>
+      <FontsProvider loaded={fontsLoaded}>
+        <GestureHandlerRootView style={styles.safe}>
+          <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
+            <View style={styles.loadingWrap}>
+              <MetadataLabel theme={theme}>Yearly Tracker</MetadataLabel>
+              <Text
+                style={[
+                  styles.loadingTitle,
+                  {
+                    color: theme.text,
+                    fontFamily: fontFamily("display", fontsLoaded),
+                  },
+                ]}
+              >
+                Opening the ledger
+              </Text>
+            </View>
+          </SafeAreaView>
+        </GestureHandlerRootView>
+      </FontsProvider>
     );
   }
 
@@ -1966,10 +1945,10 @@ export default function App() {
     _isCustom: true,
   }));
 
-  const allThemeCards = [...customThemeCards, ...THEMES];
   const createPreview = currentCreatePaletteDraft();
 
   return (
+    <FontsProvider loaded={fontsLoaded}>
     <GestureHandlerRootView style={styles.safe}>
       <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
         {activeTab === "goals" ? (
@@ -2008,6 +1987,14 @@ export default function App() {
                 dragging={isActive}
               />
             )}
+            ListEmptyComponent={
+              <EditorialEmpty
+                theme={theme}
+                kicker="Catalogue"
+                title="No goals yet"
+                body="Add a goal to start this year's index."
+              />
+            }
           />
         ) : activeTab === "history" ? (
           <ScrollView contentContainerStyle={styles.listContent}>
@@ -2055,50 +2042,36 @@ export default function App() {
                 onSwipeClose={handleHabitSwipeClose}
               />
             )}
+            ListEmptyComponent={
+              <EditorialEmpty
+                theme={theme}
+                kicker="Ledger"
+                title="No habits yet"
+                body="Add a habit. Tap cycles . → + → × → ."
+              />
+            }
             ListFooterComponent={
-              <View style={{ marginTop: 14 }}>
-                <View style={[styles.actionsRow, ANDROID && styles.noGap]}>
-                  <Pressable
+              <View style={{ marginTop: SPACE.md }}>
+                <View style={styles.actionsRow}>
+                  <EditorialButton
+                    label="Add habit"
+                    theme={theme}
+                    variant="secondary"
                     onPress={() => setHabitAddOpen(true)}
-                    style={({ pressed }) => [
-                      styles.primaryBtn,
-                      {
-                        backgroundColor: pressed
-                          ? theme.primaryPressed
-                          : theme.primary,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.primaryBtnText,
-                        { color: theme.primaryTextOn },
-                      ]}
-                    >
-                      Add Habit
-                    </Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => {
-                      setCustomizeOpen(true);
-                      setThemePage("pick");
-                    }}
-                    style={({ pressed }) => [
-                      styles.secondaryBtn,
-                      ANDROID && styles.ml10,
-                      {
-                        backgroundColor: pressed ? theme.border : theme.card,
-                        borderColor: theme.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.secondaryBtnText, { color: theme.text }]}
-                    >
-                      Theme
-                    </Text>
-                  </Pressable>
+                    style={{ flex: 1 }}
+                  />
+                  <EditorialButton
+                    label="Share"
+                    theme={theme}
+                    variant="ghost"
+                    onPress={() => setShareOpen(true)}
+                  />
+                  <EditorialButton
+                    label="Theme"
+                    theme={theme}
+                    variant="ghost"
+                    onPress={openThemePicker}
+                  />
                 </View>
               </View>
             }
@@ -2108,33 +2081,27 @@ export default function App() {
           <View
             style={[
               styles.undoWrap,
-              { borderColor: theme.border, backgroundColor: theme.card },
+              { borderColor: theme.text, backgroundColor: theme.card },
             ]}
           >
             <Text
-              style={[styles.undoText, { color: theme.text }]}
+              style={[
+                styles.undoText,
+                {
+                  color: theme.text,
+                  fontFamily: fontFamily("body", fontsLoaded),
+                },
+              ]}
               numberOfLines={1}
             >
               {undo.kind === "goal" ? "Goal deleted" : "Habit deleted"}
             </Text>
-
-            <Pressable
+            <EditorialButton
+              label="Undo"
+              theme={theme}
+              variant="primary"
               onPress={performUndo}
-              style={({ pressed }) => [
-                styles.undoBtn,
-                {
-                  backgroundColor: pressed
-                    ? theme.primaryPressed
-                    : theme.primary,
-                },
-              ]}
-            >
-              <Text
-                style={[styles.undoBtnText, { color: theme.primaryTextOn }]}
-              >
-                Undo
-              </Text>
-            </Pressable>
+            />
           </View>
         )}
         {!!toast && (
@@ -2142,14 +2109,20 @@ export default function App() {
             style={[
               styles.toastWrap,
               {
-                borderColor: theme.border,
+                borderColor: theme.text,
                 backgroundColor: theme.card,
                 bottom: undo ? 84 : 16,
               },
             ]}
           >
             <Text
-              style={[styles.toastText, { color: theme.text }]}
+              style={[
+                styles.toastText,
+                {
+                  color: theme.text,
+                  fontFamily: fontFamily("body", fontsLoaded),
+                },
+              ]}
               numberOfLines={2}
             >
               {toast.message}
@@ -2314,8 +2287,8 @@ export default function App() {
                   { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
                 ]}
               >
-                Tap a square to track that day. Tap cycles: Off → Good → Bad →
-                Off.
+                Tap a cell to track that day. Tap cycles: . empty → + good → ×
+                bad → . empty.
               </Text>
 
               <View style={{ marginTop: 10 }}>
@@ -3019,7 +2992,7 @@ export default function App() {
             >
               <View style={[styles.themeTopRow, ANDROID && styles.noGap]}>
                 <Text style={[styles.modalTitle, { color: theme.text }]}>
-                  Theme
+                  Art gallery
                 </Text>
 
                 {themePage === "pick" ? (
@@ -3065,120 +3038,16 @@ export default function App() {
               {themePage === "pick" ? (
                 <>
                   <Text style={[styles.modalSub, { color: theme.mutedText }]}>
-                    Pick a theme
+                    Art gallery
                   </Text>
-
-                  <ScrollView
-                    style={styles.themeScroll}
-                    contentContainerStyle={[
-                      styles.themeGrid,
-                      ANDROID && styles.noGap,
-                      ANDROID && styles.themeGridAndroid,
-                    ]}
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {allThemeCards.map((t) => {
-                      const selected = t.id === themeChoice;
-                      const isCustom = !!t._isCustom;
-
-                      return (
-                        <Pressable
-                          key={t.id}
-                          onPress={() => handlePickTheme(t.id)}
-                          style={({ pressed }) => [
-                            styles.themeCard,
-                            ANDROID && styles.themeCardAndroid,
-                            {
-                              borderColor: selected
-                                ? theme.primary
-                                : theme.border,
-                              borderWidth: selected ? 2 : 1,
-                              backgroundColor: "#FFFFFF",
-                              opacity: pressed ? 0.92 : 1,
-                            },
-                          ]}
-                        >
-                          <View
-                            style={[
-                              styles.themeHeader,
-                              ANDROID && styles.noGap,
-                            ]}
-                          >
-                            <View style={styles.themeNameWrap}>
-                              <Text
-                                numberOfLines={1}
-                                ellipsizeMode="tail"
-                                style={[styles.themeName, { color: "#000" }]}
-                              >
-                                {t.name}
-                              </Text>
-                            </View>
-
-                            {isCustom && (
-                              <Pressable
-                                onPress={(e) => {
-                                  e?.stopPropagation?.();
-                                  deleteCustomTheme(t._customId);
-                                }}
-                                style={({ pressed }) => [
-                                  styles.trashIconBtn,
-                                  {
-                                    backgroundColor: pressed ? "#eee" : "#fff",
-                                  },
-                                ]}
-                                hitSlop={10}
-                                accessibilityRole="button"
-                                accessibilityLabel={`Delete theme ${t.name}`}
-                              >
-                                <Ionicons
-                                  name="trash-outline"
-                                  size={18}
-                                  color="#111"
-                                />
-                              </Pressable>
-                            )}
-                          </View>
-
-                          <View
-                            style={[
-                              styles.swatchRow,
-                              ANDROID && styles.noGap,
-                              ANDROID && styles.swatchRowAndroid,
-                            ]}
-                          >
-                            <View
-                              style={[
-                                styles.themeSwatch,
-                                { backgroundColor: t.palette.primary },
-                              ]}
-                            />
-                            <View
-                              style={[
-                                styles.themeSwatch,
-                                { backgroundColor: t.palette.card },
-                              ]}
-                            />
-                            <View
-                              style={[
-                                styles.themeSwatch,
-                                { backgroundColor: t.palette.bg },
-                              ]}
-                            />
-                          </View>
-
-                          <Text
-                            style={[
-                              styles.themeHint,
-                              ANDROID && styles.themeHintAndroid,
-                              { color: selected ? "#000" : "#555" },
-                            ]}
-                          >
-                            {selected ? "Selected" : "Tap to apply"}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
+                  <ThemeGallery
+                    theme={theme}
+                    themeChoice={themeChoice}
+                    classicThemes={THEMES}
+                    customThemes={customThemeCards}
+                    onPick={handlePickTheme}
+                    onDeleteCustom={deleteCustomTheme}
+                  />
 
                   <View style={[styles.modalActions, ANDROID && styles.noGap]}>
                     <Pressable
@@ -3762,28 +3631,19 @@ export default function App() {
                               </Text>
                             </View>
 
-                            <View
+                            <Text
                               style={[
-                                styles.progressTrack,
+                                styles.editHint,
                                 {
-                                  backgroundColor: theme.bg,
-                                  borderColor: theme.border,
+                                  color: theme.text,
+                                  fontFamily: fontFamily("data", fontsLoaded),
+                                  letterSpacing: 1,
+                                  marginTop: 8,
                                 },
                               ]}
                             >
-                              <View
-                                style={[
-                                  styles.progressFill,
-                                  {
-                                    width: `${Math.max(
-                                      0,
-                                      Math.min(100, pct),
-                                    )}%`,
-                                    backgroundColor: theme.primary,
-                                  },
-                                ]}
-                              />
-                            </View>
+                              {asciiBar(pct, 22, "+", ".")}
+                            </Text>
                           </>
                         );
                       })()}
@@ -4017,6 +3877,7 @@ export default function App() {
         </Modal>
       </SafeAreaView>
     </GestureHandlerRootView>
+    </FontsProvider>
   );
 }
 
@@ -4024,20 +3885,52 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   listContent: { paddingHorizontal: 16, paddingBottom: 24 },
 
-  header: { paddingTop: 8, paddingBottom: 10 },
-  appTitle: { fontSize: 30, fontWeight: "900", letterSpacing: 0.2 },
+  header: { paddingTop: SPACE.xs, paddingBottom: SPACE.sm },
+  appTitle: {
+    fontSize: TYPE_SIZE.display,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+    marginTop: SPACE["2xs"],
+  },
   yearText: { marginTop: 4, fontSize: 13, fontWeight: "800" },
+  loadingWrap: {
+    paddingHorizontal: SPACE.md,
+    paddingTop: SPACE["2xl"],
+    gap: SPACE.xs,
+  },
+  loadingTitle: {
+    fontSize: TYPE_SIZE.title,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+  },
 
-  tabRow: { marginTop: 14, flexDirection: "row", gap: 10 },
+  tabRow: {
+    marginTop: SPACE.md,
+    flexDirection: "row",
+    gap: SPACE.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(28,25,22,0.18)",
+  },
+  tabItem: {
+    paddingVertical: SPACE.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: "transparent",
+  },
   tabPill: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  tabText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
+  tabText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
 
   chipScroll: { marginTop: 10 },
   chipRow: {
@@ -4083,30 +3976,38 @@ const styles = StyleSheet.create({
   bigPct: { fontSize: 22, fontWeight: "900", letterSpacing: 0.2 },
   bigPctSub: { marginTop: 4, fontSize: 12, fontWeight: "700" },
 
-  actionsRow: { marginTop: 14, flexDirection: "row", gap: 10 },
+  actionsRow: { marginTop: SPACE.md, flexDirection: "row", gap: SPACE.sm },
   primaryBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  primaryBtnText: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
+  primaryBtnText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
   secondaryBtn: {
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: "center",
     justifyContent: "center",
     minWidth: 110,
   },
-  secondaryBtnText: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
+  secondaryBtnText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
   shareIconBtn: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -4181,9 +4082,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   monthTitle: {
-    fontSize: 28,
-    fontWeight: "950",
-    letterSpacing: 0.2,
+    fontSize: TYPE_SIZE.display,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
     flexShrink: 1,
   },
 
@@ -4201,11 +4103,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginRight: 6,
   },
-  legendText: { fontSize: 11, fontWeight: "800", letterSpacing: 0.2 },
+  legendText: {
+    marginTop: SPACE["2xs"],
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.data,
+    textTransform: "uppercase",
+  },
 
   daysRow: { flexDirection: "row", width: SQUARE * 5 },
   dayCell: { width: SQUARE, alignItems: "center", justifyContent: "center" },
-  dayNum: { fontSize: 14, fontWeight: "800", letterSpacing: 0.2 },
+  dayNum: { fontSize: TYPE_SIZE.caption, fontWeight: "600", letterSpacing: TYPE_TRACK.data },
 
   bullet: { marginTop: 6, fontSize: 13, fontWeight: "800" },
 
@@ -4214,8 +4122,7 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     bottom: 16,
-    borderWidth: 1,
-    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 12,
     flexDirection: "row",
@@ -4224,51 +4131,59 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   undoText: {
-    fontSize: 13,
-    fontWeight: "900",
-    letterSpacing: 0.2,
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "400",
     flex: 1,
   },
   undoBtn: {
-    borderRadius: 14,
     paddingVertical: 10,
     paddingHorizontal: 14,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   undoBtnText: {
-    fontSize: 13,
-    fontWeight: "900",
-    letterSpacing: 0.2,
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
   },
   toastWrap: {
     position: "absolute",
     left: 16,
     right: 16,
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  toastText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
+  toastText: { fontSize: TYPE_SIZE.body, fontWeight: "400" },
 
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(28,25,22,0.35)",
     padding: 16,
     justifyContent: "center",
   },
-  modalCard: { borderWidth: 1, borderRadius: 22, padding: 16 },
-  modalTitle: { fontSize: 18, fontWeight: "900" },
-  modalSub: { marginTop: 6, fontSize: 13, fontWeight: "600" },
+  modalCard: { borderWidth: StyleSheet.hairlineWidth, padding: 16 },
+  modalTitle: {
+    fontSize: TYPE_SIZE.title,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+  },
+  modalSub: { marginTop: 6, fontSize: TYPE_SIZE.caption, fontWeight: "400" },
 
   rolloverStack: { marginTop: 14, gap: 10 },
   rolloverBtn: {
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     paddingHorizontal: 12,
   },
-  rolloverBtnTitle: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
-  rolloverBtnSub: { marginTop: 4, fontSize: 12, fontWeight: "700" },
+  rolloverBtnTitle: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
+  rolloverBtnSub: { marginTop: 4, fontSize: TYPE_SIZE.caption, fontWeight: "400" },
 
   label: {
     marginTop: 12,
@@ -4280,12 +4195,11 @@ const styles = StyleSheet.create({
 
   input: {
     marginTop: 8,
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 14,
-    fontWeight: "800",
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "400",
   },
 
   templateRow: {
@@ -4293,8 +4207,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   templateChip: {
-    borderWidth: 1,
-    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginRight: 10,
@@ -4308,13 +4221,17 @@ const styles = StyleSheet.create({
   typeRow: { marginTop: 10, flexDirection: "row", gap: 10 },
   pill: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  pillText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
+  pillText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
 
   themeTopRow: {
     flexDirection: "row",
@@ -4323,8 +4240,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   smallBtn: {
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 8,
     paddingHorizontal: 10,
     alignItems: "center",
@@ -4333,8 +4249,7 @@ const styles = StyleSheet.create({
   smallBtnText: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
 
   smallBtnWide: {
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 12,
     alignItems: "center",
@@ -4347,8 +4262,8 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: "stretch",
   },
-  previewCard: { flex: 1, borderWidth: 1, borderRadius: 16, padding: 12 },
-  previewBtn: { borderRadius: 12, paddingVertical: 10, alignItems: "center" },
+  previewCard: { flex: 1, borderWidth: StyleSheet.hairlineWidth, padding: 12 },
+  previewBtn: { paddingVertical: 10, alignItems: "center" },
 
   trashBtn: {
     borderWidth: 1,
@@ -4367,8 +4282,7 @@ const styles = StyleSheet.create({
 
   themeCard: {
     flexBasis: "48%",
-    borderWidth: 1,
-    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     paddingHorizontal: 12,
   },
@@ -4401,14 +4315,18 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalBtn: {
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     paddingHorizontal: 14,
     minWidth: 92,
     alignItems: "center",
   },
-  modalBtnText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
+  modalBtnText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
 
   colorPickRow: {
     marginTop: 10,
@@ -4417,8 +4335,7 @@ const styles = StyleSheet.create({
   },
   colorPickItem: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 10,
     alignItems: "center",
@@ -4427,8 +4344,7 @@ const styles = StyleSheet.create({
   colorSquare: {
     width: 34,
     height: 34,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(0,0,0,0.08)",
   },
   colorPickText: {
@@ -4481,12 +4397,11 @@ const styles = StyleSheet.create({
 
   progressTrack: {
     marginTop: 8,
-    height: 10,
-    borderRadius: 999,
-    borderWidth: 1,
+    height: 8,
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
   },
-  progressFill: { height: "100%", borderRadius: 999 },
+  progressFill: { height: "100%" },
 
   stepperRow: {
     marginTop: 12,
@@ -4497,8 +4412,7 @@ const styles = StyleSheet.create({
   stepperBtn: {
     width: 46,
     height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -4510,12 +4424,11 @@ const styles = StyleSheet.create({
   },
   stepperValue: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
-    fontWeight: "900",
+    fontSize: TYPE_SIZE.bodyLg,
+    fontWeight: "700",
     textAlign: "center",
   },
 
@@ -4526,8 +4439,7 @@ const styles = StyleSheet.create({
   },
   miniPill: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -4631,8 +4543,7 @@ const styles = StyleSheet.create({
 
   pickerSheet: {
     width: "92%",
-    borderWidth: 1,
-    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: 14,
   },
 
@@ -4650,8 +4561,7 @@ const styles = StyleSheet.create({
 
   pickerPreviewRow: {
     marginTop: 12,
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 12,
     flexDirection: "row",

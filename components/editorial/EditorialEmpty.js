@@ -4,20 +4,21 @@ import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
 import MetadataLabel from "./MetadataLabel";
 
-export default function EditorialHeader({
+export default function EditorialEmpty({
   kicker,
   title,
-  meta,
+  body,
   theme,
-  fontsLoaded,
+  children,
 }) {
-  const loaded = useFontsLoaded() || !!fontsLoaded;
+  const fontsLoaded = useFontsLoaded();
   const ink = theme?.text || "#1c1916";
+  const muted = theme?.mutedText || "#6b645c";
 
   return (
     <View style={styles.wrap}>
       {!!kicker && (
-        <MetadataLabel theme={theme} fontsLoaded={loaded}>
+        <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
           {kicker}
         </MetadataLabel>
       )}
@@ -25,42 +26,44 @@ export default function EditorialHeader({
         <Text
           style={[
             styles.title,
-            { color: ink, fontFamily: fontFamily("display", loaded) },
+            { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
           ]}
         >
           {title}
         </Text>
       )}
-      {!!meta && (
+      {!!body && (
         <Text
           style={[
-            styles.meta,
-            {
-              color: theme?.mutedText || "#6b645c",
-              fontFamily: fontFamily("body", loaded),
-            },
+            styles.body,
+            { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
           ]}
         >
-          {meta}
+          {body}
         </Text>
       )}
+      {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: SPACE["2xs"],
+    paddingVertical: SPACE["2xl"],
+    paddingHorizontal: SPACE.md,
+    alignItems: "flex-start",
+    gap: SPACE.xs,
   },
   title: {
-    fontSize: TYPE_SIZE.display,
+    fontSize: TYPE_SIZE.title,
     fontWeight: "700",
     letterSpacing: TYPE_TRACK.display,
     fontStyle: "normal",
   },
-  meta: {
-    marginTop: SPACE["3xs"],
-    fontSize: TYPE_SIZE.caption,
+  body: {
+    fontSize: TYPE_SIZE.body,
     fontWeight: "400",
+    lineHeight: 22,
+    maxWidth: 280,
   },
 });

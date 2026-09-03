@@ -1,20 +1,22 @@
 import React from "react";
 import { Text, StyleSheet } from "react-native";
 import { TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
+import { useFontsLoaded } from "../../utils/fonts";
 
 export default function MetadataLabel({
   children,
   theme,
-  fontsLoaded = false,
+  fontsLoaded,
   style,
 }) {
+  const loaded = useFontsLoaded() || !!fontsLoaded;
   return (
     <Text
       style={[
         styles.label,
         {
           color: theme?.mutedText || "#6b645c",
-          fontFamily: fontFamily("data", fontsLoaded),
+          fontFamily: fontFamily("data", loaded),
         },
         style,
       ]}

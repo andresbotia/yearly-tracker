@@ -7,6 +7,7 @@ import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../utils/tokens";
 import { asciiBar } from "./editorial/EditorialProgress";
+import { useFontsLoaded } from "../utils/fonts";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -28,6 +29,7 @@ export default function GoalItem({
   dragging = false,
   index,
 }) {
+  const fontsLoaded = useFontsLoaded();
   const percent = useMemo(() => goalPercent(goal), [goal]);
   const pct = Math.round(percent);
   const isComplete = pct >= 100;
@@ -75,7 +77,7 @@ export default function GoalItem({
               styles.index,
               {
                 color: muted,
-                fontFamily: fontFamily("data", false),
+                fontFamily: fontFamily("data", fontsLoaded),
               },
             ]}
           >
@@ -89,7 +91,7 @@ export default function GoalItem({
               styles.title,
               {
                 color: ink,
-                fontFamily: fontFamily("display", false),
+                fontFamily: fontFamily("display", fontsLoaded),
               },
             ]}
             numberOfLines={2}
@@ -102,7 +104,7 @@ export default function GoalItem({
               styles.meta,
               {
                 color: muted,
-                fontFamily: fontFamily("data", false),
+                fontFamily: fontFamily("data", fontsLoaded),
               },
             ]}
           >
@@ -115,7 +117,7 @@ export default function GoalItem({
               styles.bar,
               {
                 color: ink,
-                fontFamily: fontFamily("data", false),
+                fontFamily: fontFamily("data", fontsLoaded),
               },
             ]}
             accessible
