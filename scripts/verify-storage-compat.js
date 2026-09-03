@@ -165,20 +165,37 @@ function main() {
 
   const expectedArt = [
     "cypresses",
+    "wheat-field-cypresses",
+    "women-picking-olives",
     "flowering-orchard",
-    "water-lilies",
     "morning-seine",
+    "haystacks",
+    "water-lilies",
+    "japanese-footbridge",
+    "garden-vetheuil",
+    "garden-argenteuil",
     "vetheuil",
+    "rouen-cathedral",
+    "villeneuve-bridge",
+    "versailles-road",
+    "moret-winter",
+    "pontoise-hill",
+    "sainte-victoire-viaduct",
+    "girl-in-boat",
     "museum-paper",
   ];
   for (const id of expectedArt) {
     if (!artIds.includes(id)) fail(`missing art theme id ${id}`);
   }
+  const uniqueArt = new Set(artIds);
+  if (uniqueArt.size !== artIds.length) fail("duplicate art theme ids");
   for (const item of catalog) {
     if (!item.isPublicDomain) fail(`catalog item ${item.id} is not marked public domain`);
     const imgPath = path.join(ROOT, "assets", "art", "images", `${item.id}.jpg`);
     if (!fs.existsSync(imgPath)) fail(`missing artwork file for ${item.id}`);
     if (!imagesJs.includes(`"${item.id}"`)) fail(`images.js missing ${item.id}`);
+    const asciiPath = path.join(ROOT, "assets", "art", "ascii", `${item.id}.txt`);
+    if (!fs.existsSync(asciiPath)) fail(`missing ascii file for ${item.id}`);
   }
 
   if (!themeSrc.includes('kind: "classic"') && !themeSrc.includes("kind: extra.kind")) {

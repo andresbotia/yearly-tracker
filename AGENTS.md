@@ -1,6 +1,10 @@
-# Yearly Tracker
+# Atelier Tracker
 
 Operating manual for coding agents working in this repository.
+
+User-facing product name: **Atelier Tracker**. Provisional brand mark: `[AT]`.
+Internal package/bundle identifiers remain `ResolutionTracker` /
+`com.andresbotia.ResolutionTracker` — do not rename them for cosmetics.
 
 ## Project overview
 
@@ -8,9 +12,9 @@ Expo / React Native production mobile app.
 
 - Offline-first. Local-only data. No accounts, analytics, ads, or tracking.
 - Goals, habits, history, themes, and widgets all live on-device.
-- Visual identity: museum catalogue × old computer terminal × personal journal.
+- Visual identity: museum catalogue × impressionism / post-impressionism × personal archive.
 - ASCII is texture, not a gimmick.
-- Art themes use a full-screen artwork backdrop. Classic and custom themes keep solid palettes.
+- Art themes use a full-screen artwork backdrop with a paper veil, subtle ASCII, and faint editorial washes. Classic and custom themes keep solid palettes.
 
 ## Source-of-truth documentation
 
@@ -18,11 +22,11 @@ Expo / React Native production mobile app.
 | --- | --- |
 | `AGENTS.md` | Engineering, process, and safety rules |
 | `design.md` | Visual design system and UI rules |
-| `REVAMP.MD` | Historical / current revamp specification and rationale |
+| `REVAMP.MD` | Current redesign / rebrand implementation specification |
 
 If visual implementation conflicts with `design.md`, inspect and update `design.md` deliberately. Do not invent a new per-screen system.
 
-`REVAMP.MD` explains why a pass exists. `design.md` is what screens should look like after that pass.
+`REVAMP.MD` explains the current pass. `design.md` is what screens should look like after that pass.
 
 ## Git rules
 
@@ -36,7 +40,7 @@ If visual implementation conflicts with `design.md`, inspect and update `design.
 
 **Local AsyncStorage is production user data.**
 
-Treat every install as a live upgrade. A user who updates the app must keep the same goals, habits, history, theme, custom themes, onboarding flags, and current year.
+A user who updates from Yearly Tracker to Atelier Tracker must keep the same goals, habits, history, theme, custom themes, onboarding flags, and current year.
 
 ### Current keys
 
@@ -51,9 +55,9 @@ Treat every install as a live upgrade. A user who updates the app must keep the 
 | `yt_custom_themes_v1` | User-created palettes | `CustomTheme[]` |
 | `yt_habits_v1` | Habits + daily checks | `Habit[]` (App.js) |
 | `yt_habits_welcome_seen_v1` | Habits intro seen | `"1"` (App.js) |
-| `yt_revamp_intro_seen_v1` | Revamp visual intro seen | `"1"` (additive) |
+| `yt_revamp_intro_seen_v1` | Atelier/revamp intro seen | `"1"` (additive) |
 
-`yt_revamp_intro_seen_v1` is presentation-only. Its absence is not missing or corrupt user data.
+`yt_revamp_intro_seen_v1` is presentation-only. Its absence is not missing or corrupt user data. Do not reuse `rt_welcome_seen_v1` for the rebrand intro.
 
 ### Shapes
 
@@ -71,9 +75,9 @@ Never:
 - Drop unknown fields
 - Change persisted shapes without an explicit migration
 - Change habit `0 / 1 / 2` semantics
-- Reuse or reset `rt_welcome_seen_v1` for a new visual introduction
+- Rename iOS/Android/widget identifiers because the brand changed
 
-Prefer additive keys and optional fields. Readers of new fields must default (`??`) rather than fail. Unknown fields on persisted objects must be preserved.
+Prefer additive keys and optional fields. Unknown fields on persisted objects must be preserved.
 
 Inventory lives in `utils/storage.js`. Habit keys currently live in `App.js` and must stay named exactly as listed.
 
@@ -91,9 +95,17 @@ Preserve:
 
 Presentation may change. Stored values, IDs, and formulas may not.
 
+Existing art theme ids must keep resolving: `cypresses`, `flowering-orchard`, `water-lilies`, `morning-seine`, `vetheuil`, `museum-paper`.
+
 ## Native boundaries
 
 Android and iOS widgets read a native payload from `buildWidgetPayload` in `App.js`. Do not casually change field names, habit state integers, or theme payload shape. Widget UI may map `0/1/2` to `.` / `+` / `×` visually only.
+
+Bundle identifiers stay:
+
+- `com.andresbotia.ResolutionTracker`
+- `com.andresbotia.ResolutionTracker.widgets`
+- Android package `com.andresbotia.yearlytracker`
 
 ## Design rules
 
@@ -101,20 +113,21 @@ Read `design.md` before changing UI.
 
 High-level identity:
 
-**MUSEUM CATALOGUE × OLD COMPUTER TERMINAL × PERSONAL JOURNAL**
+**MUSEUM CATALOGUE × IMPRESSIONISM × PERSONAL ARCHIVE**
 
-- Art themes: one full-screen artwork backdrop per screen, plus a paper veil and a single subtle ASCII texture layer.
-- Classic / custom / Museum Paper (no artwork): solid palette background. Never crash on missing artwork.
-- Do not put a large rectangular art plate in the Goals / Habits / History content flow.
-- Important information must not ellipsize on narrow devices. Reflow or scale type first. iPhone 7 / 375pt is a first-class target.
-- Hairline rules, editorial type, no generic pill buttons on screens we touch.
+- `[AT]` is identity punctuation, not a stamp on every title.
+- Art themes: one full-screen artwork backdrop per screen, paper veil, one ASCII texture, faint paper washes/keylines on dense clusters.
+- Do not add large opaque cards, heavy shadows, or pill buttons.
+- Classic / custom / Museum Paper (no artwork): solid palette background.
+- Important information must not ellipsize on narrow devices. iPhone 7 / 375pt is a first-class target.
 
 ## Offline / artwork rules
 
 - No runtime museum or network requests for artwork.
-- Bundle public-domain / Open Access images and ASCII plates.
+- Bundle public-domain / Open Access images and ASCII plates from Met, NGA, AIC (or similarly reputable OA programs).
 - Keep attribution metadata (`assets/art/catalog.json`).
 - Generate assets with `npm run build:art` during development only. Never run that pipeline against a live user install.
+- Do not bundle artwork unless `isPublicDomain` is confirmed.
 
 ## Commands
 
@@ -145,7 +158,7 @@ Before declaring work complete:
 1. `npm run verify:storage` — frozen old-storage fixture still passes; new keys are additive
 2. `npx expo-doctor`
 3. Syntax / import checks on touched files
-4. Theme resolution: art, classic, and custom
+4. Theme resolution: art (old and new ids), classic, and custom
 5. Narrow-width layout (375pt / iPhone 7 considerations)
 6. Inspect full `git diff`
 7. Do not claim physical-device verification unless it was actually performed

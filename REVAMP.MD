@@ -1,666 +1,837 @@
-Continue work on the existing Yearly Tracker revamp.
+# ATELIER TRACKER — NEXT REVAMP PHASE
 
-You are working ONLY on:
+Continue the current revamp on `feature/revamp`.
 
-feature/revamp
+Before changing code:
 
-Do not switch to, modify, or merge into main.
+1. Read `REVAMP.MD`
+2. Read `design.md`
+3. Read `AGENTS.md`
+4. Inspect the current implementation and recent commits
+5. Stay on `feature/revamp`
+6. Do not modify or merge into `main`
 
-Before making changes:
+This phase combines:
 
-1. Read `REVAMP.MD` completely.
-2. Read `design.md` completely.
-3. Inspect the current implementation on `feature/revamp`.
-4. Review recent commits.
-5. Treat all existing application behavior and AsyncStorage data as production contracts.
+- Atelier Tracker rebrand
+- backdrop legibility refinement
+- expanded art-theme collection
+- theme gallery update
+- intro/rebrand messaging
+- documentation alignment
+- production compatibility verification
 
-This is a focused second visual pass based on physical-device testing.
+---
 
-The redesign direction is working, but the artwork implementation and several responsive details now need to evolve.
+# 1. REBRAND TO ATELIER TRACKER
 
-==================================================
-PRIMARY DESIGN CHANGE
-ARTWORK IS THE ENVIRONMENT, NOT A HERO CARD
-==================================================
+Rebrand the user-facing product from:
 
-The current implementation places artwork inside a relatively short rectangular ArtHero / artwork plate.
+`Yearly Tracker`
 
-That is no longer the intended direction.
+to:
 
-For ArtThemes, the selected painting should become a large, full-screen / full-canvas background behind the application.
+`Atelier Tracker`
 
-Think:
+Use the chosen brand direction conceptually as:
 
-MUSEUM WALLPAPER
-×
-EDITORIAL PAPER
-×
-SUBTLE ASCII PRINT TEXTURE
+`[AT]`
 
-NOT:
+`Atelier Tracker`
 
-content
-content
-[ rectangular painting ]
-content
+The `[AT]` mark should act as the lightweight editorial brand mark until final logo assets are supplied.
 
-Instead:
+Use `[AT]` tastefully in places such as:
 
-[ FULL SCREEN ARTWORK BACKGROUND ]
+- app header/kicker
+- intro modal
+- splash/brand treatment
+- theme gallery
+- small identity moments
 
-        YEARLY TRACKER
-        HABITS / GOALS
-        DATA
-        CONTENT
-        CONTENT
+Do not overuse it.
 
-all sitting elegantly over the artwork through a readable paper treatment.
+## Safe rebrand rules
 
-==================================================
-BACKGROUND ARCHITECTURE
-==================================================
+Change USER-FACING branding only.
 
-Do NOT simply stretch the existing 220px ArtHero.
+Update where appropriate:
 
-Create a reusable structural component, something conceptually like:
-
-ArtBackground
-ArtBackdrop
-MuseumBackdrop
-
-Use whichever name best fits the codebase.
-
-For ArtThemes:
-
-- artwork fills the entire screen
-- use `resizeMode="cover"`
-- artwork should extend edge-to-edge behind the safe area and scroll content
-- artwork should remain visually stationary while lists/content scroll over it where practical
-- do not recreate the image on every list row
-- use ONE primary background image layer per screen
-- keep this lightweight enough for older devices such as iPhone 7
-
-Suggested conceptual layering:
-
-Screen
-├── full-screen artwork
-├── subtle ASCII layer
-├── translucent warm paper veil / tonal scrim
-└── scrollable app UI
-
-The actual painting should remain clearly recognizable.
-
-Do not make the overlay so opaque that the artwork disappears.
-
-However, text contrast must remain excellent.
-
-Target the balance visually rather than blindly following exact opacity numbers.
-
-A reasonable starting point could be:
-
-artwork: clearly visible
-paper veil: ~65–80%
-ASCII texture: ~3–8%
-
-but tune per theme and based on actual device appearance.
-
-Avoid expensive runtime blur effects unless absolutely necessary.
-
-Prefer:
-
-- Image
-- absolute positioning
-- simple translucent overlays
-- preprocessed artwork
-
-over heavy GPU blur.
-
-==================================================
-ARTWORK SHOULD FOLLOW THE THEME
-==================================================
-
-The selected ArtTheme determines the full-screen painting.
-
-Examples:
-
-Cypresses
-→ Cypresses background
-
-Water Lilies
-→ Water Lilies background
-
-etc.
-
-Classic themes and user-created custom themes with no artwork must continue rendering normally with their solid/palette backgrounds.
-
-NO artwork metadata:
-→ safe classic fallback
-
-Never crash because a theme does not have artwork.
-
-==================================================
-REMOVE THE CURRENT LARGE ART PLATE FROM SCREENS
-==================================================
-
-Once full-screen artwork exists, Goals/Habits/History should NOT also show the same giant rectangular artwork hero in the content flow.
-
-That duplicates the artwork and consumes too much vertical space.
-
-Refactor `ArtHero` appropriately.
-
-It may still be useful for:
-
-- theme gallery previews
-- artwork previews
+- app display name
+- in-app headings
+- onboarding/revamp intro copy
+- docs
 - share cards
+- splash/brand copy
+- visible widget branding if safe
 
-But primary screens should use the new backdrop architecture instead.
+Do NOT rename technical identifiers just because the brand changed.
 
-Keep museum attribution.
+Do NOT change:
 
-Move attribution into a more restrained editorial treatment, for example:
+- existing AsyncStorage keys
+- iOS bundle identifiers
+- Android package identifiers
+- widget bundle identifiers
+- native widget contracts
+- existing persisted schemas
+- user IDs
+- storage behavior
 
-CYPRESSES
-VINCENT VAN GOGH · 1889
-THE MET
+These should remain stable:
 
-It can live subtly near the top, bottom, or another intentional area of the screen.
+`com.andresbotia.ResolutionTracker`
 
-It should not dominate the tracking interface.
+`com.andresbotia.ResolutionTracker.widgets`
 
-==================================================
-ASCII
-==================================================
+Existing storage remains production data.
 
-ASCII remains:
+This must behave as a normal app update:
 
-TEXTURE, NOT A GIMMICK.
+Yearly Tracker
+→ app update
+→ Atelier Tracker
+→ same goals
+→ same habits
+→ same history
+→ same themes
+→ same local data
 
-Do not turn the whole screen into terminal art.
+---
 
-The ASCII representation may exist across the artwork background but should be extremely subtle.
+# 2. IMPROVE CONTENT LEGIBILITY OVER ART BACKDROPS
 
-Keep:
+The full-canvas artwork backdrop is working well, but the painting currently competes with the UI slightly too much.
 
-- one rendered ASCII plate/layer
-- build-time generated data
-- no thousands of React elements
+Refine readability WITHOUT reverting to generic card UI.
 
-Do not compromise text readability.
+Do NOT create large opaque cards everywhere.
 
-==================================================
-PHYSICAL DEVICE RESPONSIVE FIXES
-==================================================
+Do NOT add:
 
-The current build has now been tested on a physical iPhone.
+- heavy shadows
+- large rounded cards
+- obvious floating panels
+- thick borders
 
-Treat 375pt-wide devices such as iPhone 7 as a first-class layout target.
+Instead use a very subtle editorial legibility system.
 
-Fix the following visible issues:
+Possible tools:
 
-1. Habits currently truncates the month heading similar to:
+- slightly stronger paper veil behind dense content areas
+- faint paper-tint washes
+- very subtle 1px keylines
+- low-opacity section framing
+- soft tonal separation behind controls
+- carefully increased contrast where necessary
 
-   "Septe..."
+Target effect:
 
-   This is unacceptable.
+CONTENT FEELS LIGHTLY HELD ON THE PAGE.
 
-   "September" must fit gracefully.
+Not boxed.
 
-   Use responsive typography/layout rather than truncating important headings.
+Suggested starting values:
 
-2. Re-evaluate the Habits header/date grid alignment after removing the large art hero.
+Translucent keyline:
 
-3. Preserve the elegant ASCII states:
+`rgba(28, 25, 22, 0.06–0.10)`
 
-   . empty
-   - good
-     × bad
+Subtle paper wash:
 
-   Stored values remain EXACTLY:
-   0 / 1 / 2
+`rgba(246, 243, 236, 0.08–0.14)`
 
-4. Goals CTA row currently has:
-   outlined ADD GOAL
-   floating SHARE
-   floating THEME
+Tune these visually.
 
-   Refine this into one intentional editorial control system.
+Do not blindly use the same opacity everywhere.
 
-   Do not bring back generic pill buttons.
+Potential use areas:
 
-5. Review each Goal row's:
-   edit
-   update
-   delete
+- header / identity region
+- yearly progress area
+- CTA toolbar
+- habit rows
+- goal action rows
+- history sections
+- gallery modal
+- dense metadata areas
 
-   controls.
+Keep the painting visible.
 
-   Make them feel like one designed action system and ensure they work cleanly near the bottom safe area.
+The art should still feel like the environment.
 
-6. Review the Habit History header hierarchy.
+---
 
-   "Yearly Tracker" + "Habit history" is currently visually very large.
+# 3. ATELIER ART COLLECTION
 
-   History should feel more archival/data-dense than the primary screens.
+The art-theme collection is now part of the Atelier Tracker identity.
 
-   Preserve hierarchy while reclaiming useful vertical room.
+The collection should feel curated rather than random.
 
-7. Verify:
-   - safe area
-   - scroll behavior
-   - no clipping
-   - no text truncation
-   - tap targets
-   - iPhone 7
-   - modern iPhones
-   - Android
-
-Do NOT change any underlying application behavior while addressing layout.
-
-==================================================
-ONE-TIME REVAMP INTRODUCTION
-==================================================
-
-Add a one-time introduction to the new visual identity.
-
-IMPORTANT:
-
-DO NOT reuse or reset:
-
-`rt_welcome_seen_v1`
-
-That is existing production onboarding state.
-
-Introduce a NEW additive storage key such as:
-
-`yt_revamp_intro_seen_v1`
-
-Add it to the storage inventory in `utils/storage.js`.
-
-The absence of this new key should NEVER be interpreted as missing/corrupt user data.
-
-It controls presentation only.
-
-Suggested modal content:
-
-TITLE
-Meet the new Yearly Tracker
-
-BODY
-Same private, offline tracker. A new art-led way to see your year.
-
-Public-domain artwork, editorial typography, and subtle ASCII details now shape the experience. Your goals, habits, history, and data stay right here on your phone.
-
-PRIMARY CTA
-EXPLORE THE NEW LOOK
-
-Design the modal in the new visual language.
-
-Consider:
-
-- small artwork crop or ASCII detail
-- strong Fraunces title
-- mono kicker
-- thin rules
-- paper treatment
-- no generic rounded SaaS modal
-
-Show it once.
-
-Then persist:
-
-yt_revamp_intro_seen_v1 = "1"
-
-Never show it again unless a future explicitly versioned introduction is added.
-
-Existing production users who update should see this once.
-
-Fresh installs should also receive the introduction, but avoid stacking it awkwardly over the existing welcome/onboarding flow.
-
-Coordinate modal order safely:
-
-existing onboarding / rollover / critical modal
-→ resolve
-→ revamp introduction
-
-Never display multiple modals simultaneously.
-
-Do not modify existing onboarding data solely to accomplish this.
-
-==================================================
-CREATE ROOT AGENTS.md
-==================================================
-
-Create:
-
-`AGENTS.md`
-
-in the repository root.
-
-This should become the concise operating manual for future coding agents working in this repository.
-
-Do NOT simply copy REVAMP.MD.
-
-AGENTS.md should document stable engineering rules.
-
-Include sections covering:
-
-# Yearly Tracker
-
-## Project overview
-
-- Expo / React Native
-- offline-first
-- local-only data
-- no accounts
-- production mobile app
-
-## Source-of-truth documentation
-
-Define responsibilities clearly:
-
-AGENTS.md
-→ engineering/process/safety rules
-
-design.md
-→ visual design system and UI rules
-
-REVAMP.MD
-→ historical/current revamp specification and rationale
-
-If visual implementation conflicts with design.md, agents should inspect/update design.md deliberately rather than inventing a new per-screen system.
-
-## Git rules
-
-- never work directly on main unless explicitly asked
-- current redesign branch is feature/revamp
-- focused commits
-- no automatic merging
-- inspect git diff before completion
-
-## Production persistence contract
-
-Explicitly list all current AsyncStorage keys.
-
-Explain clearly:
-
-LOCAL ASYNCSTORAGE IS PRODUCTION DATA.
-
-Never:
-
-- rename keys casually
-- reset storage
-- reseed existing users
-- alter IDs
-- drop unknown fields
-- change persisted shapes without explicit migration
-- change habit 0/1/2 semantics
-
-Document additive storage changes as the preferred strategy.
-
-Include the new revamp intro key after it is implemented.
-
-## Business logic invariants
-
-Document that agents should preserve:
-
-- goal CRUD
-- habit CRUD
-- history
-- rollover
-- percentages
-- streaks
-- drag/reorder
-- haptics
-- undo
-- sharing
-- widgets
-
-## Native boundaries
-
-Explain Android/iOS widget payload contracts must not be casually changed.
-
-## Design rules
-
-Briefly point agents toward design.md.
-
-Include the high-level identity:
+Creative direction:
 
 MUSEUM CATALOGUE
 ×
-OLD COMPUTER TERMINAL
+IMPRESSIONISM / POST-IMPRESSIONISM
 ×
-PERSONAL JOURNAL
+PERSONAL ARCHIVE
 
-ASCII is texture, not gimmick.
+Artwork should be:
 
-Artwork themes use full-screen art backdrops.
+- atmospheric
+- painterly
+- elegant
+- nature-forward
+- softly architectural when appropriate
+- muted enough for UI overlays
+- visually strong without overwhelming content
 
-## Offline / artwork rules
+Avoid:
 
-- no runtime museum requests
-- bundled assets
-- public-domain / Open Access sources
-- maintain attribution metadata
+- overly dark works
+- extremely high contrast
+- crowded scenes
+- portrait-dominant works
+- visually chaotic compositions
+- pieces that fight with text
 
-## Commands
+Aim for approximately 18 total art themes.
 
-Inspect package.json and document the ACTUAL useful commands for this repo, including:
+Quality is more important than hitting exactly 18.
 
-- install
-- Expo development server
-- storage verification
-- expo-doctor
-- any lint/test commands that genuinely exist
+---
 
-Do not invent scripts.
+# 4. LOCKED CORE ARTWORK
 
-## Verification checklist
+These selections are APPROVED.
 
-Before declaring work complete:
+Do not replace them without explicit approval.
 
-- storage verification
-- expo-doctor
-- syntax/import checks
-- theme resolution
-- physical device considerations
-- inspect git diff
+## Vincent van Gogh
 
-Keep AGENTS.md useful and concise enough that future CLI coding agents will actually read it.
+### 01 — Cypresses
 
-==================================================
-UPDATE design.md
-==================================================
+Vincent van Gogh
 
-The current design.md still describes a "single artwork plate" as the primary screen treatment.
+### 02 — Wheat Field with Cypresses
 
-That is now outdated.
+Vincent van Gogh
 
-Update design.md so the locked design system reflects what we learned from the physical-device build.
+### 03 — Women Picking Olives
 
-Change the core artwork rule to:
+Vincent van Gogh
 
-ARTWORK IS A FULL-CANVAS BACKDROP FOR ART THEMES.
+## Claude Monet
 
-Document:
+### 04 — The Seine at Giverny
 
-- full-screen artwork behavior
-- paper veil / scrim
-- ASCII background texture
-- classic/custom fallback
-- attribution behavior
-- responsive requirements
-- iPhone 7 / 375pt baseline
-- modal styling
-- theme gallery thumbnails
-- accessibility/contrast rules
+Claude Monet
 
-Remove/replace rules that instruct primary screens to use the old fixed artwork plate.
+### 05 — Haystacks
 
-ArtHero can remain documented for gallery/preview contexts if useful.
+Claude Monet
 
-Add the revamp intro modal to the design system.
+These should remain part of the canonical Atelier collection.
 
-Also document:
+Existing theme IDs already in production/dev must remain stable.
 
-IMPORTANT INFORMATION MUST NOT ELLIPSIZE ON NARROW DEVICES.
+If one of these already exists under a current ID, preserve the ID.
 
-Responsive typography should scale/reflow first.
+---
 
-Examples:
+# 5. EXPANSION ARTISTS
 
-- September must not become Septe...
-- artwork titles may wrap deliberately
-- data tables may scroll when appropriate
+Expand the collection using similar late-19th-century / impressionist / post-impressionist artists.
 
-==================================================
-KEEP DOCUMENTATION CONSISTENT
-==================================================
+Priority artists:
 
-After changing design.md, inspect REVAMP.MD for statements that now directly contradict the full-background artwork approach.
+- Alfred Sisley
+- Camille Pissarro
+- Paul Cézanne
+- Berthe Morisot
+- additional Claude Monet
+- other closely related artists only if they fit the visual system
 
-Do not rewrite REVAMP.MD unnecessarily.
+Do not expand simply for variety.
 
-Update only the conflicting visual guidance so future agents are not given two incompatible instructions.
+The collection must still feel cohesive.
 
-AGENTS.md should explain the document hierarchy.
+---
 
-==================================================
-DATA SAFETY
-==================================================
+# 6. PREFERRED EXPANSION CANDIDATES
 
-This is still non-negotiable.
+Strong candidates include:
 
-Do NOT change existing production data schemas for this work.
+## Claude Monet
 
-Do NOT rename existing AsyncStorage keys.
+### Water Lilies
 
-Do NOT reset:
+Soft blue / green / lavender atmosphere.
 
-- goals
-- habits
-- history
-- theme
-- custom themes
-- onboarding
-- current year
+### The Japanese Footbridge
 
-The new revamp-introduction flag is ADDITIVE ONLY.
+Excellent garden theme with deeper greens.
 
-A production upgrade must remain:
+### The Artist’s Garden at Vétheuil
 
-OLD APP DATA
-↓
-INSTALL REVAMP
-↓
-SAME GOALS
-SAME HABITS
-SAME HISTORY
-SAME THEME +
-NEW VISUAL EXPERIENCE
+Brighter garden theme with yellow/green energy.
 
-==================================================
-IMPLEMENTATION APPROACH
-==================================================
+### The Artist’s Garden in Argenteuil
 
-Do this as a focused visual refinement, not a rewrite.
+Floral, painterly, colorful but still compatible with the Atelier aesthetic.
+
+### Rouen Cathedral, West Façade
+
+More architectural and tonal while staying unmistakably Monet.
+
+---
+
+## Alfred Sisley
+
+### The Bridge at Villeneuve-la-Garenne
+
+Excellent sky / water / architecture balance.
+
+### The Road from Versailles to Louveciennes
+
+Quiet editorial landscape with strong depth.
+
+### Rue Eugène Moussoir at Moret: Winter
+
+Useful cooler / winter variation.
+
+Sisley should help broaden the collection without changing the visual language dramatically.
+
+---
+
+## Camille Pissarro
+
+### Landscape, Île-de-France
+
+Excellent backdrop candidate:
+
+- wide sky
+- muted land
+- restrained palette
+- readable behind UI
+
+### The Artist’s Garden at Éragny
+
+Good garden alternative if authoritative Open Access sourcing is available.
+
+---
+
+## Paul Cézanne
+
+### Mont Sainte-Victoire
+
+Strong earthy / teal / ochre palette.
+
+One of the best candidates for Atelier outside Monet and Van Gogh.
+
+### Mont Sainte-Victoire and the Viaduct of the Arc River Valley
+
+More structured and architectural.
+
+Good contrast with the softer Impressionist works.
+
+---
+
+## Berthe Morisot
+
+### Girl in a Boat with Geese
+
+Soft greens and blues with loose brushwork.
+
+### The Sisters
+
+More figurative than the rest of the collection, so only include if it still works well as a full-screen UI backdrop.
+
+Prefer Morisot works that remain atmospheric rather than portrait-heavy.
+
+---
+
+# 7. CURATORIAL SELECTION RULES
+
+When filling the remaining slots toward ~18 total themes:
+
+Prioritize works with:
+
+- broad areas of sky / water / foliage
+- natural texture
+- soft tonal transitions
+- low-to-medium visual density
+- strong but muted palettes
+- compositions that tolerate cropping with `cover`
+- recognizable visual identity after the paper veil is applied
+
+Avoid works where important subjects are constantly hidden by UI.
+
+The selected artwork must still look intentional when:
+
+- cropped vertically
+- displayed on iPhone 7 / 375pt
+- displayed on modern iPhone aspect ratios
+- displayed on Android
+- partially obscured by UI
+
+---
+
+# 8. ART ASSET SOURCING
+
+Use ONLY authoritative museum Open Access / public-domain sources.
+
+Preferred sources:
+
+- The Metropolitan Museum of Art
+- National Gallery of Art
+- Art Institute of Chicago
+- similarly reputable museum Open Access programs
+
+Do NOT use:
+
+- Pinterest
+- random image hosts
+- unofficial art wallpaper websites
+- search-engine previews
+- scraped reproduction sites
+
+Even if a painting itself is public domain, use an authoritative image source.
+
+For each artwork maintain metadata:
+
+```js
+{
+  id,
+  title,
+  artist,
+  year,
+  museum,
+  museumObjectId,
+  source,
+  rights,
+  isPublicDomain
+}
+
+Do not bundle artwork unless rights are confirmed.
+
+9. NO RUNTIME ART NETWORK CALLS
+
+Atelier Tracker remains offline-first.
+
+Museum APIs are DEVELOPMENT TOOLS ONLY.
+
+Runtime:
+
+Bundled artwork
++
+bundled ASCII
++
+local AsyncStorage
+
+No runtime museum requests.
+
+No accounts.
+
+No analytics introduced.
+
+No tracking introduced.
+
+No artwork CDN dependency.
+
+10. ART ASSET PIPELINE
+
+For every approved artwork:
+
+Authoritative museum image
+→ download high-resolution development source
+→ create optimized mobile derivative
+→ create ASCII derivative
+→ optionally derive palette
+→ store metadata
+→ bundle with app
+
+Do NOT ship enormous museum masters.
+
+Use an appropriate optimized mobile size.
+
+Keep image quality high enough for full-screen use while respecting app size and older devices.
+
+ASCII remains build-time generated.
+
+Do not dynamically convert paintings to ASCII on every launch.
+
+11. ASCII RULE
+
+ASCII remains:
+
+TEXTURE, NOT THE ARTWORK ITSELF.
+
+Do not turn Atelier Tracker into a terminal theme.
+
+Use:
+
+one ASCII Text layer
+low opacity
+subtle texture
+artwork still recognizable
+
+Stored habit values remain:
+
+0 = empty
+1 = good
+2 = bad
+
+Visual presentation remains:
+
+. = empty
++ = good
+× = bad
+
+Do not change persistence semantics.
+
+12. UPDATE THE ART GALLERY
+
+Expand the gallery for the larger collection.
+
+It should feel like browsing a small museum collection.
+
+Possible organization:
+
+ATELIER COLLECTION
+
+VAN GOGH
+01 — Cypresses
+02 — Wheat Field with Cypresses
+03 — Women Picking Olives
+
+MONET
+04 — The Seine at Giverny
+05 — Haystacks
+...
+
+SISLEY
+...
+
+PISSARRO
+...
+
+CÉZANNE
+...
+
+MORISOT
+...
+
+Then:
+
+CLASSIC
+
+CUSTOM
+
+The gallery should remain calm and editorial.
+
+Requirements:
+
+artwork thumbnails
+artist
+title
+year
+museum/source
+palette preview
+selected-state indication
+graceful title wrapping
+no metadata clipping
+no giant cluttered cards
+
+Classic themes must remain available.
+
+Custom themes must remain available/editable.
+
+Existing selected theme IDs must still resolve.
+
+13. UPDATE INTRO / REBRAND COPY
+
+The revamp intro now needs to communicate the name change.
+
+We must distinguish:
+
+Existing production user
+
+They previously used Yearly Tracker.
+
+Suggested direction:
+
+KICKER
+
+[AT] / NEW EDITION
+
+TITLE
+
+Yearly Tracker is now Atelier Tracker
+
+BODY
+
+Your goals, habits, and history are exactly where you left them.
+
+We’ve reimagined the experience around art, typography, and the idea of your year as a personal archive.
+
+Your data remains private and stored on your device.
+
+CTA
+
+ENTER ATELIER
+
+Brand new user
+
+Do NOT tell them the app “changed.”
+
+Suggested direction:
+
+KICKER
+
+[AT] / PRIVATE YEARLY JOURNAL
+
+TITLE
+
+Welcome to Atelier Tracker
+
+BODY
+
+Track your habits, goals, and year through a quiet, art-led interface.
+
+No account. No tracking. Your data stays on your device.
+
+CTA
+
+ENTER ATELIER
+
+14. INTRO STORAGE SAFETY
+
+Do not reuse:
+
+rt_welcome_seen_v1
+
+Do not reset existing onboarding flags.
+
+Use the existing additive revamp-introduction mechanism if already implemented.
+
+Current intended key:
+
+yt_revamp_intro_seen_v1
+
+Keep it additive.
+
+Do not create duplicate onboarding flags unless necessary.
+
+Modal order must remain safe:
+
+existing required onboarding
+→ rollover
+→ habits intro
+→ Atelier/revamp intro
+
+Never stack multiple modals.
+
+15. UPDATE APP BRANDING
+
+Update user-facing references to Atelier Tracker.
+
+Review:
+
+App.js
+app.json display name
+headers
+welcome modal
+revamp intro
+share cards
+theme gallery
+empty states
+splash copy
+README
+AGENTS.md
+design.md
+REVAMP.MD
+visible widget titles if safe
+
+Keep internal technical names when changing them has no user benefit.
+
+Do not rename files/packages merely for cosmetic reasons.
+
+16. [AT] BRAND MARK
+
+Use [AT] as the provisional brand mark until final production SVG assets are available.
+
+Visual intent:
+
+[AT]
+
+editorial
+archival
+catalogue-like
+subtle computing/indexing influence
+not cyberpunk
+not hacker aesthetic
+
+Possible header usage:
+
+[AT] ATELIER TRACKER / 2026
+
+Do not replace every page title with [AT].
+
+Use it as identity punctuation.
+
+17. DOCUMENTATION
+
+Update repository documentation to reflect the new brand and art collection.
+
+Review:
+
+AGENTS.md
+
+design.md
+
+REVAMP.MD
+
+README.md
+
+Document hierarchy remains:
+
+AGENTS.md
+→ engineering / process / persistence / safety
+
+design.md
+→ visual system
+
+REVAMP.MD
+→ current redesign/rebrand implementation specification
+
+Update design.md with:
+
+Atelier Tracker naming
+[AT] identity
+expanded art collection
+legibility treatment
+gallery rules
+full-canvas artwork behavior
+
+Do not let documentation contradict implementation.
+
+18. NON-NEGOTIABLE PRODUCTION SAFETY
+
+Do NOT break:
+
+existing AsyncStorage compatibility
+goal CRUD
+habit CRUD
+habit 0/1/2 semantics
+history
+rollover
+drag/reorder
+haptics
+undo
+sharing
+widget payload contracts
+classic theme compatibility
+custom theme compatibility
+
+Do NOT rename:
+
+existing AsyncStorage keys
+bundle identifiers
+package identifiers
+native widget identifiers/contracts
+
+Do not reset user data.
+
+Do not reseed existing users.
+
+Do not change IDs.
+
+Do not drop unknown persisted fields.
+
+Do not convert storage schemas merely because the branding changed.
+
+19. IMPLEMENTATION ORDER
+
+Do this as a focused continuation, not a rewrite.
 
 Suggested order:
 
-1. Read docs/code
-2. Create/update AGENTS.md
-3. Update design.md
-4. Reconcile conflicting REVAMP.MD guidance
-5. Build reusable ArtBackground/ArtBackdrop
-6. Integrate it at the correct screen/root level
-7. Remove redundant inline artwork heroes
-8. Refine attribution
-9. Fix responsive layout issues
-10. Add one-time revamp introduction
-11. Polish Goals
-12. Polish Habits
-13. Polish History
-14. Review theme gallery
-15. Verify classic/custom theme fallback
-16. Run automated verification
-17. Inspect full git diff
-18. Commit focused changes
+read AGENTS.md / REVAMP.MD / design.md
+inspect current branch + recent commits
+Atelier Tracker branding pass
+backdrop legibility refinement
+establish locked Atelier art catalog
+resolve authoritative museum sources
+add optimized artwork assets
+generate ASCII assets
+add/update ArtThemes
+update gallery organization
+update onboarding/rebrand copy
+update docs
+verify persistence compatibility
+inspect git diff
+make focused commits
 
-Do NOT stop after implementing only the background.
+Do not stop after completing only one section.
 
-Complete this entire pass.
+Continue through the full phase unless genuinely blocked.
 
-==================================================
-FINAL REVIEW
-==================================================
+20. VERIFICATION
 
-Before finishing, inspect every major screen at narrow mobile width.
+Before finishing:
 
-Specifically verify:
+Run:
 
-GOALS
+npm run verify:storage
 
-- background painting fills screen
-- data readable
-- CTAs cohesive
-- goal controls clean
-- no regressions
+npx expo-doctor
 
-HABITS
+Run any other REAL existing project verification commands.
 
-- background painting fills screen
-- September does not truncate
-- dates align
-- state interaction still works
-- . + × semantics unchanged
+Do not invent scripts.
 
-HISTORY
+Verify:
 
-- archival/data-dense hierarchy
-- month layouts readable
-- no regression in horizontal/vertical scrolling
+old AsyncStorage fixture still passes
+existing theme IDs resolve
+custom themes resolve
+locked current art themes still resolve
+new art themes resolve
+all artwork files exist
+all ASCII files exist
+no bad require/import paths
+no duplicate theme IDs
+no runtime museum requests
+no accidental identifier renaming
+no production storage regression
+no accidental business-logic change
 
-THEMES
+Inspect narrow layouts.
 
-- ArtThemes still change artwork
-- classic themes still work
-- custom themes still work
+At minimum reason against:
 
-MODALS
+iPhone 7 / 375pt
+modern iPhones
+Android
 
-- new revamp intro
-- existing welcome
-- rollover
-- edit/add flows
-- no modal collisions
+Do not claim device testing unless actually performed.
 
-STORAGE
+21. FINAL REPORT
 
-- run `npm run verify:storage`
-- frozen old-storage fixture still passes
-- new revamp flag is optional/additive
+At completion report:
 
-BUILD
+What changed
+Files changed
+Atelier Tracker branding changes
+[AT] usage
+Backdrop legibility changes
+Final art-theme catalog
+Museum/source metadata used
+Theme gallery changes
+Intro/rebrand behavior
+Storage compatibility results
+Build/test results
+Commits created
 
-- run `npx expo-doctor`
-- run other existing checks from package.json
-- do not perform unrelated dependency upgrades
-
-Do not claim physical-device verification unless you actually performed it.
-
-At the end report:
-
-1. What changed
-2. Files changed
-3. Documentation updates
-4. New background architecture
-5. Responsive fixes
-6. Revamp intro behavior
-7. Storage compatibility results
-8. Test/build results
-9. Commits created
-10. Remaining device-test items
-
-Remain on `feature/revamp`.
-
-DO NOT MERGE TO MAIN.
+```

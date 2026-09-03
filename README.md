@@ -1,41 +1,43 @@
-# 📆 Yearly Tracker
+# [AT] Atelier Tracker
 
-A simple, offline-first app to track your goals across the year.
+A private, offline-first yearly journal for habits and goals.
 
----
-
-## ✨ What is Yearly Tracker?
-
-**Yearly Tracker** helps you set goals and measure progress throughout the year — without accounts, ads, or tracking.
-
-It’s designed to be calm, private, and easy to use.
+Formerly Yearly Tracker. Updating the app keeps the same goals, habits, history, and local data.
 
 ---
 
-## 🔒 Privacy First
+## What is Atelier Tracker?
 
-- ❌ No accounts  
-- ❌ No analytics  
-- ❌ No ads  
-- ❌ No tracking  
+**Atelier Tracker** helps you log habits and yearly goals through a quiet, art-led interface — without accounts, ads, or tracking.
 
-✅ **All data is stored locally on your device**  
-✅ **Nothing is uploaded or shared**
+Public-domain museum artwork, editorial typography, and subtle ASCII texture shape the year as a personal archive.
 
 ---
 
-## 📱 How It Works
+## Privacy first
+
+- No accounts
+- No analytics
+- No ads
+- No tracking
+
+All data is stored locally on your device. Nothing is uploaded or shared.
+
+---
+
+## How it works
 
 - Create goals for the current year
 - Track progress with counts or milestones
-- See an overall yearly completion percentage
-- Customize the app’s color theme
+- Log daily habits (empty / good / bad)
+- Browse habit history
+- Choose an Atelier art theme, a classic palette, or a custom theme
 
-Everything works **fully offline**.
+Everything works fully offline. Artwork is bundled; the app never calls museum APIs at runtime.
 
 ---
 
-## 🛠 Support
+## Support
 
 If you need help, have questions, or want to report an issue:
 
@@ -43,11 +45,9 @@ If you need help, have questions, or want to report an issue:
 
 ---
 
----
+## Privacy policy
 
-## 🔐 Privacy Policy
-
-Yearly Tracker does not collect, store, transmit, or share any personal data.
+Atelier Tracker does not collect, store, transmit, or share any personal data.
 
 - No accounts
 - No analytics
@@ -62,6 +62,3 @@ If you delete the app, all stored data is permanently removed.
 
 Contact:
 📧 **Email:** andresfbotia@email.com
-
-
-##
