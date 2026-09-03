@@ -18,7 +18,7 @@ const ASCII_COLS = 52;
 const ASCII_RAMP = " .:-=+*#%@";
 const CHAR_ASPECT = 0.48;
 const USER_AGENT =
-  "YearlyTrackerArtPipeline/1.0 (local asset prep; public-domain works)";
+  "AtelierTrackerArtPipeline/1.0 (local asset prep; public-domain works)";
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });

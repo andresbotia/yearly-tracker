@@ -16,6 +16,38 @@
     ]
   },
   {
+    "id": "wheat-field-cypresses",
+    "title": "Wheat Field with Cypresses",
+    "artist": "Vincent van Gogh",
+    "year": "1889",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "436535",
+    "accessionNumber": "1993.132",
+    "source": "https://www.metmuseum.org/art/collection/search/436535",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-42549-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-42549-001.jpg"
+    ]
+  },
+  {
+    "id": "women-picking-olives",
+    "title": "Women Picking Olives",
+    "artist": "Vincent van Gogh",
+    "year": "1889",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "436536",
+    "accessionNumber": "1995.535",
+    "source": "https://www.metmuseum.org/art/collection/search/436536",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-17161-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-17161-001.jpg"
+    ]
+  },
+  {
     "id": "flowering-orchard",
     "title": "The Flowering Orchard",
     "artist": "Vincent van Gogh",
@@ -29,6 +61,38 @@
     "urls": [
       "https://images.metmuseum.org/CRDImages/ep/original/DP-14936-045.jpg",
       "https://images.metmuseum.org/CRDImages/ep/web-large/DP-14936-045.jpg"
+    ]
+  },
+  {
+    "id": "morning-seine",
+    "title": "The Seine at Giverny",
+    "artist": "Claude Monet",
+    "year": "1897",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "46655",
+    "accessionNumber": "1963.10.180",
+    "source": "https://www.nga.gov/artworks/46655-seine-giverny",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "note": "Open-access canvas from Monet's morning-on-the-Seine campaign. Existing theme id morning-seine is preserved.",
+    "urls": [
+      "https://media.nga.gov/iiif/public/objects/4/6/6/5/5/46655-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ],
+    "wikimediaFile": "Claude Monet, The Seine at Giverny, 1897, NGA 46655.jpg"
+  },
+  {
+    "id": "haystacks",
+    "title": "Stacks of Wheat (End of Summer)",
+    "artist": "Claude Monet",
+    "year": "1890–91",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "64818",
+    "accessionNumber": "1985.1103",
+    "source": "https://www.artic.edu/artworks/64818/stacks-of-wheat-end-of-summer",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/a38e2828-ec6f-ece1-a30f-70243449197b/full/2000,/0/default.jpg"
     ]
   },
   {
@@ -49,21 +113,52 @@
     "wikimediaFile": "Claude Monet - Water Lilies - 1933.1157 - Art Institute of Chicago.jpg"
   },
   {
-    "id": "morning-seine",
-    "title": "The Seine at Giverny",
+    "id": "japanese-footbridge",
+    "title": "The Japanese Footbridge",
     "artist": "Claude Monet",
-    "year": "1897",
+    "year": "1899",
     "museum": "National Gallery of Art",
-    "museumObjectId": "46655",
-    "accessionNumber": "1963.10.180",
-    "source": "https://www.nga.gov/artworks/46655-seine-giverny",
+    "museumObjectId": "74796",
+    "accessionNumber": "1992.9.1",
+    "source": "https://www.nga.gov/artworks/74796-japanese-footbridge",
     "rights": "CC0 — National Gallery of Art Open Access",
     "isPublicDomain": true,
-    "note": "Open-access canvas from Monet's morning-on-the-Seine campaign. The Met's similarly titled 1897 canvas is not marked public-domain for redistribution.",
     "urls": [
-      "https://media.nga.gov/iiif/public/objects/4/6/6/5/5/46655-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
-    ],
-    "wikimediaFile": "Claude Monet, The Seine at Giverny, 1897, NGA 46655.jpg"
+      "https://api.nga.gov/iiif/0b9cefb5-1ee4-401a-8154-8d4039191a28/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/7/4/7/9/6/74796-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "garden-vetheuil",
+    "title": "The Artist's Garden at Vétheuil",
+    "artist": "Claude Monet",
+    "year": "1881",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "52189",
+    "accessionNumber": "1970.17.45",
+    "source": "https://www.nga.gov/artworks/52189-artists-garden-vetheuil",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/9fc88734-2f9a-4da8-8d46-2b570b201223/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/5/2/1/8/9/52189-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "garden-argenteuil",
+    "title": "The Artist's Garden in Argenteuil",
+    "artist": "Claude Monet",
+    "year": "1873",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "72138",
+    "accessionNumber": "1991.27.1",
+    "source": "https://www.nga.gov/artworks/72138-artists-garden-argenteuil-corner-garden-dahlias",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/4196f97b-1edb-4fae-aa9f-882afe35978b/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/7/2/1/3/8/72138-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
   },
   {
     "id": "vetheuil",
@@ -81,5 +176,118 @@
       "https://media.nga.gov/iiif/public/objects/4/6/6/5/2/46652-primary-0-nativeres.ptif/full/!2400,/0/default.jpg"
     ],
     "wikimediaFile": "Claude Monet, Banks of the Seine, Vétheuil, 1880, NGA 46652.jpg"
+  },
+  {
+    "id": "rouen-cathedral",
+    "title": "Rouen Cathedral, West Façade",
+    "artist": "Claude Monet",
+    "year": "1894",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "46524",
+    "accessionNumber": "1963.10.49",
+    "source": "https://www.nga.gov/artworks/46524-rouen-cathedral-west-facade",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/413faf9b-5d86-468a-8363-eea43c7fe9ba/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/4/6/5/2/4/46524-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "villeneuve-bridge",
+    "title": "The Bridge at Villeneuve-la-Garenne",
+    "artist": "Alfred Sisley",
+    "year": "1872",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437680",
+    "accessionNumber": "64.287",
+    "source": "https://www.metmuseum.org/art/collection/search/437680",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-14936-041.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-14936-041.jpg"
+    ]
+  },
+  {
+    "id": "versailles-road",
+    "title": "The Road from Versailles to Louveciennes",
+    "artist": "Alfred Sisley",
+    "year": "1879",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437685",
+    "accessionNumber": "64.154.2",
+    "source": "https://www.metmuseum.org/art/collection/search/437685",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-22989-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-22989-001.jpg"
+    ]
+  },
+  {
+    "id": "moret-winter",
+    "title": "Rue Eugène Moussoir at Moret: Winter",
+    "artist": "Alfred Sisley",
+    "year": "1891",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437686",
+    "accessionNumber": "1992.366",
+    "source": "https://www.metmuseum.org/art/collection/search/437686",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-33708-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-33708-001.jpg"
+    ]
+  },
+  {
+    "id": "pontoise-hill",
+    "title": "Jalais Hill, Pontoise",
+    "artist": "Camille Pissarro",
+    "year": "1867",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437299",
+    "accessionNumber": "51.30.2",
+    "source": "https://www.metmuseum.org/art/collection/search/437299",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "note": "Île-de-France landscape: wide sky, muted land, restrained palette.",
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DT1859.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DT1859.jpg"
+    ]
+  },
+  {
+    "id": "sainte-victoire-viaduct",
+    "title": "Mont Sainte-Victoire and the Viaduct of the Arc River Valley",
+    "artist": "Paul Cézanne",
+    "year": "1882–85",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "435877",
+    "accessionNumber": "29.100.64",
+    "source": "https://www.metmuseum.org/art/collection/search/435877",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-20099-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-20099-001.jpg"
+    ]
+  },
+  {
+    "id": "girl-in-boat",
+    "title": "Girl in a Boat with Geese",
+    "artist": "Berthe Morisot",
+    "year": "c. 1889",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "52194",
+    "accessionNumber": "1970.17.50",
+    "source": "https://www.nga.gov/artworks/52194-girl-boat-geese",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/5568ca30-4751-4861-b31a-9515a6114398/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/5/2/1/9/4/52194-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
   }
 ]
