@@ -60,13 +60,19 @@ export const VISUAL = {
     imageOpacity: 0,
     grainOpacity: 0,
     asciiOpacity: 0,
+    paperVeilOpacity: 0,
+    previewAsciiOpacity: 0,
     borderStyle: "rounded",
     cornerStyle: "rounded",
   },
   art: {
-    imageOpacity: 0.34,
+    // Full-canvas backdrop: the painting is the environment.
+    // The paper veil carries readability; ASCII is a print texture.
+    imageOpacity: 1,
     grainOpacity: 0.05,
-    asciiOpacity: 0.14,
+    asciiOpacity: 0.05,
+    paperVeilOpacity: 0.68,
+    previewAsciiOpacity: 0.12,
     borderStyle: "hairline",
     cornerStyle: "square",
   },
@@ -74,7 +80,7 @@ export const VISUAL = {
 
 export const ASCII = {
   enabled: false,
-  opacity: 0.14,
+  opacity: 0.05,
   characters: ASCII_RAMP,
   columns: 52,
 };

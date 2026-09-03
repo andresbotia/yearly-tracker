@@ -3,6 +3,14 @@ import { View, Text, StyleSheet } from "react-native";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
 
+function shortMuseum(name) {
+  if (!name) return "";
+  if (/metropolitan/i.test(name)) return "The Met";
+  if (/art institute of chicago/i.test(name)) return "Art Institute of Chicago";
+  if (/national gallery of art/i.test(name)) return "National Gallery of Art";
+  return name;
+}
+
 export default function ArtworkCredit({
   artwork,
   theme,
@@ -13,6 +21,9 @@ export default function ArtworkCredit({
 
   const ink = theme?.text || "#1c1916";
   const muted = theme?.mutedText || "#6b645c";
+  const metaLine = [artwork.artist, artwork.year, shortMuseum(artwork.museum)]
+    .filter(Boolean)
+    .join("  ·  ");
 
   return (
     <View style={styles.wrap} accessibilityRole="text">
@@ -26,37 +37,30 @@ export default function ArtworkCredit({
           {String(artwork.title).toUpperCase()}
         </Text>
       )}
-      {!!artwork.artist && (
+      {!!metaLine && (
         <Text
           style={[
-            styles.artist,
-            { color: muted, fontFamily: fontFamily("body", loaded) },
+            styles.meta,
+            { color: muted, fontFamily: fontFamily("data", loaded) },
           ]}
         >
-          {artwork.artist}
+          {metaLine}
         </Text>
       )}
-      <Text style={[styles.meta, { color: muted }]}>
-        {[artwork.year, artwork.museum].filter(Boolean).join("  ·  ")}
-      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    marginTop: SPACE.sm,
-    gap: SPACE["2xs"],
+    marginTop: SPACE["2xs"],
+    gap: SPACE["3xs"],
   },
   title: {
-    fontSize: TYPE_SIZE.body,
+    fontSize: TYPE_SIZE.kicker,
     fontWeight: "700",
     letterSpacing: TYPE_TRACK.kicker,
     fontStyle: "normal",
-  },
-  artist: {
-    fontSize: TYPE_SIZE.caption,
-    fontWeight: "400",
   },
   meta: {
     fontSize: TYPE_SIZE.kicker,

@@ -86,6 +86,8 @@ export const ART_THEMES = [
       ...VISUAL.art,
       imageOpacity: 0,
       asciiOpacity: 0,
+      paperVeilOpacity: 0,
+      previewAsciiOpacity: 0,
     },
   },
 ];

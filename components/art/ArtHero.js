@@ -1,3 +1,6 @@
+// Compact artwork plate for gallery previews, intro crops, and share cards.
+// Primary screens use ArtBackdrop instead of this plate.
+
 import React from "react";
 import { View, Image, StyleSheet } from "react-native";
 import { SPACE } from "../../utils/tokens";
@@ -11,6 +14,7 @@ export default function ArtHero({
   artworkId,
   fontsLoaded,
   showCredit = true,
+  height = 120,
 }) {
   const loaded = useFontsLoaded() || !!fontsLoaded;
   const id = artworkId || theme?.artwork?.id;
@@ -20,14 +24,20 @@ export default function ArtHero({
   const artwork = visual.meta || theme?.artwork || null;
   const asciiOn = theme?.ascii?.enabled !== false;
   const imageOpacity =
-    theme?.visual?.imageOpacity ?? theme?.artwork?.imageOpacity ?? 0.34;
-  const asciiOpacity = theme?.ascii?.opacity ?? theme?.visual?.asciiOpacity;
+    theme?.visual?.imageOpacity > 0
+      ? Math.min(theme.visual.imageOpacity, 0.88)
+      : 0.72;
+  const asciiOpacity =
+    theme?.visual?.previewAsciiOpacity ??
+    theme?.visual?.asciiOpacity ??
+    theme?.ascii?.opacity ??
+    0.12;
 
   if (!visual.image && !visual.ascii) return null;
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.plate}>
+      <View style={[styles.plate, { height }]}>
         {visual.image ? (
           <Image
             source={visual.image}
@@ -67,10 +77,9 @@ export default function ArtHero({
 
 const styles = StyleSheet.create({
   wrap: {
-    marginTop: SPACE.md,
+    marginTop: SPACE.sm,
   },
   plate: {
-    height: 220,
     overflow: "hidden",
     backgroundColor: "transparent",
   },
