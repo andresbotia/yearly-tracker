@@ -41,9 +41,16 @@ export const RADIUS = {
 };
 
 export const MOTION = {
+  micro: 140,
   short: 160,
+  interaction: 240,
   medium: 240,
+  completion: 620,
+  ambient: 48000,
   reduced: 120,
+  pressScale: 0.98,
+  livingScale: 1.013,
+  livingTranslate: 5,
 };
 
 export const TYPOGRAPHY = {
