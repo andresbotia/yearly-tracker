@@ -37,10 +37,13 @@ import {
   setDebugWidgetTextAndroid,
 } from "./native/widgetBridge.android";
 
-import ProgressRing from "./components/ProgressRing";
 import GoalItem from "./components/GoalItem";
 import HabitRow from "./components/HabitRow";
 import HabitHistory from "./components/HabitHistory";
+import ArtHero from "./components/art/ArtHero";
+import EditorialProgress from "./components/editorial/EditorialProgress";
+import MetadataLabel from "./components/editorial/MetadataLabel";
+import SectionRule from "./components/editorial/SectionRule";
 import {
   THEMES,
   makeTheme,
@@ -270,6 +273,14 @@ function dateKey(d) {
 
 function monthName(d) {
   return d.toLocaleString(undefined, { month: "long" });
+}
+
+function dayOfYear(d) {
+  const start = new Date(d.getFullYear(), 0, 1);
+  start.setHours(12, 0, 0, 0);
+  const cur = new Date(d);
+  cur.setHours(12, 0, 0, 0);
+  return Math.floor((cur - start) / 86400000) + 1;
 }
 
 function lastNDays(n, baseDate = new Date()) {
@@ -1804,103 +1815,64 @@ export default function App() {
 
       {activeTab === "goals" ? (
         <>
-          <View style={styles.ringCard(theme)}>
-            <ProgressRing
-              size={176}
-              strokeWidth={14}
+          <View style={{ marginTop: 18 }}>
+            <MetadataLabel theme={theme}>
+              {`YEARLY  /  ${year}  DAY ${dayOfYear(todayDate)}`}
+            </MetadataLabel>
+          </View>
+
+          <ArtHero theme={theme} />
+
+          <View style={{ marginTop: 18 }}>
+            <EditorialProgress
               percent={yearlyPercent}
               theme={theme}
-              label="Year completion"
+              label="Year progress"
             />
-
-            <View style={{ marginTop: 12, alignItems: "center" }}>
-              {/* <Text style={[styles.bigPct, { color: theme.text }]}>
-                {Math.round(yearlyPercent)}%
-              </Text>
-              <Text style={[styles.bigPctSub, { color: theme.mutedText }]}>
-                average across goals
-              </Text> */}
-              <View
-                style={[
-                  styles.chip,
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                ]}
-              >
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={16}
-                  color={theme.primary}
-                  style={styles.chipIcon}
-                />
-                <Text
-                  style={[styles.chipText, { color: theme.text }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {goalsSummaryText}
-                </Text>
-              </View>
-            </View>
+            <Text
+              style={[
+                styles.bigPctSub,
+                { color: theme.mutedText, marginTop: 8 },
+              ]}
+            >
+              {goalsSummaryText}
+            </Text>
           </View>
 
           <View style={[styles.actionsRow, ANDROID && styles.noGap]}>
             <Pressable
               onPress={() => setAddOpen(true)}
               style={({ pressed }) => [
-                styles.primaryBtn,
+                styles.editorialAction,
                 {
-                  backgroundColor: pressed
-                    ? theme.primaryPressed
-                    : theme.primary,
+                  borderColor: theme.text,
+                  opacity: pressed ? 0.65 : 1,
                 },
               ]}
             >
               <Text
-                style={[styles.primaryBtnText, { color: theme.primaryTextOn }]}
+                style={[styles.editorialActionText, { color: theme.text }]}
               >
-                Add Goal
+                Add goal
               </Text>
             </Pressable>
-            {/* <Pressable
-              onPress={() => setShareOpen(true)}
-              style={({ pressed }) => [
-                styles.shareIconBtn,
-                ANDROID && styles.ml10,
-                {
-                  backgroundColor: pressed ? theme.border : theme.card,
-                  borderColor: theme.border,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Share"
-            >
-              <Ionicons name="share-outline" size={18} color={theme.text} />
-            </Pressable> */}
           </View>
 
-          <View style={styles.divider(theme)} />
+          <SectionRule theme={theme} />
 
           <View style={[styles.sectionHeaderRow, ANDROID && styles.noGap]}>
-            <Text style={[styles.sectionTitle, { color: theme.mutedText }]}>
-              Goals
-            </Text>
+            <MetadataLabel theme={theme}>Goals</MetadataLabel>
 
             <Pressable
               onPress={async () => {
                 await hapticLight();
                 setHideCompleted((v) => !v);
               }}
-              style={({ pressed }) => [
-                styles.togglePill,
-                {
-                  borderColor: theme.border,
-                  backgroundColor: pressed ? theme.border : theme.card,
-                },
-              ]}
+              style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel="Toggle hide completed goals"
             >
-              <Text style={[styles.toggleText, { color: theme.text }]}>
+              <Text style={[styles.editorialToggle, { color: theme.text }]}>
                 {hideCompleted ? "Show completed" : "Hide completed"}
               </Text>
             </Pressable>
@@ -2024,10 +1996,11 @@ export default function App() {
                 persistGoals(data);
               }
             }}
-            renderItem={({ item, drag, isActive }) => (
+            renderItem={({ item, drag, isActive, getIndex }) => (
               <GoalItem
                 goal={item}
                 theme={theme}
+                index={(typeof getIndex === "function" ? getIndex() : 0) + 1}
                 onProgress={openEdit}
                 onEditDetails={openGoalDetails}
                 onDelete={handleDeleteGoal}
@@ -4181,6 +4154,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "900",
     letterSpacing: 0.2,
+  },
+  editorialAction: {
+    flex: 1,
+    minHeight: 44,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+  },
+  editorialActionText: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  editorialToggle: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   habitsHeaderGrid: {
     marginTop: 12,
