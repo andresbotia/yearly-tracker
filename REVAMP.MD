@@ -1,837 +1,735 @@
-# ATELIER TRACKER — NEXT REVAMP PHASE
+# ATELIER MOTION + TACTILE INTERACTION PHASE
 
-Continue the current revamp on `feature/revamp`.
+The visual rebrand and art-theme collection are now established.
 
-Before changing code:
-
-1. Read `REVAMP.MD`
-2. Read `design.md`
-3. Read `AGENTS.md`
-4. Inspect the current implementation and recent commits
-5. Stay on `feature/revamp`
-6. Do not modify or merge into `main`
-
-This phase combines:
-
-- Atelier Tracker rebrand
-- backdrop legibility refinement
-- expanded art-theme collection
-- theme gallery update
-- intro/rebrand messaging
-- documentation alignment
-- production compatibility verification
-
----
-
-# 1. REBRAND TO ATELIER TRACKER
-
-Rebrand the user-facing product from:
-
-`Yearly Tracker`
-
-to:
-
-`Atelier Tracker`
-
-Use the chosen brand direction conceptually as:
-
-`[AT]`
-
-`Atelier Tracker`
-
-The `[AT]` mark should act as the lightweight editorial brand mark until final logo assets are supplied.
-
-Use `[AT]` tastefully in places such as:
-
-- app header/kicker
-- intro modal
-- splash/brand treatment
-- theme gallery
-- small identity moments
-
-Do not overuse it.
-
-## Safe rebrand rules
-
-Change USER-FACING branding only.
-
-Update where appropriate:
-
-- app display name
-- in-app headings
-- onboarding/revamp intro copy
-- docs
-- share cards
-- splash/brand copy
-- visible widget branding if safe
-
-Do NOT rename technical identifiers just because the brand changed.
-
-Do NOT change:
-
-- existing AsyncStorage keys
-- iOS bundle identifiers
-- Android package identifiers
-- widget bundle identifiers
-- native widget contracts
-- existing persisted schemas
-- user IDs
-- storage behavior
-
-These should remain stable:
-
-`com.andresbotia.ResolutionTracker`
-
-`com.andresbotia.ResolutionTracker.widgets`
-
-Existing storage remains production data.
-
-This must behave as a normal app update:
-
-Yearly Tracker
-→ app update
-→ Atelier Tracker
-→ same goals
-→ same habits
-→ same history
-→ same themes
-→ same local data
-
----
-
-# 2. IMPROVE CONTENT LEGIBILITY OVER ART BACKDROPS
-
-The full-canvas artwork backdrop is working well, but the painting currently competes with the UI slightly too much.
-
-Refine readability WITHOUT reverting to generic card UI.
-
-Do NOT create large opaque cards everywhere.
-
-Do NOT add:
-
-- heavy shadows
-- large rounded cards
-- obvious floating panels
-- thick borders
-
-Instead use a very subtle editorial legibility system.
-
-Possible tools:
-
-- slightly stronger paper veil behind dense content areas
-- faint paper-tint washes
-- very subtle 1px keylines
-- low-opacity section framing
-- soft tonal separation behind controls
-- carefully increased contrast where necessary
-
-Target effect:
-
-CONTENT FEELS LIGHTLY HELD ON THE PAGE.
-
-Not boxed.
-
-Suggested starting values:
-
-Translucent keyline:
-
-`rgba(28, 25, 22, 0.06–0.10)`
-
-Subtle paper wash:
-
-`rgba(246, 243, 236, 0.08–0.14)`
-
-Tune these visually.
-
-Do not blindly use the same opacity everywhere.
-
-Potential use areas:
-
-- header / identity region
-- yearly progress area
-- CTA toolbar
-- habit rows
-- goal action rows
-- history sections
-- gallery modal
-- dense metadata areas
-
-Keep the painting visible.
-
-The art should still feel like the environment.
-
----
-
-# 3. ATELIER ART COLLECTION
-
-The art-theme collection is now part of the Atelier Tracker identity.
-
-The collection should feel curated rather than random.
+The next phase focuses on how Atelier Tracker FEELS to use.
 
 Creative direction:
 
-MUSEUM CATALOGUE
+ANALOG INSTRUMENT
 ×
-IMPRESSIONISM / POST-IMPRESSIONISM
+ARCHIVAL INDEX
 ×
-PERSONAL ARCHIVE
+QUIET DIGITAL MOTION
 
-Artwork should be:
+This remains part of `feature/revamp`.
 
-- atmospheric
-- painterly
-- elegant
-- nature-forward
-- softly architectural when appropriate
-- muted enough for UI overlays
-- visually strong without overwhelming content
+Do not create a separate branch.
+Do not modify or merge into `main`.
 
-Avoid:
-
-- overly dark works
-- extremely high contrast
-- crowded scenes
-- portrait-dominant works
-- visually chaotic compositions
-- pieces that fight with text
-
-Aim for approximately 18 total art themes.
-
-Quality is more important than hitting exactly 18.
+All existing storage/business-logic safety requirements still apply.
 
 ---
 
-# 4. LOCKED CORE ARTWORK
+# 1. PRIMARY OBJECTIVE
 
-These selections are APPROVED.
+Current goal update interactions are functional but still feel like conventional mobile-app controls.
 
-Do not replace them without explicit approval.
+Examples that should be reconsidered:
 
-## Vincent van Gogh
+- large `EDIT / UPDATE / DELETE` button rows
+- count goal `- / number / +`
+- milestone `NOT YET / DONE`
+- static percentage changes
+- static progress bars
+- abrupt modal transitions
 
-### 01 — Cypresses
+Redesign these interactions so they feel native to Atelier Tracker.
 
-Vincent van Gogh
+Do NOT sacrifice usability for novelty.
 
-### 02 — Wheat Field with Cypresses
+Motion should:
 
-Vincent van Gogh
+- acknowledge input
+- communicate data changes
+- make tracking satisfying
+- reinforce the archival/editorial identity
 
-### 03 — Women Picking Olives
+Motion should NOT:
 
-Vincent van Gogh
-
-## Claude Monet
-
-### 04 — The Seine at Giverny
-
-Claude Monet
-
-### 05 — Haystacks
-
-Claude Monet
-
-These should remain part of the canonical Atelier collection.
-
-Existing theme IDs already in production/dev must remain stable.
-
-If one of these already exists under a current ID, preserve the ID.
+- become gamification
+- bounce constantly
+- use confetti
+- use flashy particles
+- distract from the artwork
+- make routine actions slower
 
 ---
 
-# 5. EXPANSION ARTISTS
+# 2. MOTION LANGUAGE
 
-Expand the collection using similar late-19th-century / impressionist / post-impressionist artists.
+Use four motion levels.
 
-Priority artists:
+## MICRO — ~100–180ms
 
-- Alfred Sisley
-- Camille Pissarro
-- Paul Cézanne
-- Berthe Morisot
-- additional Claude Monet
-- other closely related artists only if they fit the visual system
+For:
 
-Do not expand simply for variety.
+- button press feedback
+- habit state changes
+- counter ticks
+- toggles
+- focus/selection
 
-The collection must still feel cohesive.
+Potential treatment:
 
----
+- 0.98 scale
+- slight opacity/tonal shift
+- border/keyline darkening
+- subtle haptic
 
-# 6. PREFERRED EXPANSION CANDIDATES
+No exaggerated bounce.
 
-Strong candidates include:
+## INTERACTION — ~180–300ms
 
-## Claude Monet
+For:
 
-### Water Lilies
+- progress updates
+- counter snapping
+- tabs
+- drawers
+- state transitions
 
-Soft blue / green / lavender atmosphere.
+Use restrained springs where appropriate.
 
-### The Japanese Footbridge
+## COMPLETION — ~450–800ms
 
-Excellent garden theme with deeper greens.
+Reserved for:
 
-### The Artist’s Garden at Vétheuil
+- completing a goal
+- completing a milestone
 
-Brighter garden theme with yellow/green energy.
+These should feel meaningful but mature.
 
-### The Artist’s Garden in Argenteuil
+## AMBIENT — ~30–60 seconds
 
-Floral, painterly, colorful but still compatible with the Atelier aesthetic.
+Reserved for:
 
-### Rouen Cathedral, West Façade
+- barely perceptible art movement
+- subtle ASCII/paper movement
 
-More architectural and tonal while staying unmistakably Monet.
-
----
-
-## Alfred Sisley
-
-### The Bridge at Villeneuve-la-Garenne
-
-Excellent sky / water / architecture balance.
-
-### The Road from Versailles to Louveciennes
-
-Quiet editorial landscape with strong depth.
-
-### Rue Eugène Moussoir at Moret: Winter
-
-Useful cooler / winter variation.
-
-Sisley should help broaden the collection without changing the visual language dramatically.
+Ambient animation must be almost invisible.
 
 ---
 
-## Camille Pissarro
+# 3. CREATE THE ATELIER COUNTER
 
-### Landscape, Île-de-France
+Replace the generic count-goal interaction:
 
-Excellent backdrop candidate:
+`[-] [3] [+]`
 
-- wide sky
-- muted land
-- restrained palette
-- readable behind UI
+with a purpose-built tactile counter.
 
-### The Artist’s Garden at Éragny
+Visual concept:
 
-Good garden alternative if authoritative Open Access sourcing is available.
+CURRENT / TARGET
 
----
+             003
+             ───
+       001 002 [003] 004 005
 
-## Paul Cézanne
+       +++.................
 
-### Mont Sainte-Victoire
+              15%
 
-Strong earthy / teal / ochre palette.
+The interaction should evoke:
 
-One of the best candidates for Atelier outside Monet and Van Gogh.
+- a mechanical counter
+- film advance
+- an archival index
+- a precision instrument
 
-### Mont Sainte-Victoire and the Viaduct of the Arc River Valley
+Do not literally copy another product.
 
-More structured and architectural.
-
-Good contrast with the softer Impressionist works.
-
----
-
-## Berthe Morisot
-
-### Girl in a Boat with Geese
-
-Soft greens and blues with loose brushwork.
-
-### The Sisters
-
-More figurative than the rest of the collection, so only include if it still works well as a full-screen UI backdrop.
-
-Prefer Morisot works that remain atmospheric rather than portrait-heavy.
+Create Atelier's own interpretation.
 
 ---
 
-# 7. CURATORIAL SELECTION RULES
+# 4. ATELIER COUNTER INTERACTION
 
-When filling the remaining slots toward ~18 total themes:
+Support multiple input methods.
 
-Prioritize works with:
+## Horizontal scrub
 
-- broad areas of sky / water / foliage
-- natural texture
-- soft tonal transitions
-- low-to-medium visual density
-- strong but muted palettes
-- compositions that tolerate cropping with `cover`
-- recognizable visual identity after the paper veil is applied
+Dragging horizontally adjusts progress.
 
-Avoid works where important subjects are constantly hidden by UI.
+As values cross integer boundaries:
 
-The selected artwork must still look intentional when:
+- provide a light haptic tick
+- animate neighboring values
+- center value remains visually dominant
+- values should magnetically snap
 
-- cropped vertically
-- displayed on iPhone 7 / 375pt
-- displayed on modern iPhone aspect ratios
-- displayed on Android
-- partially obscured by UI
+On release:
+
+- settle naturally to the nearest valid value
+
+## Tap
+
+Allow single-step increment/decrement through intuitive tap regions or subtle controls.
+
+Do not require precise swiping for a simple +1.
+
+## Long press
+
+Allow controlled repeated increment/decrement.
+
+Acceleration may increase gently during a long hold.
+
+## Direct entry
+
+Tapping the primary number should allow exact numeric input.
+
+This is REQUIRED for large goals.
+
+Example:
+
+`Run 500 miles`
+
+A user must be able to go:
+
+`288 → 337`
+
+without swiping through 49 individual values.
 
 ---
 
-# 8. ART ASSET SOURCING
+# 5. ADAPT COUNTER SCALE TO TARGET SIZE
 
-Use ONLY authoritative museum Open Access / public-domain sources.
+The visual interaction should adapt intelligently.
 
-Preferred sources:
+Example:
 
-- The Metropolitan Museum of Art
-- National Gallery of Art
-- Art Institute of Chicago
-- similarly reputable museum Open Access programs
+Target 20:
 
-Do NOT use:
+- integer-by-integer wheel works beautifully
 
-- Pinterest
-- random image hosts
-- unofficial art wallpaper websites
-- search-engine previews
-- scraped reproduction sites
+Target 500:
 
-Even if a painting itself is public domain, use an authoritative image source.
+- direct entry and faster scrubbing become more important
 
-For each artwork maintain metadata:
+Target 10,000:
 
-```js
-{
-  id,
-  title,
-  artist,
-  year,
-  museum,
-  museumObjectId,
-  source,
-  rights,
-  isPublicDomain
-}
+- do not render thousands of neighboring numbers
+- virtualize the concept
+- keep animation lightweight
 
-Do not bundle artwork unless rights are confirmed.
+Do not create performance issues based on goal target size.
 
-9. NO RUNTIME ART NETWORK CALLS
+The counter is presentation only.
 
-Atelier Tracker remains offline-first.
+Use the existing progress persistence handlers.
 
-Museum APIs are DEVELOPMENT TOOLS ONLY.
+---
 
-Runtime:
+# 6. ANIMATE PROGRESS CHANGES
 
-Bundled artwork
-+
-bundled ASCII
-+
-local AsyncStorage
+Important numeric changes should not abruptly replace text.
 
-No runtime museum requests.
+Examples:
 
-No accounts.
+`03 → 04`
 
-No analytics introduced.
+`15% → 20%`
 
-No tracking introduced.
+`4% yearly → 5% yearly`
 
-No artwork CDN dependency.
+Possible treatment:
 
-10. ART ASSET PIPELINE
+- vertical roll
+- translate/fade
+- digit swap
 
-For every approved artwork:
+Keep animations short.
 
-Authoritative museum image
-→ download high-resolution development source
-→ create optimized mobile derivative
-→ create ASCII derivative
-→ optionally derive palette
-→ store metadata
-→ bundle with app
+Synchronize numeric animation with the ASCII/editorial progress representation.
 
-Do NOT ship enormous museum masters.
+Example:
 
-Use an appropriate optimized mobile size.
+`+++.................`
 
-Keep image quality high enough for full-screen use while respecting app size and older devices.
+becomes:
 
-ASCII remains build-time generated.
+`++++................`
 
-Do not dynamically convert paintings to ASCII on every launch.
+The newly added `+` may briefly appear using the active artwork accent before settling into ink.
 
-11. ASCII RULE
+---
 
-ASCII remains:
+# 7. MILESTONE GOAL INTERACTION
 
-TEXTURE, NOT THE ARTWORK ITSELF.
+Replace the generic:
 
-Do not turn Atelier Tracker into a terminal theme.
+`NOT YET / DONE`
 
-Use:
+segmented control.
 
-one ASCII Text layer
-low opacity
-subtle texture
-artwork still recognizable
+Create a simple Atelier milestone control.
 
-Stored habit values remain:
+Concept:
+
+`○  INCOMPLETE`
+
+becomes:
+
+`●  COMPLETE`
+
+The interaction should feel like applying an archival mark or catalog stamp.
+
+Possible completion sequence:
+
+1. touch response
+2. indicator fills
+3. label transitions
+4. progress line completes
+5. success haptic
+6. brief Atelier completion notation appears
+
+Example:
+
+`[AT] / GOAL COMPLETE`
+
+Then quietly settle.
+
+No:
+
+- confetti
+- fireworks
+- coins
+- trophy explosions
+- loud badges
+
+---
+
+# 8. GOAL COMPLETION MOMENT
+
+When a count goal reaches 100%:
+
+- animate the final number
+- animate percentage to 100%
+- complete the editorial progress line
+- trigger tasteful success haptic
+- briefly display an Atelier completion mark
+- settle into the EXISTING completed state
+
+Do not change:
+
+- completion calculations
+- completed sorting
+- hide completed
+- persistence
+
+Presentation only.
+
+---
+
+# 9. REDESIGN GOAL ACTIONS
+
+The current three large buttons:
+
+EDIT
+UPDATE
+DELETE
+
+consume too much visual weight.
+
+Refine this action system.
+
+Goals themselves should remain the focal point.
+
+Explore a quieter editorial interaction such as:
+
+`EDIT     PROGRESS     DELETE`
+
+or an indexed action rail / small textual controls.
+
+Requirements:
+
+- tap targets remain accessible
+- destructive action remains clearly differentiated
+- controls must work on iPhone 7
+- no tiny inaccessible text links
+- no generic rounded icon buttons
+
+Consider making the most common action — updating progress — clearly primary without making every goal row visually heavy.
+
+---
+
+# 10. ATELIER DRAWER
+
+Evaluate replacing count/milestone centered update modals with a reusable bottom drawer.
+
+Concept:
+
+────────────────────────────
+02 / READ 20 BOOKS
+
+CURRENT PROGRESS
+
+             003
+
+      001 002 [003] 004 005
+
++++............... 15%
+
+CANCEL APPLY
+────────────────────────────
+
+The artwork remains visible above and subtly behind the drawer.
+
+Drawer visual language:
+
+- museum paper
+- hairline rule
+- Atelier typography
+- square edges / minimal corner radius
+- no generic SaaS card styling
+
+Motion:
+
+- rise from bottom
+- restrained spring
+- safe-area aware
+- keyboard-aware
+- smooth dismissal
+
+Use the drawer for:
+
+- count progress
+- milestone state
+
+Potentially use it for editing where appropriate.
+
+Do NOT blindly convert critical or complex dialogs if a standard modal is safer.
+
+---
+
+# 11. HAPTIC LANGUAGE
+
+Create a deliberate haptic hierarchy.
+
+Examples:
+
+## Light tick
+
+- crossing one counter increment
+- habit selection
+- minor toggle
+
+## Selection
+
+- switching counter mode
+- choosing theme/state
+
+## Success
+
+- completing milestone
+- reaching 100%
+
+Do not fire strong haptics repeatedly during fast scrubbing.
+
+Throttle appropriately.
+
+Existing habit haptics must continue working.
+
+---
+
+# 12. HABIT ANIMATION REFINEMENT
+
+Keep existing habit logic:
 
 0 = empty
 1 = good
 2 = bad
 
-Visual presentation remains:
+Presentation:
 
-. = empty
-+ = good
-× = bad
+`.` → `+` → `×`
 
-Do not change persistence semantics.
+Enhance transitions slightly.
 
-12. UPDATE THE ART GALLERY
+Possible treatment:
 
-Expand the gallery for the larger collection.
+- quick scale/fade
+- accent-color flash
+- appropriate haptic
 
-It should feel like browsing a small museum collection.
+Do not make habit interactions slower.
 
-Possible organization:
+The character change should remain immediate.
 
-ATELIER COLLECTION
+---
 
-VAN GOGH
-01 — Cypresses
-02 — Wheat Field with Cypresses
-03 — Women Picking Olives
+# 13. LIVING CANVAS
 
-MONET
-04 — The Seine at Giverny
-05 — Haystacks
-...
+Add OPTIONAL extremely subtle ambient movement to ArtTheme backgrounds.
 
-SISLEY
-...
+Concept:
 
-PISSARRO
-...
+Artwork transform:
 
-CÉZANNE
-...
+scale:
+`1.000 → ~1.012–1.015`
 
-MORISOT
-...
+translate:
+approximately `3–8px`
 
-Then:
+duration:
+approximately `30–60 seconds`
 
-CLASSIC
+then reverse smoothly.
 
-CUSTOM
+ASCII layer may drift independently by only ~1–2px.
 
-The gallery should remain calm and editorial.
+The user should NOT immediately think:
 
-Requirements:
+"the background is zooming."
 
-artwork thumbnails
-artist
-title
-year
-museum/source
-palette preview
-selected-state indication
-graceful title wrapping
-no metadata clipping
-no giant cluttered cards
+They should eventually notice:
 
-Classic themes must remain available.
+"this feels slightly alive."
 
-Custom themes must remain available/editable.
+Avoid obvious Ken Burns effects.
 
-Existing selected theme IDs must still resolve.
+---
 
-13. UPDATE INTRO / REBRAND COPY
+# 14. ART-SPECIFIC MOTION MUST REMAIN GENERIC
 
-The revamp intro now needs to communicate the name change.
+Do not attempt to animate individual objects inside paintings.
 
-We must distinguish:
+No:
 
-Existing production user
+- moving trees
+- animated clouds painted from scratch
+- AI object segmentation
+- generated water motion
 
-They previously used Yearly Tracker.
+The paintings remain paintings.
 
-Suggested direction:
+Motion comes from subtle camera/parallax treatment only.
 
-KICKER
+This keeps:
 
-[AT] / NEW EDITION
+- artistic integrity
+- performance
+- offline behavior
 
-TITLE
+---
 
-Yearly Tracker is now Atelier Tracker
+# 15. REDUCED MOTION
 
-BODY
+Respect the OS reduced-motion preference.
 
-Your goals, habits, and history are exactly where you left them.
+When enabled:
 
-We’ve reimagined the experience around art, typography, and the idea of your year as a personal archive.
+- disable Living Canvas
+- remove long transforms
+- drawer may fade/translate minimally
+- numeric transitions use simple fades
+- all interactions remain fully functional
 
-Your data remains private and stored on your device.
+No feature may depend on animation.
 
-CTA
+---
 
-ENTER ATELIER
+# 16. PERFORMANCE
 
-Brand new user
+iPhone 7 remains a first-class performance target.
 
-Do NOT tell them the app “changed.”
+Prefer:
 
-Suggested direction:
+- React Native Reanimated
+- UI-thread transforms
+- opacity
+- transform
 
-KICKER
+Avoid:
 
-[AT] / PRIVATE YEARLY JOURNAL
+- JS-driven frame loops
+- runtime blur
+- particles
+- repeated image processing
+- huge animated trees
+- unnecessary state updates during drag
 
-TITLE
+One artwork layer remains one artwork layer.
 
-Welcome to Atelier Tracker
+One ASCII layer remains one ASCII layer.
 
-BODY
+---
 
-Track your habits, goals, and year through a quiet, art-led interface.
+# 17. ACCESSIBILITY
 
-No account. No tracking. Your data stays on your device.
+The custom counter must remain accessible.
 
-CTA
+Expose:
 
-ENTER ATELIER
+- current value
+- target
+- increment action
+- decrement action
+- direct-value entry
 
-14. INTRO STORAGE SAFETY
+VoiceOver users must not be required to perform a custom drag gesture.
 
-Do not reuse:
+All motion-enhanced buttons retain meaningful labels.
 
-rt_welcome_seen_v1
+Milestone controls expose correct checked/completed state.
 
-Do not reset existing onboarding flags.
+---
 
-Use the existing additive revamp-introduction mechanism if already implemented.
+# 18. BUSINESS LOGIC IS FROZEN
 
-Current intended key:
+Do not modify the underlying semantics of:
 
-yt_revamp_intro_seen_v1
+- goal progress
+- goal target
+- completion
+- goal CRUD
+- habit CRUD
+- habit values
+- yearly calculations
+- history
+- rollover
+- undo
+- reordering
+- widgets
+- sharing
 
-Keep it additive.
+The motion system consumes existing handlers.
 
-Do not create duplicate onboarding flags unless necessary.
+It does not replace them.
 
-Modal order must remain safe:
+AsyncStorage schemas remain unchanged.
 
-existing required onboarding
-→ rollover
-→ habits intro
-→ Atelier/revamp intro
+---
 
-Never stack multiple modals.
+# 19. DESIGN DOCUMENTATION
 
-15. UPDATE APP BRANDING
+Update `design.md` with a formal Motion section.
 
-Update user-facing references to Atelier Tracker.
+Document:
 
-Review:
+- motion durations
+- haptic hierarchy
+- Atelier Counter
+- completion behavior
+- Living Canvas
+- reduced motion
+- performance constraints
 
-App.js
-app.json display name
-headers
-welcome modal
-revamp intro
-share cards
-theme gallery
-empty states
-splash copy
-README
-AGENTS.md
-design.md
-REVAMP.MD
-visible widget titles if safe
+Update `AGENTS.md` only where stable engineering rules need clarification.
 
-Keep internal technical names when changing them has no user benefit.
+Keep REVAMP.MD as the implementation specification.
 
-Do not rename files/packages merely for cosmetic reasons.
+---
 
-16. [AT] BRAND MARK
+# 20. IMPLEMENTATION ORDER
 
-Use [AT] as the provisional brand mark until final production SVG assets are available.
+Remain on `feature/revamp`.
 
-Visual intent:
+Suggested focused commits:
 
-[AT]
+1. `feat/motion-foundation`
+2. `feat/atelier-counter`
+3. `feat/milestone-interaction`
+4. `feat/atelier-drawer`
+5. `feat/progress-motion`
+6. `feat/living-canvas`
 
-editorial
-archival
-catalogue-like
-subtle computing/indexing influence
-not cyberpunk
-not hacker aesthetic
+Actual commit names may differ, but keep work separable.
 
-Possible header usage:
+Recommended order:
 
-[AT] ATELIER TRACKER / 2026
+1. audit current progress handlers/modal flows
+2. define motion tokens
+3. implement shared animated-number/progress primitives
+4. implement Atelier Counter
+5. add exact numeric entry
+6. implement milestone control
+7. implement Atelier Drawer
+8. refine goal action controls
+9. add completion moments
+10. refine habits
+11. implement Living Canvas
+12. reduced-motion pass
+13. performance pass
+14. verification
 
-Do not replace every page title with [AT].
+Do not stop after the counter.
 
-Use it as identity punctuation.
+Complete the interaction language throughout the app.
 
-17. DOCUMENTATION
+---
 
-Update repository documentation to reflect the new brand and art collection.
-
-Review:
-
-AGENTS.md
-
-design.md
-
-REVAMP.MD
-
-README.md
-
-Document hierarchy remains:
-
-AGENTS.md
-→ engineering / process / persistence / safety
-
-design.md
-→ visual system
-
-REVAMP.MD
-→ current redesign/rebrand implementation specification
-
-Update design.md with:
-
-Atelier Tracker naming
-[AT] identity
-expanded art collection
-legibility treatment
-gallery rules
-full-canvas artwork behavior
-
-Do not let documentation contradict implementation.
-
-18. NON-NEGOTIABLE PRODUCTION SAFETY
-
-Do NOT break:
-
-existing AsyncStorage compatibility
-goal CRUD
-habit CRUD
-habit 0/1/2 semantics
-history
-rollover
-drag/reorder
-haptics
-undo
-sharing
-widget payload contracts
-classic theme compatibility
-custom theme compatibility
-
-Do NOT rename:
-
-existing AsyncStorage keys
-bundle identifiers
-package identifiers
-native widget identifiers/contracts
-
-Do not reset user data.
-
-Do not reseed existing users.
-
-Do not change IDs.
-
-Do not drop unknown persisted fields.
-
-Do not convert storage schemas merely because the branding changed.
-
-19. IMPLEMENTATION ORDER
-
-Do this as a focused continuation, not a rewrite.
-
-Suggested order:
-
-read AGENTS.md / REVAMP.MD / design.md
-inspect current branch + recent commits
-Atelier Tracker branding pass
-backdrop legibility refinement
-establish locked Atelier art catalog
-resolve authoritative museum sources
-add optimized artwork assets
-generate ASCII assets
-add/update ArtThemes
-update gallery organization
-update onboarding/rebrand copy
-update docs
-verify persistence compatibility
-inspect git diff
-make focused commits
-
-Do not stop after completing only one section.
-
-Continue through the full phase unless genuinely blocked.
-
-20. VERIFICATION
-
-Before finishing:
+# 21. VERIFICATION
 
 Run:
 
-npm run verify:storage
+`npm run verify:storage`
 
-npx expo-doctor
+`npx expo-doctor`
 
-Run any other REAL existing project verification commands.
-
-Do not invent scripts.
+and all other existing relevant checks.
 
 Verify:
 
-old AsyncStorage fixture still passes
-existing theme IDs resolve
-custom themes resolve
-locked current art themes still resolve
-new art themes resolve
-all artwork files exist
-all ASCII files exist
-no bad require/import paths
-no duplicate theme IDs
-no runtime museum requests
-no accidental identifier renaming
-no production storage regression
-no accidental business-logic change
+- progress values persist exactly as before
+- old upgrade fixture still passes
+- counter cannot exceed valid bounds
+- direct entry validates correctly
+- boolean/milestone state persists
+- completed sorting still works
+- hide completed still works
+- undo remains functional
+- no duplicate updates
+- rapid scrubbing does not flood AsyncStorage/haptics
+- reduced motion works
+- classic themes do not gain unwanted backdrop motion
+- custom themes remain valid
+- no native widget contract changed
 
-Inspect narrow layouts.
+Inspect diffs for accidental business logic modifications.
 
-At minimum reason against:
+Do not claim physical-device testing unless actually performed.
 
-iPhone 7 / 375pt
-modern iPhones
-Android
+---
 
-Do not claim device testing unless actually performed.
+# 22. PHYSICAL DEVICE TEST CHECKLIST
 
-21. FINAL REPORT
+After implementation we will test manually:
 
-At completion report:
+COUNT GOAL
 
-What changed
-Files changed
-Atelier Tracker branding changes
-[AT] usage
-Backdrop legibility changes
-Final art-theme catalog
-Museum/source metadata used
-Theme gallery changes
-Intro/rebrand behavior
-Storage compatibility results
-Build/test results
-Commits created
+- +1 feels good
+- -1 feels good
+- scrub feels predictable
+- haptic does not become annoying
+- long press works
+- direct numeric entry works
+- 3 / 20 feels good
+- 288 / 500 remains practical
 
-```
+MILESTONE
+
+- incomplete → complete feels satisfying
+- complete → incomplete works
+- persisted value correct
+
+DRAWER
+
+- iPhone 7
+- keyboard
+- safe area
+- dismissal
+- no clipping
+
+ANIMATION
+
+- no dropped frames
+- progress transitions smooth
+- artwork drift almost imperceptible
+
+ACCESSIBILITY
+
+- reduced motion
+- VoiceOver semantics

@@ -159,6 +159,15 @@ function main() {
   if (!appSrcAfter.includes("ArtBackdrop")) {
     fail("ArtBackdrop missing from App.js");
   }
+  if (!appSrcAfter.includes("function persistGoals")) {
+    fail("persistGoals missing from App.js");
+  }
+  const counterPath = path.join(ROOT, "components", "atelier", "AtelierCounter.js");
+  if (!fs.existsSync(counterPath)) fail("missing AtelierCounter");
+  const tokensSrc = read(path.join(ROOT, "utils", "tokens.js"));
+  if (!tokensSrc.includes("ambient:") || !tokensSrc.includes("completion:")) {
+    fail("motion duration tokens missing");
+  }
   if (appSrcAfter.includes("<ArtHero")) {
     fail("primary screens still render ArtHero");
   }

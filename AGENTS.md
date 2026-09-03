@@ -90,7 +90,7 @@ Preserve:
 - Habit history month/year math
 - Annual rollover (carry / reset progress / start new / decide later)
 - Yearly percentage (average of goal percents — do not invent a new formula)
-- Haptics, undo toast, sharing capture size and data
+- Haptics (tick / selection / success hierarchy), undo toast, sharing capture size and data
 - Widget payload shape and native widget contracts
 
 Presentation may change. Stored values, IDs, and formulas may not.
@@ -120,6 +120,8 @@ High-level identity:
 - Do not add large opaque cards, heavy shadows, or pill buttons.
 - Classic / custom / Museum Paper (no artwork): solid palette background.
 - Important information must not ellipsize on narrow devices. iPhone 7 / 375pt is a first-class target.
+- Motion is presentation only. Progress handlers, habit 0/1/2, and completion math stay unchanged.
+- Honor reduced motion. Do not drive artwork with JS frame loops. Living Canvas is art-theme only.
 
 ## Offline / artwork rules
 

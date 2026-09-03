@@ -123,10 +123,34 @@ Titles may wrap. Do not ellipsize artwork titles on narrow devices.
 tokens, never ad-hoc magic numbers for new UI.
 
 ## Motion
-- Duration: 160–240ms. Reduced-motion: opacity only, ≤ 120ms.
-- Animate transform and opacity only.
-- Haptics stay as they are today (selection / success / drag).
-- Silent success. No celebratory confetti.
+Four levels. Analog instrument × archival index × quiet digital motion.
+
+- Micro (~140ms): press scale 0.98, habit ticks, counter ticks, toggles
+- Interaction (~240ms): drawers, progress updates, digit rolls
+- Completion (~620ms): milestone / 100% mark only. `[AT] / GOAL COMPLETE`, then settle
+- Ambient (~48s): Living Canvas, art themes only. Scale ~1.000–1.013, 3–8px drift. ASCII may drift 1–2px. Never animate objects inside paintings.
+
+Animate transform and opacity only. Reanimated / UI thread. No JS frame loops, blur, particles, or confetti.
+
+### Haptics
+- Light tick: counter increment, habit cycle. Throttle during scrub (~42ms)
+- Selection: theme/state/drawer actions
+- Success: milestone complete, count goal reaches 100%
+
+### Atelier Counter
+Count-goal instrument: padded current value, neighbor strip, horizontal scrub, ± tap, long-press repeat, tap-to-enter exact number. Virtualize neighbors (five values). Do not render thousands of numbers. Persist only on Apply.
+
+### Milestone
+`○ Incomplete` / `● Complete`. Archival mark, not a segmented control.
+
+### Drawer
+Bottom sheet, museum paper, hairline, square edges. Rise from bottom. Keyboard- and safe-area-aware. Used for count and milestone progress. Critical/complex dialogs may remain centered modals.
+
+### Reduced motion
+Honor OS reduce-motion. Disable Living Canvas, use short fades, keep every control functional. No feature may depend on animation.
+
+### Performance
+iPhone 7 is a first-class target. One artwork layer, one ASCII layer. Classic/custom themes must not run Living Canvas.
 
 ## Microinteractions stance
 - Habit cells map 0/1/2 to `.` / `+` / `×` visually. Stored values do not change.
