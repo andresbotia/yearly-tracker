@@ -143,9 +143,9 @@ class HabitsWidgetProvider : AppWidgetProvider() {
       val title = h.optString("title", "").ifBlank { "—" }
       val state = h.optInt("todayState", 0)
       val badge = when (state) {
-        1 -> "✅"
-        2 -> "⚠️"
-        else -> "⬜"
+        1 -> "+"
+        2 -> "×"
+        else -> "."
       }
       return "$badge $title"
     }

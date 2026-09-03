@@ -97,9 +97,9 @@ private struct HabitStateDot: View {
 
 private func habitStateSymbol(_ state: Int) -> String {
     switch state {
-    case 1: return "✔︎"
-    case 2: return "!"
-    default: return "✕"
+    case 1: return "+"
+    case 2: return "×"
+    default: return "."
     }
 }
 
