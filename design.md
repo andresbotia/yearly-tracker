@@ -63,8 +63,8 @@ tokens, never ad-hoc magic numbers for new UI.
 ## Per-page allowances
 - Goals / Habits / History MAY use a single artwork plate + ASCII overlay.
 - Theme gallery MAY show artwork thumbnails.
-- Share cards wait until the main UI is stable (Phase 6).
-- Widgets wait until Phase 6.
+- Share cards: museum poster / archival print. Same capture size and data.
+- Widgets: native layouts stay; habit symbols map 0/1/2 to `.` / `+` / `×` only.
 
 ## What screens MUST share
 - Paper / ink / rule colours (or the active theme palette)

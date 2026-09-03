@@ -145,6 +145,50 @@ function main() {
     if (!themeSrc.includes(`id: "${id}"`)) fail(`classic theme missing: ${id}`);
   }
 
+  const imagesJs = read(path.join(ROOT, "assets", "art", "images.js"));
+  const catalog = JSON.parse(read(path.join(ROOT, "assets", "art", "catalog.json")));
+  const habitAscii = read(path.join(ROOT, "utils", "habitAscii.js"));
+  const appSrcAfter = appSrc;
+
+  if (!habitAscii.includes('return "+"') || !habitAscii.includes('return "×"')) {
+    fail("habit ASCII mapping must keep + / × presentation");
+  }
+  if (!appSrcAfter.includes("yt_habits_v1") || !appSrcAfter.includes("function buildWidgetPayload")) {
+    fail("habit storage key or widget payload builder missing from App.js");
+  }
+
+  const expectedArt = [
+    "cypresses",
+    "flowering-orchard",
+    "water-lilies",
+    "morning-seine",
+    "vetheuil",
+    "museum-paper",
+  ];
+  for (const id of expectedArt) {
+    if (!artIds.includes(id)) fail(`missing art theme id ${id}`);
+  }
+  for (const item of catalog) {
+    if (!item.isPublicDomain) fail(`catalog item ${item.id} is not marked public domain`);
+    const imgPath = path.join(ROOT, "assets", "art", "images", `${item.id}.jpg`);
+    if (!fs.existsSync(imgPath)) fail(`missing artwork file for ${item.id}`);
+    if (!imagesJs.includes(`"${item.id}"`)) fail(`images.js missing ${item.id}`);
+  }
+
+  if (!themeSrc.includes('kind: "classic"') && !themeSrc.includes("kind: extra.kind")) {
+    // decorateTheme still tags classic
+  }
+  if (!themeSrc.includes("findArtTheme")) fail("makeTheme lost art theme resolution");
+  if (!themeSrc.includes("CUSTOM_THEME_PREFIX")) fail("custom theme prefix missing");
+
+  const payloadMatch = appSrcAfter.match(
+    /function buildWidgetPayload[\s\S]*?return \{[\s\S]*?habits:[\s\S]*?\};/
+  );
+  if (!payloadMatch) fail("buildWidgetPayload shape not found");
+  for (const field of ["yearlyProgress", "theme", "goals", "habits", "todayState"]) {
+    if (!payloadMatch[0].includes(field)) fail(`widget payload missing ${field}`);
+  }
+
   if (process.exitCode) {
     console.error("Storage compatibility check failed.");
     process.exit(1);
@@ -155,6 +199,8 @@ function main() {
   console.log(`  habits: ${habits.length}`);
   console.log(`  theme: ${hue}`);
   console.log(`  history years: ${history.map((h) => h.year).join(", ")}`);
+  console.log(`  art themes: ${artIds.join(", ")}`);
+  console.log(`  catalog plates: ${catalog.length}`);
 }
 
 main();

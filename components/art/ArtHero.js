@@ -2,15 +2,17 @@ import React from "react";
 import { View, Image, StyleSheet } from "react-native";
 import { SPACE } from "../../utils/tokens";
 import { getArtVisual } from "../../assets/art/registry";
+import { useFontsLoaded } from "../../utils/fonts";
 import AsciiArtwork from "./AsciiArtwork";
 import ArtworkCredit from "./ArtworkCredit";
 
 export default function ArtHero({
   theme,
   artworkId,
-  fontsLoaded = false,
+  fontsLoaded,
   showCredit = true,
 }) {
+  const loaded = useFontsLoaded() || !!fontsLoaded;
   const id = artworkId || theme?.artwork?.id;
   if (!id) return null;
 
@@ -46,7 +48,7 @@ export default function ArtHero({
               ascii={visual.ascii}
               theme={theme}
               opacity={asciiOpacity}
-              fontsLoaded={fontsLoaded}
+              fontsLoaded={loaded}
             />
           </View>
         ) : null}
@@ -56,7 +58,7 @@ export default function ArtHero({
         <ArtworkCredit
           artwork={artwork}
           theme={theme}
-          fontsLoaded={fontsLoaded}
+          fontsLoaded={loaded}
         />
       ) : null}
     </View>

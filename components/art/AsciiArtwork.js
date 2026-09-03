@@ -1,13 +1,15 @@
 import React from "react";
 import { Text, StyleSheet, Platform } from "react-native";
 import { fontFamily } from "../../utils/tokens";
+import { useFontsLoaded } from "../../utils/fonts";
 
 export default function AsciiArtwork({
   ascii,
   theme,
   opacity,
-  fontsLoaded = false,
+  fontsLoaded,
 }) {
+  const loaded = useFontsLoaded() || !!fontsLoaded;
   const plate = typeof ascii === "string" ? ascii : "";
   if (!plate) return null;
 
@@ -27,7 +29,7 @@ export default function AsciiArtwork({
         {
           color,
           opacity: alpha,
-          fontFamily: fontFamily("data", fontsLoaded),
+          fontFamily: fontFamily("data", loaded),
         },
       ]}
     >

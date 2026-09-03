@@ -1,12 +1,14 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
+import { useFontsLoaded } from "../../utils/fonts";
 
 export default function ArtworkCredit({
   artwork,
   theme,
-  fontsLoaded = false,
+  fontsLoaded,
 }) {
+  const loaded = useFontsLoaded() || !!fontsLoaded;
   if (!artwork) return null;
 
   const ink = theme?.text || "#1c1916";
@@ -18,7 +20,7 @@ export default function ArtworkCredit({
         <Text
           style={[
             styles.title,
-            { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
+            { color: ink, fontFamily: fontFamily("display", loaded) },
           ]}
         >
           {String(artwork.title).toUpperCase()}
@@ -28,7 +30,7 @@ export default function ArtworkCredit({
         <Text
           style={[
             styles.artist,
-            { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
+            { color: muted, fontFamily: fontFamily("body", loaded) },
           ]}
         >
           {artwork.artist}
