@@ -1,6 +1,7 @@
 // components/HabitRow.js
+// Presentation-only redesign. Stored 0/1/2 states, toggle, swipe, drag, and streak stay unchanged.
 
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import Animated, {
@@ -8,10 +9,12 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
   useSharedValue,
-  withSequence,
   withTiming,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "../utils/tokens";
+import { habitStateChar, habitStateLabel } from "../utils/habitAscii";
+import { useFontsLoaded } from "../utils/fonts";
 
 const ANDROID = Platform.OS === "android";
 
@@ -36,17 +39,6 @@ function streakFromChecks(checks) {
   return streak;
 }
 
-function lastStateFromChecks(checks) {
-  const keys = Object.keys(checks || {});
-  if (!keys.length) return 0;
-  let latest = keys[0];
-  for (let i = 1; i < keys.length; i++) {
-    if (keys[i] > latest) latest = keys[i];
-  }
-  const v = (checks || {})[latest] || 0;
-  return v === 1 ? 1 : v === 2 ? 2 : 0;
-}
-
 function hexToRgba(hex, alpha = 1) {
   if (!hex || typeof hex !== "string") return `rgba(0,0,0,${alpha})`;
   const clean = hex.replace("#", "").trim();
@@ -66,74 +58,47 @@ function hexToRgba(hex, alpha = 1) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function HabitSquare({ value, size, theme, onPress }) {
+function HabitCell({ value, size, theme, onPress, fontsLoaded, label }) {
   const scale = useSharedValue(1);
-  const ring = useSharedValue(0);
-  const pulse = useSharedValue(0);
-  const prevVal = useRef(value);
-
-  useEffect(() => {
-    if (value === 1 && prevVal.current !== 1) {
-      pulse.value = 0;
-      pulse.value = withSequence(
-        withTiming(1, { duration: 120 }),
-        withTiming(0, { duration: 220 }),
-      );
-    }
-    prevVal.current = value;
-  }, [value, pulse]);
 
   const scaleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  const ringStyle = useAnimatedStyle(() => ({
-    opacity: ring.value,
-  }));
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    opacity: pulse.value * 0.22,
-    transform: [{ scale: 1 + pulse.value * 0.6 }],
-  }));
-
-  const bg =
-    value === 1 ? theme.primary : value === 2 ? theme.danger : "transparent";
+  const char = habitStateChar(value);
+  const color =
+    value === 1
+      ? theme.primary
+      : value === 2
+        ? theme.danger
+        : theme.mutedText;
 
   return (
     <Animated.View style={scaleStyle}>
       <Pressable
         onPress={onPress}
         onPressIn={() => {
-          scale.value = withTiming(0.96, { duration: 90 });
-          ring.value = withTiming(1, { duration: 90 });
+          scale.value = withTiming(0.92, { duration: MOTION.reduced });
         }}
         onPressOut={() => {
-          scale.value = withTiming(1, { duration: 140 });
-          ring.value = withTiming(0, { duration: 160 });
+          scale.value = withTiming(1, { duration: MOTION.short });
         }}
-        style={[
-          styles.square,
-          {
-            width: size,
-            height: size,
-            borderColor: theme.border,
-            backgroundColor: bg,
-          },
-        ]}
+        style={[styles.cell, { width: size, height: size }]}
         accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint="Cycles empty, good, bad"
       >
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.squareRing, ringStyle, { borderColor: theme.primary }]}
-        />
-        <Animated.View
-          pointerEvents="none"
+        <Text
           style={[
-            styles.squarePulse,
-            pulseStyle,
-            { backgroundColor: theme.ringBg || theme.primary },
+            styles.cellChar,
+            {
+              color,
+              fontFamily: fontFamily("data", fontsLoaded),
+            },
           ]}
-        />
+        >
+          {char}
+        </Text>
       </Pressable>
     </Animated.View>
   );
@@ -147,32 +112,29 @@ function ActionButton({
   swipeableRef,
   first,
 }) {
-  const base = variant === "danger" ? theme.danger : theme.primary;
-  const bg = hexToRgba(base, 0.12);
-  const bgPressed = hexToRgba(base, 0.22);
-  const border = hexToRgba(base, 0.18);
+  const base = variant === "danger" ? theme.danger : theme.text;
+  const bg = hexToRgba(base, 0.08);
+  const bgPressed = hexToRgba(base, 0.16);
 
   return (
     <Pressable
       onPress={() => {
-        // close immediately so the row doesn't “overlap” actions while navigating
         try {
           swipeableRef.current?.close?.();
         } catch {}
-        // run after close kick-off
         requestAnimationFrame(() => onPress?.());
       }}
       style={({ pressed }) => [
         styles.actionBtn,
         {
-          marginLeft: first ? 0 : 10,
+          marginLeft: first ? 0 : SPACE.xs,
           backgroundColor: pressed ? bgPressed : bg,
-          borderColor: border,
+          borderColor: theme.border,
         },
       ]}
       accessibilityRole="button"
     >
-      <Ionicons name={iconName} size={22} color={base} />
+      <Ionicons name={iconName} size={18} color={base} />
     </Pressable>
   );
 }
@@ -189,39 +151,23 @@ export default function HabitRow({
   labelWidth = 140,
   squareSize = 34,
   labelGap = 10,
-
-  // only-one-open-at-a-time coordination (from App.js)
   onSwipeOpen,
   onSwipeClose,
 }) {
   const swipeRef = useRef(null);
+  const fontsLoaded = useFontsLoaded();
 
   const squaresW = useMemo(
     () => squareSize * dates.length,
     [squareSize, dates.length],
   );
-  const innerSquare = useMemo(() => Math.max(22, squareSize - 6), [squareSize]);
 
   const streak = useMemo(
     () => streakFromChecks(habit?.checks || {}),
     [habit?.checks],
   );
 
-  const lastState = useMemo(
-    () => lastStateFromChecks(habit?.checks || {}),
-    [habit?.checks],
-  );
-  const lastLabel = lastState === 1 ? "good" : lastState === 2 ? "bad" : "off";
-  const lastColor =
-    lastState === 1
-      ? theme.primary
-      : lastState === 2
-        ? theme.danger
-        : theme.mutedText;
-
-  // ✅ Right actions with smooth fade/slide in/out.
-  // ReanimatedSwipeable passes shared values; this stays stable and avoids the old Swipeable crash.
-  const renderRightActions = (progress /* shared value */) => {
+  const renderRightActions = (progress) => {
     const animatedStyle = useAnimatedStyle(() => {
       const opacity = interpolate(
         progress.value,
@@ -268,7 +214,7 @@ export default function HabitRow({
       renderRightActions={renderRightActions}
       overshootRight={false}
       rightThreshold={36}
-      friction={0.85} // ✅ snappier open/close (lower = less “slow rubber band”)
+      friction={0.85}
       onSwipeableWillOpen={() => {
         onSwipeOpen?.(habit.id, swipeRef.current);
       }}
@@ -280,9 +226,8 @@ export default function HabitRow({
         style={[
           styles.row,
           {
-            backgroundColor: theme.card,
-            borderColor: theme.border,
-            opacity: dragging ? 0.92 : 1,
+            borderBottomColor: theme.border,
+            opacity: dragging ? 0.72 : 1,
           },
         ]}
       >
@@ -301,46 +246,47 @@ export default function HabitRow({
           accessibilityRole="button"
           accessibilityLabel={`Habit ${habit.title}. Long press to reorder.`}
         >
-          <View style={styles.labelBlock}>
-            <Text
-              style={[styles.label, { color: theme.text }]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {habit.title}
-            </Text>
-            <Text
-              style={[styles.subtitle, { color: theme.mutedText }]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              streak {streak}
-              {/* • last:{" "} */}
-              {/* <Text style={[styles.lastStateText, { color: lastColor }]}>
-                {lastLabel}
-              </Text> */}
-            </Text>
-          </View>
+          <Text
+            style={[
+              styles.label,
+              {
+                color: theme.text,
+                fontFamily: fontFamily("display", fontsLoaded),
+              },
+            ]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {habit.title}
+          </Text>
+          <Text
+            style={[
+              styles.subtitle,
+              {
+                color: theme.mutedText,
+                fontFamily: fontFamily("data", fontsLoaded),
+              },
+            ]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {`streak ${streak}`}
+          </Text>
         </Pressable>
 
         <View style={[styles.squaresRow, { width: squaresW }]}>
           {dates.map((d) => {
             const v = (habit.checks || {})[d.key] || 0;
             return (
-              <View
+              <HabitCell
                 key={d.key}
-                style={[
-                  styles.squareCell,
-                  { width: squareSize, height: squareSize },
-                ]}
-              >
-                <HabitSquare
-                  value={v}
-                  size={innerSquare}
-                  theme={theme}
-                  onPress={() => onToggle?.(habit.id, d.key)}
-                />
-              </View>
+                value={v}
+                size={squareSize}
+                theme={theme}
+                fontsLoaded={fontsLoaded}
+                label={`${habit.title}, ${d.key}, ${habitStateLabel(v)}`}
+                onPress={() => onToggle?.(habit.id, d.key)}
+              />
             );
           })}
         </View>
@@ -353,86 +299,51 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 4 },
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
+    paddingVertical: SPACE.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   labelBox: { justifyContent: "center" },
-  labelBlock: { flexShrink: 1 },
   label: {
-    fontSize: 15,
-    fontWeight: "900",
-    letterSpacing: 0.2,
-  },
-  squaresRow: { flexDirection: "row", alignItems: "center" },
-  square: {
-    borderWidth: 1,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-    overflow: "visible",
-  },
-  squareCell: { alignItems: "center", justifyContent: "center" },
-  squareRing: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 8,
-    borderWidth: 2,
-  },
-  squarePulse: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 10,
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
   },
   subtitle: {
-    marginTop: 4,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.2,
+    marginTop: SPACE["3xs"],
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.data,
+    textTransform: "uppercase",
   },
-  lastStateText: { fontWeight: "900" },
+  squaresRow: { flexDirection: "row", alignItems: "center" },
+  cell: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cellChar: {
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: "400",
+    letterSpacing: 0,
+    ...Platform.select({
+      android: { includeFontPadding: false },
+    }),
+  },
   actionsWrap: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     height: "100%",
-    paddingHorizontal: 10,
+    paddingHorizontal: SPACE.xs,
   },
   actionBtn: {
-    width: 72,
-    minHeight: 52,
+    width: 56,
+    minHeight: 44,
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: ANDROID ? 10 : 11,
-  },
-  streakChip: {
-    marginLeft: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  streakChipText: {
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 0.2,
   },
 });
