@@ -1,921 +1,666 @@
-You are working on my existing React Native / Expo app:
+Continue work on the existing Yearly Tracker revamp.
 
-GitHub:
-https://github.com/andresbotia/yearly-tracker
+You are working ONLY on:
 
-The app is already live/functional. This is a UI/UX redesign and architecture cleanup — NOT a rewrite of the application's business logic.
+feature/revamp
 
-## PRIMARY OBJECTIVE
+Do not switch to, modify, or merge into main.
 
-Redesign Yearly Tracker around an artistic visual identity inspired by:
+Before making changes:
 
-https://www.inspora.design/posts/wafer-page
+1. Read `REVAMP.MD` completely.
+2. Read `design.md` completely.
+3. Inspect the current implementation on `feature/revamp`.
+4. Review recent commits.
+5. Treat all existing application behavior and AsyncStorage data as production contracts.
 
-The aesthetic should combine:
+This is a focused second visual pass based on physical-device testing.
 
-- classical/public-domain artwork
-- subtle ASCII rendering
-- editorial typography
-- museum catalogue design
-- restrained monochrome/data UI
-- large amounts of negative space
-- thin lines instead of excessive cards
-- subtle analog / archival character
-- modern mobile usability
+The redesign direction is working, but the artwork implementation and several responsive details now need to evolve.
+
+==================================================
+PRIMARY DESIGN CHANGE
+ARTWORK IS THE ENVIRONMENT, NOT A HERO CARD
+==================================================
+
+The current implementation places artwork inside a relatively short rectangular ArtHero / artwork plate.
+
+That is no longer the intended direction.
+
+For ArtThemes, the selected painting should become a large, full-screen / full-canvas background behind the application.
 
 Think:
 
-MUSEUM CATALOGUE × OLD COMPUTER TERMINAL × PERSONAL JOURNAL
+MUSEUM WALLPAPER
+×
+EDITORIAL PAPER
+×
+SUBTLE ASCII PRINT TEXTURE
 
-Do NOT turn this into a stereotypical green terminal UI.
+NOT:
 
-ASCII should act as texture and visual language rather than a gimmick.
+content
+content
+[ rectangular painting ]
+content
 
----
+Instead:
 
-# ABSOLUTE REQUIREMENT #1
+[ FULL SCREEN ARTWORK BACKGROUND ]
 
-# DO NOT BREAK EXISTING FUNCTIONALITY
+        YEARLY TRACKER
+        HABITS / GOALS
+        DATA
+        CONTENT
+        CONTENT
 
-Treat all current application behavior as production behavior.
+all sitting elegantly over the artwork through a readable paper treatment.
 
-Before modifying anything:
+==================================================
+BACKGROUND ARCHITECTURE
+==================================================
 
-1. Inspect the entire existing codebase.
-2. Understand how goals are stored and updated.
-3. Understand how habits are stored and updated.
-4. Understand yearly rollover.
-5. Understand goal history.
-6. Understand habit history.
-7. Understand themes and custom themes.
-8. Understand share cards.
-9. Understand Android/native widget integration.
-10. Understand drag/reorder.
-11. Understand haptics.
-12. Understand undo behavior.
-13. Understand all existing AsyncStorage keys.
-14. Understand all existing data object shapes.
+Do NOT simply stretch the existing 220px ArtHero.
 
-DO NOT redesign by replacing working logic.
+Create a reusable structural component, something conceptually like:
 
-Separate presentation from behavior wherever possible.
+ArtBackground
+ArtBackdrop
+MuseumBackdrop
 
-Existing handlers, persistence functions, calculations, data models, history logic, widgets, and state transitions should remain intact unless there is a specific technical reason to change them.
+Use whichever name best fits the codebase.
 
-If you do change internal logic, document WHY and prove that behavior remains equivalent.
+For ArtThemes:
 
----
+- artwork fills the entire screen
+- use `resizeMode="cover"`
+- artwork should extend edge-to-edge behind the safe area and scroll content
+- artwork should remain visually stationary while lists/content scroll over it where practical
+- do not recreate the image on every list row
+- use ONE primary background image layer per screen
+- keep this lightweight enough for older devices such as iPhone 7
 
-# ABSOLUTE REQUIREMENT #2
+Suggested conceptual layering:
 
-# EXISTING USER DATA MUST SURVIVE THE UPDATE
+Screen
+├── full-screen artwork
+├── subtle ASCII layer
+├── translucent warm paper veil / tonal scrim
+└── scrollable app UI
 
-This application does NOT use a remote database.
+The actual painting should remain clearly recognizable.
 
-User data lives locally on the user's phone.
+Do not make the overlay so opaque that the artwork disappears.
 
-Therefore:
+However, text contrast must remain excellent.
 
-THE CURRENT LOCAL DATA IS THE PRODUCTION DATABASE.
+Target the balance visually rather than blindly following exact opacity numbers.
 
-Users installing this redesign as an App Store / Play Store update must open the new version and immediately see:
+A reasonable starting point could be:
 
-- their existing goals
-- their existing goal progress
-- their habits
-- habit history
-- yearly history
-- current year information
-- theme preference
-- custom themes
-- other existing persisted settings
+artwork: clearly visible
+paper veil: ~65–80%
+ASCII texture: ~3–8%
 
-Do NOT:
+but tune per theme and based on actual device appearance.
 
-- rename AsyncStorage keys casually
-- replace existing keys with new keys
-- change stored object shapes without migration
-- clear storage
-- initialize starter data over existing data
-- change IDs
-- reset progress
-- reset history
-- remove unknown fields from persisted objects
-- introduce a database requirement
-- require accounts
-- require authentication
-
-The update must feel seamless.
-
-Existing user:
-
-Version 1
-↓ App Store update
-Version 2
-↓
-Same goals
-Same habits
-Same progress
-Same history
-New design
-
----
-
-# STORAGE / MIGRATION RULE
-
-Before changing any persisted structure, audit `utils/storage.js`, `App.js`, and every AsyncStorage usage.
-
-Create a clear inventory like:
-
-Storage Key
-Purpose
-Current Schema
-Read Location
-Write Location
-Migration Needed?
-
-Preserve every existing key whenever possible.
-
-Prefer adding optional properties rather than modifying existing properties.
-
-For example:
-
-Existing goal:
-
-{
-id,
-title,
-type,
-target,
-progress,
-createdAt
-}
-
-If the redesign eventually needs metadata, prefer:
-
-{
-...existingGoal,
-optionalNewProperty
-}
-
-instead of replacing the schema.
-
-Every reader of new fields must safely handle:
-
-undefined
-
-because existing users will not have those fields.
-
-Example:
-
-const artStyle = goal.artStyle ?? DEFAULT_ART_STYLE;
-
-Never assume new fields exist.
-
----
-
-# MIGRATIONS
-
-If a schema change truly becomes necessary, create an explicit versioned migration system.
-
-Example concept:
-
-const STORAGE_SCHEMA_VERSION = 2;
-
-migrateStorage(data, fromVersion, toVersion)
-
-Migration requirements:
-
-- idempotent
-- non-destructive
-- backward-aware
-- preserves unknown fields
-- never resets user progress
-- never creates duplicate records
-- only marks migration complete AFTER successful migration
-
-Prefer not needing migrations at all for this visual redesign.
-
----
-
-# DATA SAFETY
-
-Before writing migrated data:
-
-1. validate it
-2. retain the original structure in memory
-3. perform migration
-4. verify required fields
-5. only then persist the new representation
-
-Never replace valid user storage with defaults because parsing or migration encountered an unexpected value.
-
-If loading old data fails, fail safely rather than overwriting it.
-
----
-
-# OFFLINE-FIRST MUST REMAIN
-
-The current identity of Yearly Tracker is:
-
-- no accounts
-- no analytics
-- no ads
-- no tracking
-- local device storage
-- offline-first
-
-Preserve this.
-
-Do NOT fetch artwork from museum APIs while the app is running.
-
-Museum APIs should be used during DEVELOPMENT ONLY.
-
-Artwork should be processed ahead of time and bundled with the application.
-
-Runtime:
-
-App
-→ bundled artwork
-→ bundled ASCII data
-→ local AsyncStorage user data
-
-No museum network dependency.
-
----
-
-# ARTWORK
-
-Use legitimate public-domain / Open Access artwork from authoritative sources such as:
-
-- The Metropolitan Museum of Art
-- Art Institute of Chicago
-- National Gallery of Art
-- other reputable museum Open Access programs
-
-Start with artists such as:
-
-Vincent van Gogh
-Claude Monet
-
-Possible initial collection:
-
-CYPRESSES / 1889
-Vincent van Gogh
-
-FLOWERING ORCHARD / 1888
-Vincent van Gogh
-
-WATER LILIES
-Claude Monet
-
-MORNING ON THE SEINE
-Claude Monet
-
-VÉTHEUIL
-Claude Monet
-
-MUSEUM PAPER
-No artwork / pure editorial mode
-
-For every artwork asset retain metadata:
-
-{
-id,
-title,
-artist,
-year,
-museum,
-museumObjectId,
-source,
-rights,
-isPublicDomain
-}
-
-Do not use artwork unless its rights are appropriate for redistribution in an application.
-
----
-
-# DO NOT BUNDLE RIDICULOUSLY LARGE SOURCE IMAGES
-
-Download high-resolution museum masters during development.
-
-Then generate mobile derivatives.
-
-Suggested:
-
-1600–2400px maximum dimension
-
-Keep image quality high but app size reasonable.
-
-The master source does not need to ship inside the app.
-
----
-
-# ASCII ART PIPELINE
-
-ASCII conversion should happen during development/build preparation, NOT dynamically every time the application starts.
-
-Create something like:
-
-scripts/build-art-assets.js
-
-Pipeline:
-
-Museum source image
-→ optimized mobile image
-→ grayscale/luminance sampling
-→ ASCII conversion
-→ metadata
-→ optional palette extraction
-→ generated app asset
-
-ASCII character ramp example:
-
-" .:-=+\*#%@"
-
-Generate perhaps:
-
-40–65 characters wide
-
-depending on the visual.
-
-Store ASCII as a multiline string or generated asset.
-
-DO NOT create thousands of separate React Native components.
-
-Prefer one Text layer containing the complete ASCII representation.
-
----
-
-# NEW ART THEME SYSTEM
-
-The existing theme engine should evolve rather than be discarded.
-
-Current concept:
-
-palette
-
-New concept:
-
-ArtTheme =
-
-{
-id,
-name,
-
-palette: {
-bg,
-card,
-text,
-mutedText,
-primary,
-primaryPressed,
-primaryTextOn,
-ringBg,
-border,
-danger
-},
-
-artwork: {
-asset,
-ascii,
-artist,
-title,
-year,
-museum,
-source,
-rights
-},
-
-typography: {
-display,
-body,
-data
-},
-
-ascii: {
-enabled,
-opacity,
-characters,
-columns
-},
-
-visual: {
-imageOpacity,
-grainOpacity,
-borderStyle,
-cornerStyle
-}
-}
-
-IMPORTANT:
-
-Existing old themes and CUSTOM THEMES must continue working.
-
-Do NOT make an existing saved theme ID invalid.
-
-If the user's old theme exists:
-
-load it normally.
-
-If artwork metadata is absent:
-
-render the classic/fallback theme layout safely.
-
----
-
-# DESIGN LANGUAGE
-
-Reduce:
-
-- giant rounded cards
-- excessive pill buttons
-- excessive borders
-- generic productivity-app visual patterns
-- large blobs of primary color
-
-Use more:
-
-- typography
-- spacing
-- thin rules
-- indexing
-- small uppercase labels
-- monochrome metadata
-- subtle artwork
-- ASCII texture
-- understated motion
-- museum-style attribution
-
----
-
-# HOME / GOALS DESIGN
-
-Reimagine the existing Goals screen.
-
-Possible layout:
-
-YEARLY / 2026 DAY 245
-
-[ ARTWORK / ASCII HERO ]
-
-CYPRESSES
-VINCENT VAN GOGH
-1889
-
-YEAR PROGRESS
-████████████████░░░░░░░░ 62%
-
-01
-RUN 500 MILES
-
-288 / 500
-+++++++++++++++++.........
-
-02
-READ 20 BOOKS
-
-14 / 20
-++++++++++++++.........
-
-03
-RUN A 10K
-
-[ INCOMPLETE ]
-
-────────────────────────
-
-- ADD GOAL
-
-Keep all existing goal interaction behavior.
-
-Editing goals, updating progress, deleting, undo, dragging, completed state, hiding completed goals, etc. must continue working.
-
----
-
-# PROGRESS COMPONENTS
-
-Consider replacing the large conventional circular progress ring visually.
-
-Do NOT remove the underlying calculation.
-
-Instead render the same percentage using something more editorial:
-
-████████████░░░░░░
-
-or
-
-62 ━━━━━━━━━━━━━━━────── 100
-
-or another elegant treatment.
-
-Progress behavior must remain mathematically identical.
-
----
-
-# HABITS
-
-This could become the signature screen.
-
-Use ASCII-style states.
-
-Current underlying habit state behavior should NOT change.
-
-Visually map states to something like:
-
-. = empty
-
-- = good
-  × = bad
-
-Example:
-
-SEPTEMBER / 2026
-
-```
-             27 28 29 30 31 01 02
-```
-
-WORKOUT + + . + × + +
-CARDIO . + . + . + +
-DRINK WATER + + + + + + .
-READ + . + + + + +
-
-- GOOD
-  × BAD
-  . EMPTY
-
-Do not change the stored numeric states simply to achieve this appearance.
-
-Presentation should map existing values into ASCII characters.
-
----
-
-# HISTORY
-
-Apply the same visual system to Habit History.
-
-The eventual yearly heatmap should feel like a large ASCII calendar / contribution matrix.
-
-Example:
-
-JAN
-...++++..+++....+++
-
-FEB
-+++++....++++++....
-
-etc.
-
-Again: underlying checks and history remain unchanged.
-
----
-
-# THEME PICKER → ART GALLERY
-
-Transform the current Theme picker into something closer to an art gallery.
-
-Theme card:
-
-[ artwork preview ]
-
-CYPRESSES
-
-Vincent van Gogh
-1889
-
-● ● ● ● ●
-
-APPLY
-
-Allow artwork themes and classic themes to coexist.
-
-Potential categories:
-
-ART COLLECTION
-CLASSIC
-CUSTOM
-
-Do not remove custom theme functionality.
-
----
-
-# SHARE CARDS
-
-Eventually extend the art direction to share cards.
-
-They should resemble museum posters/editorial prints rather than standard social media achievement cards.
-
-Example:
-
-YEAR / 2026
-
-62%
-
-RUNNING
-288 MI
-
-READING
-14 BOOKS
-
-[ subtle artwork / ASCII ]
-
-YEARLY
-
-But do this only after the main UI is stable.
-
-Existing share functionality must continue working during the redesign.
-
----
-
-# ARCHITECTURE CLEANUP
-
-`App.js` is currently very large.
-
-Use this redesign as an opportunity to extract presentation components WITHOUT rewriting working state logic unnecessarily.
-
-Possible direction:
-
-src/
-screens/
-GoalsScreen.js
-HabitsScreen.js
-HabitHistoryScreen.js
-
-components/
-art/
-ArtHero.js
-AsciiArtwork.js
-ArtworkCredit.js
-
-```
-editorial/
-  EditorialHeader.js
-  EditorialProgress.js
-  SectionRule.js
-  MetadataLabel.js
-
-themes/
-  ThemeGallery.js
-  ThemePreview.js
-```
-
-themes/
-artThemes.js
-classicThemes.js
-
-assets/
-art/
-
-scripts/
-build-art-assets.js
-
-Do this incrementally.
-
-Do NOT perform a gigantic rewrite all at once.
-
----
-
-# IMPLEMENTATION STRATEGY
-
-Work in phases.
-
-PHASE 0 — AUDIT
-
-Before changing code:
-
-- map application state
-- map AsyncStorage
-- map native widget dependencies
-- map theme loading
-- map share functionality
-- map goal flow
-- map habit flow
-- identify regression risks
-
-Output the findings.
-
-PHASE 1 — DESIGN FOUNDATION
-
-Implement:
-
-- ArtTheme format
-- backwards-compatible theme resolution
-- typography tokens
-- spacing tokens
-- editorial primitives
-- ASCII renderer
-- artwork metadata system
-
-Do not redesign every screen yet.
-
-PHASE 2 — GOALS
-
-Redesign Goals while preserving every existing action.
-
-Test thoroughly.
-
-PHASE 3 — HABITS
-
-Redesign Habits using ASCII states.
-
-Test thoroughly.
-
-PHASE 4 — HISTORY
-
-Apply the design system to history.
-
-PHASE 5 — ART GALLERY
-
-Replace/extend the theme picker with Art Gallery while retaining classic/custom themes.
-
-PHASE 6 — SHARE / WIDGET POLISH
-
-Only after everything else is stable.
-
----
-
-# REGRESSION CHECKLIST
-
-After each phase verify:
-
-GOALS
-
-- goals load after fresh launch
-- existing goals appear
-- add works
-- edit works
-- progress works
-- boolean goals work
-- delete works
-- undo works
-- reorder works
-- completed sorting works
-- hide/show completed works
-
-HABITS
-
-- existing habits appear
-- add works
-- rename works
-- delete works
-- undo works
-- reorder works
-- each daily state cycles exactly as before
-- history remains intact
-- streak calculations remain correct
-
-YEAR
-
-- yearly progress matches old version
-- annual rollover still works
-- previous-year snapshots survive
-
-THEMES
-
-- existing theme selections load
-- custom themes load
-- custom themes remain editable
-- new ArtThemes work
-- missing art metadata never crashes the app
-
-SHARING
-
-- existing share cards render
-- capture works
-- native share works
-
-ANDROID
-
-- native widget bridge remains functional
-- widget payload still receives expected structures
-
-STORAGE
-
-- install/update does not clear AsyncStorage
-- no AsyncStorage keys were accidentally renamed
-- old stored objects load without modification
-- no duplicate goals/habits are created
-- no history disappears
-
----
-
-# MOST IMPORTANT TEST
-
-Simulate a real production upgrade.
-
-Create data using the current version BEFORE the redesign:
-
-- 5 goals
-- progress on several goals
-- one completed goal
-- several habits
-- multiple weeks of habit history
-- custom theme
-- chosen built-in theme
-- yearly/history data where possible
-
-Save a copy of that AsyncStorage state.
-
-Then run the redesigned version against THAT EXACT EXISTING STORAGE.
-
-The redesigned app must load it perfectly.
-
-Do not test only with fresh installs.
-
-Also test:
-
-OLD APP STORAGE
-↓
-NEW APP CODE
-↓
-ZERO DATA LOSS
-
-This upgrade test is mandatory.
-
----
-
-# IMPORTANT DEVELOPMENT RULE
-
-Do not make unrelated changes simply because code could be cleaner.
-
-The application works today.
+Avoid expensive runtime blur effects unless absolutely necessary.
 
 Prefer:
 
-small change
-→ run/test
-→ verify
-→ commit
+- Image
+- absolute positioning
+- simple translucent overlays
+- preprocessed artwork
 
-over:
+over heavy GPU blur.
 
-rewrite half the application
-→ debug regressions later
+==================================================
+ARTWORK SHOULD FOLLOW THE THEME
+==================================================
 
-Keep commits focused.
+The selected ArtTheme determines the full-screen painting.
 
-Suggested branches/commits:
+Examples:
 
-refactor/design-foundation
-feat/art-theme-system
-feat/ascii-art
-redesign/goals
-redesign/habits
-redesign/history
-redesign/theme-gallery
+Cypresses
+→ Cypresses background
 
----
+Water Lilies
+→ Water Lilies background
 
-# VISUAL PRIORITY
+etc.
 
-The goal is NOT to make an ASCII app.
+Classic themes and user-created custom themes with no artwork must continue rendering normally with their solid/palette backgrounds.
 
-The goal is to make a BEAUTIFUL ART-DRIVEN APP where ASCII is one of the visual materials.
+NO artwork metadata:
+→ safe classic fallback
 
-Artwork should still be recognizable.
+Never crash because a theme does not have artwork.
 
-Good:
+==================================================
+REMOVE THE CURRENT LARGE ART PLATE FROM SCREENS
+==================================================
 
-real artwork
+Once full-screen artwork exists, Goals/Habits/History should NOT also show the same giant rectangular artwork hero in the content flow.
 
-- subtle ASCII overlay
-- beautiful typography
-- clean data
+That duplicates the artwork and consumes too much vertical space.
 
-Bad:
+Refactor `ArtHero` appropriately.
 
-entire screen made out of ASCII
+It may still be useful for:
 
-- terminal green
-- retro gimmicks
+- theme gallery previews
+- artwork previews
+- share cards
 
-Aim for subtle, artistic, expensive, calm, unusual.
+But primary screens should use the new backdrop architecture instead.
 
----
+Keep museum attribution.
 
-# DO NOT BEGIN BY CHANGING CODE
+Move attribution into a more restrained editorial treatment, for example:
 
-First inspect the repository and give me:
+CYPRESSES
+VINCENT VAN GOGH · 1889
+THE MET
 
-1. Current architecture assessment
-2. Current persistence/storage map
-3. Data compatibility risks
-4. Components/features that must not be touched logically
-5. Proposed refactor boundaries
-6. Proposed ArtTheme schema
-7. Proposed artwork asset pipeline
-8. Proposed file/folder structure
-9. A screen-by-screen redesign plan
-10. Migration strategy — ideally confirming none is needed for the initial redesign
-11. Regression test plan
-12. Exact implementation order
+It can live subtly near the top, bottom, or another intentional area of the screen.
 
-Once that is established, begin implementation incrementally.
+It should not dominate the tracking interface.
 
-At every stage remember:
+==================================================
+ASCII
+==================================================
 
-THE EXISTING APP'S LOCAL STORAGE IS PRODUCTION DATA.
+ASCII remains:
 
-A visual redesign is NEVER justification for losing or resetting user data.
+TEXTURE, NOT A GIMMICK.
+
+Do not turn the whole screen into terminal art.
+
+The ASCII representation may exist across the artwork background but should be extremely subtle.
+
+Keep:
+
+- one rendered ASCII plate/layer
+- build-time generated data
+- no thousands of React elements
+
+Do not compromise text readability.
+
+==================================================
+PHYSICAL DEVICE RESPONSIVE FIXES
+==================================================
+
+The current build has now been tested on a physical iPhone.
+
+Treat 375pt-wide devices such as iPhone 7 as a first-class layout target.
+
+Fix the following visible issues:
+
+1. Habits currently truncates the month heading similar to:
+
+   "Septe..."
+
+   This is unacceptable.
+
+   "September" must fit gracefully.
+
+   Use responsive typography/layout rather than truncating important headings.
+
+2. Re-evaluate the Habits header/date grid alignment after removing the large art hero.
+
+3. Preserve the elegant ASCII states:
+
+   . empty
+   - good
+     × bad
+
+   Stored values remain EXACTLY:
+   0 / 1 / 2
+
+4. Goals CTA row currently has:
+   outlined ADD GOAL
+   floating SHARE
+   floating THEME
+
+   Refine this into one intentional editorial control system.
+
+   Do not bring back generic pill buttons.
+
+5. Review each Goal row's:
+   edit
+   update
+   delete
+
+   controls.
+
+   Make them feel like one designed action system and ensure they work cleanly near the bottom safe area.
+
+6. Review the Habit History header hierarchy.
+
+   "Yearly Tracker" + "Habit history" is currently visually very large.
+
+   History should feel more archival/data-dense than the primary screens.
+
+   Preserve hierarchy while reclaiming useful vertical room.
+
+7. Verify:
+   - safe area
+   - scroll behavior
+   - no clipping
+   - no text truncation
+   - tap targets
+   - iPhone 7
+   - modern iPhones
+   - Android
+
+Do NOT change any underlying application behavior while addressing layout.
+
+==================================================
+ONE-TIME REVAMP INTRODUCTION
+==================================================
+
+Add a one-time introduction to the new visual identity.
+
+IMPORTANT:
+
+DO NOT reuse or reset:
+
+`rt_welcome_seen_v1`
+
+That is existing production onboarding state.
+
+Introduce a NEW additive storage key such as:
+
+`yt_revamp_intro_seen_v1`
+
+Add it to the storage inventory in `utils/storage.js`.
+
+The absence of this new key should NEVER be interpreted as missing/corrupt user data.
+
+It controls presentation only.
+
+Suggested modal content:
+
+TITLE
+Meet the new Yearly Tracker
+
+BODY
+Same private, offline tracker. A new art-led way to see your year.
+
+Public-domain artwork, editorial typography, and subtle ASCII details now shape the experience. Your goals, habits, history, and data stay right here on your phone.
+
+PRIMARY CTA
+EXPLORE THE NEW LOOK
+
+Design the modal in the new visual language.
+
+Consider:
+
+- small artwork crop or ASCII detail
+- strong Fraunces title
+- mono kicker
+- thin rules
+- paper treatment
+- no generic rounded SaaS modal
+
+Show it once.
+
+Then persist:
+
+yt_revamp_intro_seen_v1 = "1"
+
+Never show it again unless a future explicitly versioned introduction is added.
+
+Existing production users who update should see this once.
+
+Fresh installs should also receive the introduction, but avoid stacking it awkwardly over the existing welcome/onboarding flow.
+
+Coordinate modal order safely:
+
+existing onboarding / rollover / critical modal
+→ resolve
+→ revamp introduction
+
+Never display multiple modals simultaneously.
+
+Do not modify existing onboarding data solely to accomplish this.
+
+==================================================
+CREATE ROOT AGENTS.md
+==================================================
+
+Create:
+
+`AGENTS.md`
+
+in the repository root.
+
+This should become the concise operating manual for future coding agents working in this repository.
+
+Do NOT simply copy REVAMP.MD.
+
+AGENTS.md should document stable engineering rules.
+
+Include sections covering:
+
+# Yearly Tracker
+
+## Project overview
+
+- Expo / React Native
+- offline-first
+- local-only data
+- no accounts
+- production mobile app
+
+## Source-of-truth documentation
+
+Define responsibilities clearly:
+
+AGENTS.md
+→ engineering/process/safety rules
+
+design.md
+→ visual design system and UI rules
+
+REVAMP.MD
+→ historical/current revamp specification and rationale
+
+If visual implementation conflicts with design.md, agents should inspect/update design.md deliberately rather than inventing a new per-screen system.
+
+## Git rules
+
+- never work directly on main unless explicitly asked
+- current redesign branch is feature/revamp
+- focused commits
+- no automatic merging
+- inspect git diff before completion
+
+## Production persistence contract
+
+Explicitly list all current AsyncStorage keys.
+
+Explain clearly:
+
+LOCAL ASYNCSTORAGE IS PRODUCTION DATA.
+
+Never:
+
+- rename keys casually
+- reset storage
+- reseed existing users
+- alter IDs
+- drop unknown fields
+- change persisted shapes without explicit migration
+- change habit 0/1/2 semantics
+
+Document additive storage changes as the preferred strategy.
+
+Include the new revamp intro key after it is implemented.
+
+## Business logic invariants
+
+Document that agents should preserve:
+
+- goal CRUD
+- habit CRUD
+- history
+- rollover
+- percentages
+- streaks
+- drag/reorder
+- haptics
+- undo
+- sharing
+- widgets
+
+## Native boundaries
+
+Explain Android/iOS widget payload contracts must not be casually changed.
+
+## Design rules
+
+Briefly point agents toward design.md.
+
+Include the high-level identity:
+
+MUSEUM CATALOGUE
+×
+OLD COMPUTER TERMINAL
+×
+PERSONAL JOURNAL
+
+ASCII is texture, not gimmick.
+
+Artwork themes use full-screen art backdrops.
+
+## Offline / artwork rules
+
+- no runtime museum requests
+- bundled assets
+- public-domain / Open Access sources
+- maintain attribution metadata
+
+## Commands
+
+Inspect package.json and document the ACTUAL useful commands for this repo, including:
+
+- install
+- Expo development server
+- storage verification
+- expo-doctor
+- any lint/test commands that genuinely exist
+
+Do not invent scripts.
+
+## Verification checklist
+
+Before declaring work complete:
+
+- storage verification
+- expo-doctor
+- syntax/import checks
+- theme resolution
+- physical device considerations
+- inspect git diff
+
+Keep AGENTS.md useful and concise enough that future CLI coding agents will actually read it.
+
+==================================================
+UPDATE design.md
+==================================================
+
+The current design.md still describes a "single artwork plate" as the primary screen treatment.
+
+That is now outdated.
+
+Update design.md so the locked design system reflects what we learned from the physical-device build.
+
+Change the core artwork rule to:
+
+ARTWORK IS A FULL-CANVAS BACKDROP FOR ART THEMES.
+
+Document:
+
+- full-screen artwork behavior
+- paper veil / scrim
+- ASCII background texture
+- classic/custom fallback
+- attribution behavior
+- responsive requirements
+- iPhone 7 / 375pt baseline
+- modal styling
+- theme gallery thumbnails
+- accessibility/contrast rules
+
+Remove/replace rules that instruct primary screens to use the old fixed artwork plate.
+
+ArtHero can remain documented for gallery/preview contexts if useful.
+
+Add the revamp intro modal to the design system.
+
+Also document:
+
+IMPORTANT INFORMATION MUST NOT ELLIPSIZE ON NARROW DEVICES.
+
+Responsive typography should scale/reflow first.
+
+Examples:
+
+- September must not become Septe...
+- artwork titles may wrap deliberately
+- data tables may scroll when appropriate
+
+==================================================
+KEEP DOCUMENTATION CONSISTENT
+==================================================
+
+After changing design.md, inspect REVAMP.MD for statements that now directly contradict the full-background artwork approach.
+
+Do not rewrite REVAMP.MD unnecessarily.
+
+Update only the conflicting visual guidance so future agents are not given two incompatible instructions.
+
+AGENTS.md should explain the document hierarchy.
+
+==================================================
+DATA SAFETY
+==================================================
+
+This is still non-negotiable.
+
+Do NOT change existing production data schemas for this work.
+
+Do NOT rename existing AsyncStorage keys.
+
+Do NOT reset:
+
+- goals
+- habits
+- history
+- theme
+- custom themes
+- onboarding
+- current year
+
+The new revamp-introduction flag is ADDITIVE ONLY.
+
+A production upgrade must remain:
+
+OLD APP DATA
+↓
+INSTALL REVAMP
+↓
+SAME GOALS
+SAME HABITS
+SAME HISTORY
+SAME THEME +
+NEW VISUAL EXPERIENCE
+
+==================================================
+IMPLEMENTATION APPROACH
+==================================================
+
+Do this as a focused visual refinement, not a rewrite.
+
+Suggested order:
+
+1. Read docs/code
+2. Create/update AGENTS.md
+3. Update design.md
+4. Reconcile conflicting REVAMP.MD guidance
+5. Build reusable ArtBackground/ArtBackdrop
+6. Integrate it at the correct screen/root level
+7. Remove redundant inline artwork heroes
+8. Refine attribution
+9. Fix responsive layout issues
+10. Add one-time revamp introduction
+11. Polish Goals
+12. Polish Habits
+13. Polish History
+14. Review theme gallery
+15. Verify classic/custom theme fallback
+16. Run automated verification
+17. Inspect full git diff
+18. Commit focused changes
+
+Do NOT stop after implementing only the background.
+
+Complete this entire pass.
+
+==================================================
+FINAL REVIEW
+==================================================
+
+Before finishing, inspect every major screen at narrow mobile width.
+
+Specifically verify:
+
+GOALS
+
+- background painting fills screen
+- data readable
+- CTAs cohesive
+- goal controls clean
+- no regressions
+
+HABITS
+
+- background painting fills screen
+- September does not truncate
+- dates align
+- state interaction still works
+- . + × semantics unchanged
+
+HISTORY
+
+- archival/data-dense hierarchy
+- month layouts readable
+- no regression in horizontal/vertical scrolling
+
+THEMES
+
+- ArtThemes still change artwork
+- classic themes still work
+- custom themes still work
+
+MODALS
+
+- new revamp intro
+- existing welcome
+- rollover
+- edit/add flows
+- no modal collisions
+
+STORAGE
+
+- run `npm run verify:storage`
+- frozen old-storage fixture still passes
+- new revamp flag is optional/additive
+
+BUILD
+
+- run `npx expo-doctor`
+- run other existing checks from package.json
+- do not perform unrelated dependency upgrades
+
+Do not claim physical-device verification unless you actually performed it.
+
+At the end report:
+
+1. What changed
+2. Files changed
+3. Documentation updates
+4. New background architecture
+5. Responsive fixes
+6. Revamp intro behavior
+7. Storage compatibility results
+8. Test/build results
+9. Commits created
+10. Remaining device-test items
+
+Remain on `feature/revamp`.
+
+DO NOT MERGE TO MAIN.
