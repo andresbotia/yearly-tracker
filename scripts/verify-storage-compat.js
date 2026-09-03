@@ -156,6 +156,12 @@ function main() {
   if (!appSrcAfter.includes("yt_habits_v1") || !appSrcAfter.includes("function buildWidgetPayload")) {
     fail("habit storage key or widget payload builder missing from App.js");
   }
+  if (!appSrcAfter.includes("ArtBackdrop")) {
+    fail("ArtBackdrop missing from App.js");
+  }
+  if (appSrcAfter.includes("<ArtHero")) {
+    fail("primary screens still render ArtHero");
+  }
 
   const expectedArt = [
     "cypresses",
@@ -180,6 +186,16 @@ function main() {
   }
   if (!themeSrc.includes("findArtTheme")) fail("makeTheme lost art theme resolution");
   if (!themeSrc.includes("CUSTOM_THEME_PREFIX")) fail("custom theme prefix missing");
+
+  // Additive revamp intro flag: must exist in live code, must NOT be required of old snapshots.
+  if (!storageSrc.includes("yt_revamp_intro_seen_v1")) {
+    fail("revamp intro key missing from storage.js");
+  }
+  if (REQUIRED_KEYS.includes("yt_revamp_intro_seen_v1")) {
+    fail("yt_revamp_intro_seen_v1 must remain additive, not a required old key");
+  }
+  const backdropPath = path.join(ROOT, "components", "art", "ArtBackdrop.js");
+  if (!fs.existsSync(backdropPath)) fail("missing components/art/ArtBackdrop.js");
 
   const payloadMatch = appSrcAfter.match(
     /function buildWidgetPayload[\s\S]*?return \{[\s\S]*?habits:[\s\S]*?\};/

@@ -2,12 +2,12 @@
 // Presentation-only redesign. Props and callbacks are unchanged.
 
 import React, { useMemo } from "react";
-import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import * as Haptics from "expo-haptics";
-import { Ionicons } from "@expo/vector-icons";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../utils/tokens";
 import { asciiBar } from "./editorial/EditorialProgress";
 import { useFontsLoaded } from "../utils/fonts";
+import EditorialToolbar from "./editorial/EditorialToolbar";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -129,57 +129,37 @@ export default function GoalItem({
         </View>
       </View>
 
-      <View style={styles.actions}>
-        <Pressable
-          onPress={async () => {
-            await hapticLight();
-            onEditDetails?.(goal);
-          }}
-          hitSlop={8}
-          style={styles.iconHit}
-          accessibilityRole="button"
-          accessibilityLabel={`Edit goal details for ${goal.title}`}
-        >
-          <Ionicons name="create-outline" size={18} color={ink} />
-        </Pressable>
-
-        <Pressable
-          onPress={async () => {
-            await hapticLight();
-            onProgress?.(goal);
-          }}
-          style={({ pressed }) => [
-            styles.updateBtn,
-            {
-              borderColor: ink,
-              opacity: pressed ? 0.65 : 1,
+      <EditorialToolbar
+        theme={theme}
+        style={styles.actions}
+        items={[
+          {
+            label: "Edit",
+            accessibilityLabel: `Edit goal details for ${goal.title}`,
+            onPress: async () => {
+              await hapticLight();
+              onEditDetails?.(goal);
             },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={`Update progress for ${goal.title}`}
-        >
-          <Text style={[styles.updateText, { color: ink }]}>
-            {isComplete ? "Adjust" : "Update"}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={async () => {
-            await hapticLight();
-            onDelete?.(goal.id);
-          }}
-          hitSlop={8}
-          style={styles.iconHit}
-          accessibilityRole="button"
-          accessibilityLabel={`Delete ${goal.title}`}
-        >
-          <Ionicons
-            name="trash-outline"
-            size={18}
-            color={theme.danger || "#9b2c2c"}
-          />
-        </Pressable>
-      </View>
+          },
+          {
+            label: isComplete ? "Adjust" : "Update",
+            accessibilityLabel: `Update progress for ${goal.title}`,
+            onPress: async () => {
+              await hapticLight();
+              onProgress?.(goal);
+            },
+          },
+          {
+            label: "Delete",
+            danger: true,
+            accessibilityLabel: `Delete ${goal.title}`,
+            onPress: async () => {
+              await hapticLight();
+              onDelete?.(goal.id);
+            },
+          },
+        ]}
+      />
     </Pressable>
   );
 }
@@ -227,31 +207,5 @@ const styles = StyleSheet.create({
   actions: {
     marginTop: SPACE.sm,
     marginLeft: 28 + SPACE.sm,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACE.sm,
-  },
-  iconHit: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  updateBtn: {
-    flex: 1,
-    minHeight: 44,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: SPACE.md,
-    ...Platform.select({
-      android: { elevation: 0 },
-    }),
-  },
-  updateText: {
-    fontSize: TYPE_SIZE.caption,
-    fontWeight: "700",
-    letterSpacing: TYPE_TRACK.kicker,
-    textTransform: "uppercase",
   },
 });

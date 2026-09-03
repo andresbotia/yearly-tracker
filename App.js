@@ -14,6 +14,7 @@ import {
   AppState,
   NativeModules,
   ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ColorPicker, {
@@ -45,13 +46,16 @@ import { IBMPlexMono_400Regular } from "@expo-google-fonts/ibm-plex-mono";
 import GoalItem from "./components/GoalItem";
 import HabitRow from "./components/HabitRow";
 import HabitHistory from "./components/HabitHistory";
-import ArtHero from "./components/art/ArtHero";
+import ArtBackdrop from "./components/art/ArtBackdrop";
+import ArtworkCredit from "./components/art/ArtworkCredit";
+import RevampIntroModal from "./components/art/RevampIntroModal";
 import EditorialProgress, {
   asciiBar,
 } from "./components/editorial/EditorialProgress";
 import MetadataLabel from "./components/editorial/MetadataLabel";
 import SectionRule from "./components/editorial/SectionRule";
 import EditorialButton from "./components/editorial/EditorialButton";
+import EditorialToolbar from "./components/editorial/EditorialToolbar";
 import EditorialEmpty from "./components/editorial/EditorialEmpty";
 import ThemeGallery from "./components/theme/ThemeGallery";
 import {
@@ -75,6 +79,8 @@ import {
   appendGoalHistory,
   loadCustomThemes,
   saveCustomThemes,
+  loadRevampIntroSeen,
+  setRevampIntroSeen,
 } from "./utils/storage";
 
 import Constants from "expo-constants";
@@ -524,6 +530,8 @@ export default function App() {
 
   const [habitsWelcomeOpen, setHabitsWelcomeOpen] = useState(false);
   const [habitsWelcomeSeen, setHabitsWelcomeSeen] = useState(true);
+  const [revampIntroSeen, setRevampIntroSeenState] = useState(true);
+  const [revampIntroOpen, setRevampIntroOpen] = useState(false);
 
   const [title, setTitle] = useState("");
   const [type, setType] = useState("count");
@@ -577,6 +585,18 @@ export default function App() {
     [themeChoice, customThemes],
   );
   const todayDate = useMemo(() => new Date(todayTick), [todayTick]);
+  const { width: windowWidth } = useWindowDimensions();
+  const habitLayout = useMemo(() => {
+    const available = Math.max(280, windowWidth - SPACE.md * 2);
+    const squareSize = SQUARE;
+    const labelGap = LABEL_GAP;
+    const squaresW = squareSize * 5;
+    let labelWidth = LABEL_W;
+    if (labelWidth + labelGap + squaresW > available) {
+      labelWidth = Math.max(96, available - squaresW - labelGap);
+    }
+    return { labelWidth, squareSize, labelGap };
+  }, [windowWidth]);
   const dates = useMemo(
     () => lastNDays(5, new Date(todayTick)),
     [activeTab, todayTick],
@@ -1138,6 +1158,7 @@ export default function App() {
           habitsSeenFlag,
           storedYear,
           storedCustomThemes,
+          introSeen,
         ] = await Promise.all([
           loadGoalsWithMeta(),
           loadHue(),
@@ -1146,6 +1167,7 @@ export default function App() {
           loadHabitsWelcomeSeen(),
           loadCurrentYear(),
           loadCustomThemes(),
+          loadRevampIntroSeen(),
         ]);
 
         if (!mounted) return;
@@ -1182,6 +1204,7 @@ export default function App() {
         }
 
         setHabitsWelcomeSeen(habitsSeenFlag);
+        setRevampIntroSeenState(introSeen);
         if (!welcomeSeen) setWelcomeOpen(true);
 
         if (storedYear == null) {
@@ -1266,11 +1289,40 @@ export default function App() {
     if (activeTab !== "habits") return;
     if (habitsWelcomeSeen) return;
     if (welcomeOpen) return;
+    if (yearRolloverOpen) return;
 
     setHabitsWelcomeOpen(true);
     setHabitsWelcomeSeen(true);
     setHabitsWelcomeSeenFlag();
-  }, [activeTab, habitsWelcomeSeen, welcomeOpen]);
+  }, [activeTab, habitsWelcomeSeen, welcomeOpen, yearRolloverOpen]);
+
+  const blockingModal =
+    welcomeOpen ||
+    yearRolloverOpen ||
+    habitsWelcomeOpen ||
+    addOpen ||
+    habitAddOpen ||
+    customizeOpen ||
+    shareOpen ||
+    editOpen ||
+    goalDetailsOpen ||
+    habitEditOpen;
+
+  useEffect(() => {
+    if (!ready) return;
+    if (revampIntroSeen) return;
+    if (blockingModal) return;
+    if (revampIntroOpen) return;
+    setRevampIntroOpen(true);
+  }, [ready, revampIntroSeen, blockingModal, revampIntroOpen]);
+
+  async function closeRevampIntro() {
+    setRevampIntroOpen(false);
+    setRevampIntroSeenState(true);
+    try {
+      await setRevampIntroSeen();
+    } catch {}
+  }
 
   useEffect(() => {
     if (!shareOpen) return;
@@ -1673,17 +1725,27 @@ export default function App() {
       <MetadataLabel theme={theme}>
         {`YEARLY TRACKER  /  ${year}`}
       </MetadataLabel>
-      <Text
-        style={[
-          styles.appTitle,
-          {
-            color: theme.text,
-            fontFamily: fontFamily("display", fontsLoaded),
-          },
-        ]}
-      >
-        Yearly Tracker
-      </Text>
+      {activeTab !== "history" ? (
+        <Text
+          style={[
+            styles.appTitle,
+            {
+              color: theme.text,
+              fontFamily: fontFamily("display", fontsLoaded),
+            },
+          ]}
+        >
+          Yearly Tracker
+        </Text>
+      ) : null}
+
+      {theme?.artwork ? (
+        <ArtworkCredit
+          artwork={theme.artwork}
+          theme={theme}
+          fontsLoaded={fontsLoaded}
+        />
+      ) : null}
 
       {activeTab !== "history" && (
         <View style={styles.tabRow}>
@@ -1751,8 +1813,6 @@ export default function App() {
             </MetadataLabel>
           </View>
 
-          <ArtHero theme={theme} fontsLoaded={fontsLoaded} />
-
           <View style={{ marginTop: SPACE.md }}>
             <EditorialProgress
               percent={yearlyPercent}
@@ -1774,27 +1834,15 @@ export default function App() {
             </Text>
           </View>
 
-          <View style={styles.actionsRow}>
-            <EditorialButton
-              label="Add goal"
-              theme={theme}
-              variant="secondary"
-              onPress={() => setAddOpen(true)}
-              style={{ flex: 1 }}
-            />
-            <EditorialButton
-              label="Share"
-              theme={theme}
-              variant="ghost"
-              onPress={() => setShareOpen(true)}
-            />
-            <EditorialButton
-              label="Theme"
-              theme={theme}
-              variant="ghost"
-              onPress={openThemePicker}
-            />
-          </View>
+          <EditorialToolbar
+            theme={theme}
+            style={styles.actionsRow}
+            items={[
+              { label: "Add goal", onPress: () => setAddOpen(true) },
+              { label: "Share", onPress: () => setShareOpen(true) },
+              { label: "Theme", onPress: openThemePicker },
+            ]}
+          />
 
           <SectionRule theme={theme} />
 
@@ -1832,34 +1880,63 @@ export default function App() {
             </MetadataLabel>
           </View>
 
-          <ArtHero theme={theme} fontsLoaded={fontsLoaded} />
+          <Pressable
+            onPress={() => {
+              setHistoryYear(todayDate.getFullYear());
+              setActiveTab("history");
+            }}
+            style={({ pressed }) => [
+              styles.monthHit,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="View habit history for this month"
+          >
+            <Text
+              style={[
+                styles.monthTitle,
+                {
+                  color: theme.text,
+                  fontFamily: fontFamily("display", fontsLoaded),
+                },
+              ]}
+            >
+              {monthName(new Date(todayTick))}
+            </Text>
+          </Pressable>
+
+          <Text
+            style={[
+              styles.legendText,
+              {
+                color: theme.mutedText,
+                fontFamily: fontFamily("data", fontsLoaded),
+              },
+            ]}
+          >
+            . empty   + good   × bad
+          </Text>
+          <Text
+            style={[
+              styles.legendText,
+              {
+                color: theme.mutedText,
+                marginTop: SPACE["2xs"],
+                fontFamily: fontFamily("data", fontsLoaded),
+              },
+            ]}
+          >
+            {todaySummaryText}
+          </Text>
 
           <View style={styles.habitsHeaderGrid}>
-            <View style={{ width: LABEL_W, paddingRight: LABEL_GAP }}>
-              <Pressable
-                onPress={() => {
-                  setHistoryYear(todayDate.getFullYear());
-                  setActiveTab("history");
-                }}
-                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                accessibilityRole="button"
-                accessibilityLabel="View habit history for this month"
-              >
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={[
-                    styles.monthTitle,
-                    {
-                      color: theme.text,
-                      fontFamily: fontFamily("display", fontsLoaded),
-                    },
-                  ]}
-                >
-                  {monthName(new Date(todayTick))}
-                </Text>
-              </Pressable>
-
+            <View
+              style={{
+                width: habitLayout.labelWidth,
+                paddingRight: habitLayout.labelGap,
+                justifyContent: "flex-end",
+              }}
+            >
               <Text
                 style={[
                   styles.legendText,
@@ -1869,26 +1946,21 @@ export default function App() {
                   },
                 ]}
               >
-                . empty   + good   × bad
-              </Text>
-              <Text
-                style={[
-                  styles.legendText,
-                  {
-                    color: theme.mutedText,
-                    marginTop: 4,
-                    fontFamily: fontFamily("data", fontsLoaded),
-                  },
-                ]}
-                numberOfLines={2}
-              >
-                {todaySummaryText}
+                Habits
               </Text>
             </View>
 
-            <View style={styles.daysRow}>
+            <View
+              style={[
+                styles.daysRow,
+                { width: habitLayout.squareSize * dates.length },
+              ]}
+            >
               {dates.map((d) => (
-                <View key={d.key} style={styles.dayCell}>
+                <View
+                  key={d.key}
+                  style={[styles.dayCell, { width: habitLayout.squareSize }]}
+                >
                   <Text
                     style={[
                       styles.dayNum,
@@ -1914,8 +1986,11 @@ export default function App() {
   if (!ready) {
     return (
       <FontsProvider loaded={fontsLoaded}>
-        <GestureHandlerRootView style={styles.safe}>
-          <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
+        <GestureHandlerRootView
+          style={[styles.safe, { backgroundColor: theme.bg }]}
+        >
+          <ArtBackdrop theme={theme} fontsLoaded={fontsLoaded} />
+          <SafeAreaView style={[styles.safe, styles.transparent]}>
             <View style={styles.loadingWrap}>
               <MetadataLabel theme={theme}>Yearly Tracker</MetadataLabel>
               <Text
@@ -1949,13 +2024,18 @@ export default function App() {
 
   return (
     <FontsProvider loaded={fontsLoaded}>
-    <GestureHandlerRootView style={styles.safe}>
-      <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
+    <GestureHandlerRootView
+      style={[styles.safe, { backgroundColor: theme.bg }]}
+    >
+      <ArtBackdrop theme={theme} fontsLoaded={fontsLoaded} />
+      <SafeAreaView style={[styles.safe, styles.transparent]}>
         {activeTab === "goals" ? (
           <DraggableFlatList
             activationDistance={12}
             data={visibleGoals}
             keyExtractor={(item) => item.id}
+            style={styles.transparentList}
+            containerStyle={styles.transparentList}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
             onDragBegin={() => {
@@ -1997,7 +2077,10 @@ export default function App() {
             }
           />
         ) : activeTab === "history" ? (
-          <ScrollView contentContainerStyle={styles.listContent}>
+          <ScrollView
+            style={styles.transparentList}
+            contentContainerStyle={styles.listContent}
+          >
             {topHeader}
             <HabitHistory
               theme={theme}
@@ -2012,6 +2095,8 @@ export default function App() {
             activationDistance={12}
             data={habits}
             keyExtractor={(item) => item.id}
+            style={styles.transparentList}
+            containerStyle={styles.transparentList}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
             onDragBegin={() => {
@@ -2035,9 +2120,9 @@ export default function App() {
                 onEdit={openHabitEdit}
                 onDrag={drag}
                 dragging={isActive}
-                labelWidth={LABEL_W}
-                squareSize={SQUARE}
-                labelGap={LABEL_GAP}
+                labelWidth={habitLayout.labelWidth}
+                squareSize={habitLayout.squareSize}
+                labelGap={habitLayout.labelGap}
                 onSwipeOpen={handleHabitSwipeOpen}
                 onSwipeClose={handleHabitSwipeClose}
               />
@@ -2051,29 +2136,15 @@ export default function App() {
               />
             }
             ListFooterComponent={
-              <View style={{ marginTop: SPACE.md }}>
-                <View style={styles.actionsRow}>
-                  <EditorialButton
-                    label="Add habit"
-                    theme={theme}
-                    variant="secondary"
-                    onPress={() => setHabitAddOpen(true)}
-                    style={{ flex: 1 }}
-                  />
-                  <EditorialButton
-                    label="Share"
-                    theme={theme}
-                    variant="ghost"
-                    onPress={() => setShareOpen(true)}
-                  />
-                  <EditorialButton
-                    label="Theme"
-                    theme={theme}
-                    variant="ghost"
-                    onPress={openThemePicker}
-                  />
-                </View>
-              </View>
+              <EditorialToolbar
+                theme={theme}
+                style={styles.actionsRow}
+                items={[
+                  { label: "Add habit", onPress: () => setHabitAddOpen(true) },
+                  { label: "Share", onPress: () => setShareOpen(true) },
+                  { label: "Theme", onPress: openThemePicker },
+                ]}
+              />
             }
           />
         )}
@@ -2263,6 +2334,11 @@ export default function App() {
             </View>
           </View>
         </Modal>
+        <RevampIntroModal
+          visible={revampIntroOpen}
+          theme={theme}
+          onClose={closeRevampIntro}
+        />
         {/* Habits welcome */}
         <Modal
           visible={habitsWelcomeOpen}
@@ -3883,7 +3959,12 @@ export default function App() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  listContent: { paddingHorizontal: 16, paddingBottom: 24 },
+  transparent: { backgroundColor: "transparent" },
+  transparentList: { flex: 1, backgroundColor: "transparent" },
+  listContent: {
+    paddingHorizontal: SPACE.md,
+    paddingBottom: SPACE["2xl"] + SPACE.lg,
+  },
 
   header: { paddingTop: SPACE.xs, paddingBottom: SPACE.sm },
   appTitle: {
@@ -3976,7 +4057,7 @@ const styles = StyleSheet.create({
   bigPct: { fontSize: 22, fontWeight: "900", letterSpacing: 0.2 },
   bigPctSub: { marginTop: 4, fontSize: 12, fontWeight: "700" },
 
-  actionsRow: { marginTop: SPACE.md, flexDirection: "row", gap: SPACE.sm },
+  actionsRow: { marginTop: SPACE.md },
   primaryBtn: {
     flex: 1,
     paddingVertical: 12,
@@ -4077,16 +4158,20 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   habitsHeaderGrid: {
-    marginTop: 12,
+    marginTop: SPACE.md,
     flexDirection: "row",
     alignItems: "flex-end",
   },
+  monthHit: {
+    marginTop: SPACE.sm,
+    minHeight: 44,
+    justifyContent: "center",
+  },
   monthTitle: {
-    fontSize: TYPE_SIZE.display,
+    fontSize: TYPE_SIZE.title,
     fontWeight: "700",
     letterSpacing: TYPE_TRACK.display,
     fontStyle: "normal",
-    flexShrink: 1,
   },
 
   legendRow: {
@@ -4111,8 +4196,8 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
 
-  daysRow: { flexDirection: "row", width: SQUARE * 5 },
-  dayCell: { width: SQUARE, alignItems: "center", justifyContent: "center" },
+  daysRow: { flexDirection: "row" },
+  dayCell: { alignItems: "center", justifyContent: "center" },
   dayNum: { fontSize: TYPE_SIZE.caption, fontWeight: "600", letterSpacing: TYPE_TRACK.data },
 
   bullet: { marginTop: 6, fontSize: 13, fontWeight: "800" },
@@ -4122,6 +4207,7 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     bottom: 16,
+    zIndex: 20,
     borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -4150,6 +4236,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 16,
     right: 16,
+    zIndex: 20,
     borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 12,

@@ -77,7 +77,6 @@ function GalleryRow({
             styles.title,
             { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
           ]}
-          numberOfLines={1}
         >
           {String(title || "").toUpperCase()}
         </Text>

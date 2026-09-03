@@ -12,6 +12,7 @@
 // yt_custom_themes_v1         User-created palettes           CustomTheme[]
 // yt_habits_v1                Habits + daily checks           Habit[]   (App.js)
 // yt_habits_welcome_seen_v1   Habits intro seen               "1"       (App.js)
+// yt_revamp_intro_seen_v1     Revamp visual intro seen        "1"       (additive)
 //
 // Goal: { id, title, type: "count"|"boolean", target, progress, createdAt }
 // Habit: { id, title, checks: { "YYYY-MM-DD": 0|1|2 } }  // 0 empty, 1 good, 2 bad
@@ -37,6 +38,9 @@ const KEYS = {
 
   // ✅ New: custom themes
   customThemes: "yt_custom_themes_v1",
+
+  // Additive presentation flag. Absence is not missing/corrupt user data.
+  revampIntroSeen: "yt_revamp_intro_seen_v1",
 };
 
 export const STORAGE_KEYS = KEYS;
@@ -99,6 +103,23 @@ export async function loadWelcomeSeen() {
 
 export async function setWelcomeSeen() {
   await AsyncStorage.setItem(KEYS.welcomeSeen, "1");
+}
+
+// -----------------------------
+// Revamp introduction (additive, presentation only)
+// -----------------------------
+
+export async function loadRevampIntroSeen() {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.revampIntroSeen);
+    return raw === "1";
+  } catch {
+    return true; // fail safe: don't block the user with a modal
+  }
+}
+
+export async function setRevampIntroSeen() {
+  await AsyncStorage.setItem(KEYS.revampIntroSeen, "1");
 }
 
 // -----------------------------

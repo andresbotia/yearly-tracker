@@ -98,18 +98,20 @@ export default function HabitHistory({
   return (
     <View>
       <View style={styles.historyHeader}>
-        <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
-          {`ARCHIVE  /  ${historyYear}`}
-        </MetadataLabel>
         <View style={[styles.historyTitleRow, ANDROID && styles.noGap]}>
-          <Text
-            style={[
-              styles.historyTitle,
-              { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
-            ]}
-          >
-            Habit history
-          </Text>
+          <View style={styles.historyTitleCol}>
+            <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
+              {`ARCHIVE  /  ${historyYear}`}
+            </MetadataLabel>
+            <Text
+              style={[
+                styles.historyTitle,
+                { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
+              ]}
+            >
+              Habit history
+            </Text>
+          </View>
           <Pressable
             onPress={onBack}
             style={({ pressed }) => [
@@ -138,10 +140,10 @@ export default function HabitHistory({
         <Text
           style={[
             styles.historySub,
-            { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
+            { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
           ]}
         >
-          Months completed so far.  . empty   + good   × bad
+          . empty   + good   × bad
         </Text>
       </View>
 
@@ -372,24 +374,30 @@ export default function HabitHistory({
 }
 
 const styles = StyleSheet.create({
-  historyHeader: { marginTop: SPACE.sm, gap: SPACE["2xs"] },
+  historyHeader: { marginTop: SPACE.xs, gap: SPACE["2xs"] },
   historyTitleRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: SPACE.sm,
   },
+  historyTitleCol: {
+    flex: 1,
+    minWidth: 0,
+    gap: SPACE["3xs"],
+  },
   historyTitle: {
-    fontSize: TYPE_SIZE.display,
+    fontSize: TYPE_SIZE.bodyLg,
     fontWeight: "700",
     letterSpacing: TYPE_TRACK.display,
     fontStyle: "normal",
-    flex: 1,
   },
   historySub: {
     marginTop: SPACE["3xs"],
-    fontSize: TYPE_SIZE.caption,
-    fontWeight: "400",
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.data,
+    textTransform: "uppercase",
   },
   historyBackBtn: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -420,7 +428,8 @@ const styles = StyleSheet.create({
   },
   monthTitle: {
     flex: 1,
-    fontSize: TYPE_SIZE.title,
+    flexShrink: 1,
+    fontSize: TYPE_SIZE.bodyLg,
     fontWeight: "700",
     letterSpacing: TYPE_TRACK.display,
     fontStyle: "normal",
