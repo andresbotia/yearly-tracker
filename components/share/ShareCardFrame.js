@@ -37,7 +37,7 @@ export function ShareCardFrame({
   theme,
   children,
   contentStyle,
-  kicker = "Yearly Tracker",
+  kicker = "Atelier Tracker",
   credit,
 }) {
   const { s } = useScale(width);

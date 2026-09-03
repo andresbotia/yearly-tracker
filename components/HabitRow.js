@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "../utils/tokens";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily, LEGIBILITY } from "../utils/tokens";
 import { habitStateChar, habitStateLabel } from "../utils/habitAscii";
 import { useFontsLoaded } from "../utils/fonts";
 
@@ -227,6 +227,10 @@ export default function HabitRow({
           styles.row,
           {
             borderBottomColor: theme.border,
+            backgroundColor:
+              theme?.kind === "art" && theme?.artwork
+                ? LEGIBILITY.wash
+                : "transparent",
             opacity: dragging ? 0.72 : 1,
           },
         ]}

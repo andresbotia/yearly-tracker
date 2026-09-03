@@ -6,15 +6,36 @@ import MetadataLabel from "../editorial/MetadataLabel";
 import SectionRule from "../editorial/SectionRule";
 import ArtHero from "./ArtHero";
 
+const EXISTING = {
+  kicker: "[AT]  /  New edition",
+  title: "Yearly Tracker is now Atelier Tracker",
+  body: [
+    "Your goals, habits, and history are exactly where you left them.",
+    "We’ve reimagined the experience around art, typography, and the idea of your year as a personal archive.",
+    "Your data remains private and stored on your device.",
+  ],
+};
+
+const FRESH = {
+  kicker: "[AT]  /  Private yearly journal",
+  title: "Welcome to Atelier Tracker",
+  body: [
+    "Track your habits, goals, and year through a quiet, art-led interface.",
+    "No account. No tracking. Your data stays on your device.",
+  ],
+};
+
 export default function RevampIntroModal({
   visible,
   theme,
   onClose,
+  existingUser = false,
 }) {
   const fontsLoaded = useFontsLoaded();
   const ink = theme?.text || "#1c1916";
   const muted = theme?.mutedText || "#6b645c";
   const previewId = theme?.artwork?.id || "cypresses";
+  const copy = existingUser ? EXISTING : FRESH;
 
   return (
     <Modal
@@ -34,7 +55,7 @@ export default function RevampIntroModal({
           ]}
         >
           <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
-            Yearly Tracker
+            {copy.kicker}
           </MetadataLabel>
 
           <ArtHero
@@ -51,34 +72,27 @@ export default function RevampIntroModal({
               { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
             ]}
           >
-            Meet the new Yearly Tracker
+            {copy.title}
           </Text>
 
           <SectionRule theme={theme} style={styles.rule} />
 
-          <Text
-            style={[
-              styles.body,
-              { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
-            ]}
-          >
-            Same private, offline tracker. A new art-led way to see your year.
-          </Text>
-          <Text
-            style={[
-              styles.body,
-              { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
-            ]}
-          >
-            Public-domain artwork, editorial typography, and subtle ASCII
-            details now shape the experience. Your goals, habits, history, and
-            data stay right here on your phone.
-          </Text>
+          {copy.body.map((paragraph) => (
+            <Text
+              key={paragraph}
+              style={[
+                styles.body,
+                { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
+              ]}
+            >
+              {paragraph}
+            </Text>
+          ))}
 
           <Pressable
             onPress={onClose}
             accessibilityRole="button"
-            accessibilityLabel="Explore the new look"
+            accessibilityLabel="Enter Atelier"
             style={({ pressed }) => [
               styles.cta,
               {
@@ -98,7 +112,7 @@ export default function RevampIntroModal({
                 },
               ]}
             >
-              Explore the new look
+              Enter Atelier
             </Text>
           </Pressable>
         </View>

@@ -71,11 +71,16 @@ export const VISUAL = {
     imageOpacity: 1,
     grainOpacity: 0.05,
     asciiOpacity: 0.05,
-    paperVeilOpacity: 0.68,
+    paperVeilOpacity: 0.74,
     previewAsciiOpacity: 0.12,
     borderStyle: "hairline",
     cornerStyle: "square",
   },
+};
+
+export const LEGIBILITY = {
+  keyline: "rgba(28, 25, 22, 0.08)",
+  wash: "rgba(246, 243, 236, 0.12)",
 };
 
 export const ASCII = {

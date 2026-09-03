@@ -110,14 +110,14 @@ private struct YearlyProgressView: View {
 
     var body: some View {
         guard let payload = entry.payload else {
-            return AnyView(EmptyStateView(title: "Yearly Tracker Progress"))
+            return AnyView(EmptyStateView(title: "Atelier Tracker Progress"))
         }
 
         let pct = clamp01(payload.yearlyProgress)
 
         return AnyView(
             VStack(alignment: .leading, spacing: 10) {
-                Text("Yearly Tracker Progress")
+                Text("Atelier Tracker Progress")
                     .font(.headline)
 
                 Text("\(Int(round(pct * 100)))%")

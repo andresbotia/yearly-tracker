@@ -8,6 +8,7 @@ import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../utils/tokens";
 import { asciiBar } from "./editorial/EditorialProgress";
 import { useFontsLoaded } from "../utils/fonts";
 import EditorialToolbar from "./editorial/EditorialToolbar";
+import EditorialSurface from "./editorial/EditorialSurface";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -129,9 +130,9 @@ export default function GoalItem({
         </View>
       </View>
 
+      <EditorialSurface theme={theme} padded={false} style={styles.actions}>
       <EditorialToolbar
         theme={theme}
-        style={styles.actions}
         items={[
           {
             label: "Edit",
@@ -160,6 +161,7 @@ export default function GoalItem({
           },
         ]}
       />
+      </EditorialSurface>
     </Pressable>
   );
 }

@@ -1,5 +1,5 @@
 <resources>
-  <string name="app_name">Yearly Tracker</string>
+  <string name="app_name">Atelier Tracker</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
   <string name="widget_yearly_progress_label">Yearly Progress</string>

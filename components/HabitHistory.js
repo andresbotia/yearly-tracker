@@ -16,6 +16,7 @@ import { useFontsLoaded } from "../utils/fonts";
 import MetadataLabel from "./editorial/MetadataLabel";
 import EditorialEmpty from "./editorial/EditorialEmpty";
 import SectionRule from "./editorial/SectionRule";
+import EditorialSurface from "./editorial/EditorialSurface";
 
 const ANDROID = Platform.OS === "android";
 
@@ -97,7 +98,7 @@ export default function HabitHistory({
 
   return (
     <View>
-      <View style={styles.historyHeader}>
+      <EditorialSurface theme={theme} style={styles.historyHeader}>
         <View style={[styles.historyTitleRow, ANDROID && styles.noGap]}>
           <View style={styles.historyTitleCol}>
             <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
@@ -145,7 +146,7 @@ export default function HabitHistory({
         >
           . empty   + good   × bad
         </Text>
-      </View>
+      </EditorialSurface>
 
       <SectionRule theme={theme} />
 

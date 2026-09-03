@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Yearly Tracker",
+    "name": "Atelier Tracker",
     "slug": "ResolutionTracker",
     "version": "1.0.3",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F5F7FA"
+      "backgroundColor": "#F6F3EC"
     },
     "ios": {
       "supportsTablet": false,
@@ -25,7 +25,7 @@
       "versionCode": 18,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#F5F7FA"
+        "backgroundColor": "#F6F3EC"
       }
     },
     "web": {

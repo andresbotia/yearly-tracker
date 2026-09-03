@@ -56,6 +56,7 @@ import MetadataLabel from "./components/editorial/MetadataLabel";
 import SectionRule from "./components/editorial/SectionRule";
 import EditorialButton from "./components/editorial/EditorialButton";
 import EditorialToolbar from "./components/editorial/EditorialToolbar";
+import EditorialSurface from "./components/editorial/EditorialSurface";
 import EditorialEmpty from "./components/editorial/EditorialEmpty";
 import ThemeGallery from "./components/theme/ThemeGallery";
 import {
@@ -532,6 +533,7 @@ export default function App() {
   const [habitsWelcomeSeen, setHabitsWelcomeSeen] = useState(true);
   const [revampIntroSeen, setRevampIntroSeenState] = useState(true);
   const [revampIntroOpen, setRevampIntroOpen] = useState(false);
+  const [wasExistingUser, setWasExistingUser] = useState(false);
 
   const [title, setTitle] = useState("");
   const [type, setType] = useState("count");
@@ -1205,6 +1207,7 @@ export default function App() {
 
         setHabitsWelcomeSeen(habitsSeenFlag);
         setRevampIntroSeenState(introSeen);
+        setWasExistingUser(!!welcomeSeen);
         if (!welcomeSeen) setWelcomeOpen(true);
 
         if (storedYear == null) {
@@ -1389,7 +1392,7 @@ export default function App() {
     await new Promise((r) => requestAnimationFrame(r));
 
     const ok = await captureAndShare(shareShotRef, {
-      message: "Made with Yearly Tracker",
+      message: "Made with Atelier Tracker",
     });
 
     setShareBusy(false);
@@ -1722,30 +1725,32 @@ export default function App() {
 
   const topHeader = (
     <View style={styles.header}>
-      <MetadataLabel theme={theme}>
-        {`YEARLY TRACKER  /  ${year}`}
-      </MetadataLabel>
-      {activeTab !== "history" ? (
-        <Text
-          style={[
-            styles.appTitle,
-            {
-              color: theme.text,
-              fontFamily: fontFamily("display", fontsLoaded),
-            },
-          ]}
-        >
-          Yearly Tracker
-        </Text>
-      ) : null}
+      <EditorialSurface theme={theme} style={styles.identitySurface}>
+        <MetadataLabel theme={theme}>
+          {`[AT]  ATELIER TRACKER  /  ${year}`}
+        </MetadataLabel>
+        {activeTab !== "history" ? (
+          <Text
+            style={[
+              styles.appTitle,
+              {
+                color: theme.text,
+                fontFamily: fontFamily("display", fontsLoaded),
+              },
+            ]}
+          >
+            Atelier Tracker
+          </Text>
+        ) : null}
 
-      {theme?.artwork ? (
-        <ArtworkCredit
-          artwork={theme.artwork}
-          theme={theme}
-          fontsLoaded={fontsLoaded}
-        />
-      ) : null}
+        {theme?.artwork ? (
+          <ArtworkCredit
+            artwork={theme.artwork}
+            theme={theme}
+            fontsLoaded={fontsLoaded}
+          />
+        ) : null}
+      </EditorialSurface>
 
       {activeTab !== "history" && (
         <View style={styles.tabRow}>
@@ -1813,7 +1818,7 @@ export default function App() {
             </MetadataLabel>
           </View>
 
-          <View style={{ marginTop: SPACE.md }}>
+          <EditorialSurface theme={theme} style={{ marginTop: SPACE.md }}>
             <EditorialProgress
               percent={yearlyPercent}
               theme={theme}
@@ -1832,17 +1837,18 @@ export default function App() {
             >
               {goalsSummaryText}
             </Text>
-          </View>
+          </EditorialSurface>
 
-          <EditorialToolbar
-            theme={theme}
-            style={styles.actionsRow}
-            items={[
-              { label: "Add goal", onPress: () => setAddOpen(true) },
-              { label: "Share", onPress: () => setShareOpen(true) },
-              { label: "Theme", onPress: openThemePicker },
-            ]}
-          />
+          <EditorialSurface theme={theme} padded={false} style={styles.actionsRow}>
+            <EditorialToolbar
+              theme={theme}
+              items={[
+                { label: "Add goal", onPress: () => setAddOpen(true) },
+                { label: "Share", onPress: () => setShareOpen(true) },
+                { label: "Theme", onPress: openThemePicker },
+              ]}
+            />
+          </EditorialSurface>
 
           <SectionRule theme={theme} />
 
@@ -1880,6 +1886,7 @@ export default function App() {
             </MetadataLabel>
           </View>
 
+          <EditorialSurface theme={theme} style={{ marginTop: SPACE.sm }}>
           <Pressable
             onPress={() => {
               setHistoryYear(todayDate.getFullYear());
@@ -1928,6 +1935,7 @@ export default function App() {
           >
             {todaySummaryText}
           </Text>
+          </EditorialSurface>
 
           <View style={styles.habitsHeaderGrid}>
             <View
@@ -1992,7 +2000,7 @@ export default function App() {
           <ArtBackdrop theme={theme} fontsLoaded={fontsLoaded} />
           <SafeAreaView style={[styles.safe, styles.transparent]}>
             <View style={styles.loadingWrap}>
-              <MetadataLabel theme={theme}>Yearly Tracker</MetadataLabel>
+              <MetadataLabel theme={theme}>[AT] Atelier Tracker</MetadataLabel>
               <Text
                 style={[
                   styles.loadingTitle,
@@ -2136,15 +2144,16 @@ export default function App() {
               />
             }
             ListFooterComponent={
-              <EditorialToolbar
-                theme={theme}
-                style={styles.actionsRow}
-                items={[
-                  { label: "Add habit", onPress: () => setHabitAddOpen(true) },
-                  { label: "Share", onPress: () => setShareOpen(true) },
-                  { label: "Theme", onPress: openThemePicker },
-                ]}
-              />
+              <EditorialSurface theme={theme} padded={false} style={styles.actionsRow}>
+                <EditorialToolbar
+                  theme={theme}
+                  items={[
+                    { label: "Add habit", onPress: () => setHabitAddOpen(true) },
+                    { label: "Share", onPress: () => setShareOpen(true) },
+                    { label: "Theme", onPress: openThemePicker },
+                  ]}
+                />
+              </EditorialSurface>
             }
           />
         )}
@@ -2338,6 +2347,7 @@ export default function App() {
           visible={revampIntroOpen}
           theme={theme}
           onClose={closeRevampIntro}
+          existingUser={wasExistingUser}
         />
         {/* Habits welcome */}
         <Modal
@@ -2426,7 +2436,7 @@ export default function App() {
               ]}
             >
               <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Welcome to Yearly Tracker
+                Welcome to Atelier Tracker
               </Text>
 
               <Text
@@ -3967,6 +3977,7 @@ const styles = StyleSheet.create({
   },
 
   header: { paddingTop: SPACE.xs, paddingBottom: SPACE.sm },
+  identitySurface: { marginBottom: SPACE.xs },
   appTitle: {
     fontSize: TYPE_SIZE.display,
     fontWeight: "700",

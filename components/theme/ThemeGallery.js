@@ -1,4 +1,4 @@
-// Art Gallery theme picker. Presentation only.
+// Atelier collection theme picker. Presentation only.
 // Existing classic ids, custom ids, and art ids still resolve through makeTheme.
 
 import React from "react";
@@ -6,7 +6,7 @@ import { View, Text, Pressable, Image, StyleSheet, ScrollView } from "react-nati
 import { Ionicons } from "@expo/vector-icons";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
-import { ART_THEMES } from "../../themes/artThemes";
+import { ART_THEMES, ART_THEME_GROUPS } from "../../themes/artThemes";
 import { ART_IMAGES } from "../../assets/art/images";
 import MetadataLabel from "../editorial/MetadataLabel";
 import SectionRule from "../editorial/SectionRule";
@@ -86,7 +86,6 @@ function GalleryRow({
               styles.subtitle,
               { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
             ]}
-            numberOfLines={1}
           >
             {subtitle}
           </Text>
@@ -97,7 +96,6 @@ function GalleryRow({
               styles.meta,
               { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
             ]}
-            numberOfLines={1}
           >
             {meta}
           </Text>
@@ -119,45 +117,29 @@ function GalleryRow({
   );
 }
 
-export default function ThemeGallery({
+function ArtGroup({
+  label,
+  themes,
   theme,
   themeChoice,
-  classicThemes,
-  customThemes,
+  fontsLoaded,
   onPick,
-  onDeleteCustom,
 }) {
-  const fontsLoaded = useFontsLoaded();
-
+  if (!themes.length) return null;
   return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={styles.group}>
       <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
-        Art collection
+        {label}
       </MetadataLabel>
-      <Text
-        style={[
-          styles.sectionNote,
-          {
-            color: theme.mutedText,
-            fontFamily: fontFamily("body", fontsLoaded),
-          },
-        ]}
-      >
-        Public-domain plates, bundled. No network calls.
-      </Text>
-
-      {ART_THEMES.map((t) => {
+      {themes.map((t, i) => {
         const selected = t.id === themeChoice;
         const art = t.artwork;
         const image = ART_IMAGES[t.id] || null;
+        const index = String(i + 1).padStart(2, "0");
         return (
           <GalleryRow
             key={t.id}
-            title={t.name}
+            title={`${index}  —  ${art?.title || t.name}`}
             subtitle={art ? art.artist : "No plate"}
             meta={
               art
@@ -174,6 +156,64 @@ export default function ThemeGallery({
           </GalleryRow>
         );
       })}
+    </View>
+  );
+}
+
+export default function ThemeGallery({
+  theme,
+  themeChoice,
+  classicThemes,
+  customThemes,
+  onPick,
+  onDeleteCustom,
+}) {
+  const fontsLoaded = useFontsLoaded();
+  const paperTheme = ART_THEMES.find((t) => t.id === "museum-paper");
+
+  return (
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
+        [AT]  Atelier collection
+      </MetadataLabel>
+      <Text
+        style={[
+          styles.sectionNote,
+          {
+            color: theme.mutedText,
+            fontFamily: fontFamily("body", fontsLoaded),
+          },
+        ]}
+      >
+        Public-domain plates, bundled. No network calls.
+      </Text>
+
+      {ART_THEME_GROUPS.map((group) => (
+        <ArtGroup
+          key={group.key}
+          label={group.label}
+          themes={ART_THEMES.filter((t) => t.artwork?.artist === group.artist)}
+          theme={theme}
+          themeChoice={themeChoice}
+          fontsLoaded={fontsLoaded}
+          onPick={onPick}
+        />
+      ))}
+
+      {paperTheme ? (
+        <ArtGroup
+          label="Paper"
+          themes={[paperTheme]}
+          theme={theme}
+          themeChoice={themeChoice}
+          fontsLoaded={fontsLoaded}
+          onPick={onPick}
+        />
+      ) : null}
 
       <SectionRule theme={theme} />
 
@@ -265,6 +305,9 @@ const styles = StyleSheet.create({
     marginTop: SPACE["2xs"],
     marginBottom: SPACE.sm,
     fontSize: TYPE_SIZE.caption,
+  },
+  group: {
+    marginTop: SPACE.md,
   },
   row: {
     flexDirection: "row",

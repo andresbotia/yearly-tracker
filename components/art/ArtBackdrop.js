@@ -36,7 +36,7 @@ function ArtBackdrop({ theme, fontsLoaded }) {
   const veilOpacity =
     typeof theme?.visual?.paperVeilOpacity === "number"
       ? theme.visual.paperVeilOpacity
-      : 0.68;
+      : 0.74;
   const asciiOpacity =
     typeof theme?.visual?.asciiOpacity === "number"
       ? theme.visual.asciiOpacity
