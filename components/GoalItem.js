@@ -3,12 +3,12 @@
 
 import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import * as Haptics from "expo-haptics";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../utils/tokens";
-import { asciiBar } from "./editorial/EditorialProgress";
 import { useFontsLoaded } from "../utils/fonts";
-import EditorialToolbar from "./editorial/EditorialToolbar";
 import EditorialSurface from "./editorial/EditorialSurface";
+import AnimatedAsciiBar from "./motion/AnimatedAsciiBar";
+import AnimatedNumber from "./motion/AnimatedNumber";
+import { hapticSelect } from "../utils/motion";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -45,12 +45,6 @@ export default function GoalItem({
       : isComplete
         ? "Complete"
         : "Incomplete";
-
-  async function hapticLight() {
-    try {
-      await Haptics.selectionAsync();
-    } catch {}
-  }
 
   const ink = theme.text;
   const muted = theme.mutedText;
@@ -100,67 +94,109 @@ export default function GoalItem({
             {String(goal.title || "").toUpperCase()}
           </Text>
 
-          <Text
-            style={[
-              styles.meta,
-              {
-                color: muted,
-                fontFamily: fontFamily("data", fontsLoaded),
-              },
-            ]}
-          >
-            {meta}
-            {isComplete ? "   ·   DONE" : ""}
-          </Text>
+          <View style={styles.metaRow}>
+            <Text
+              style={[
+                styles.meta,
+                {
+                  color: muted,
+                  fontFamily: fontFamily("data", fontsLoaded),
+                },
+              ]}
+            >
+              {meta}
+              {isComplete ? "   ·   DONE" : ""}
+            </Text>
+            <AnimatedNumber
+              value={pct}
+              theme={theme}
+              role="data"
+              format={(v) => `${v}%`}
+              style={[styles.pct, { color: muted }]}
+            />
+          </View>
 
-          <Text
-            style={[
-              styles.bar,
-              {
-                color: ink,
-                fontFamily: fontFamily("data", fontsLoaded),
-              },
-            ]}
-            accessible
-            accessibilityRole="progressbar"
-            accessibilityValue={{ min: 0, max: 100, now: pct }}
-          >
-            {asciiBar(pct, 22, "+", ".")}
-          </Text>
+          <AnimatedAsciiBar
+            percent={pct}
+            width={22}
+            theme={theme}
+            fontsLoaded={fontsLoaded}
+            style={styles.bar}
+          />
         </View>
       </View>
 
       <EditorialSurface theme={theme} padded={false} style={styles.actions}>
-      <EditorialToolbar
-        theme={theme}
-        items={[
-          {
-            label: "Edit",
-            accessibilityLabel: `Edit goal details for ${goal.title}`,
-            onPress: async () => {
-              await hapticLight();
-              onEditDetails?.(goal);
-            },
-          },
-          {
-            label: isComplete ? "Adjust" : "Update",
-            accessibilityLabel: `Update progress for ${goal.title}`,
-            onPress: async () => {
-              await hapticLight();
+        <View style={styles.rail}>
+          <Pressable
+            onPress={async () => {
+              await hapticSelect();
               onProgress?.(goal);
-            },
-          },
-          {
-            label: "Delete",
-            danger: true,
-            accessibilityLabel: `Delete ${goal.title}`,
-            onPress: async () => {
-              await hapticLight();
+            }}
+            style={({ pressed }) => [
+              styles.railPrimary,
+              { borderColor: ink, opacity: pressed ? 0.65 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`Update progress for ${goal.title}`}
+          >
+            <Text
+              style={[
+                styles.railPrimaryText,
+                { color: ink, fontFamily: fontFamily("data", fontsLoaded) },
+              ]}
+            >
+              {isComplete ? "Adjust" : "Progress"}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={async () => {
+              await hapticSelect();
+              onEditDetails?.(goal);
+            }}
+            hitSlop={6}
+            style={({ pressed }) => [
+              styles.railGhost,
+              { opacity: pressed ? 0.55 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`Edit goal details for ${goal.title}`}
+          >
+            <Text
+              style={[
+                styles.railGhostText,
+                { color: ink, fontFamily: fontFamily("data", fontsLoaded) },
+              ]}
+            >
+              Edit
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={async () => {
+              await hapticSelect();
               onDelete?.(goal.id);
-            },
-          },
-        ]}
-      />
+            }}
+            hitSlop={6}
+            style={({ pressed }) => [
+              styles.railGhost,
+              { opacity: pressed ? 0.55 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`Delete ${goal.title}`}
+          >
+            <Text
+              style={[
+                styles.railGhostText,
+                {
+                  color: theme.danger || "#9b2c2c",
+                  fontFamily: fontFamily("data", fontsLoaded),
+                },
+              ]}
+            >
+              Delete
+            </Text>
+          </Pressable>
+        </View>
       </EditorialSurface>
     </Pressable>
   );
@@ -195,11 +231,21 @@ const styles = StyleSheet.create({
     letterSpacing: TYPE_TRACK.display,
     fontStyle: "normal",
   },
-  meta: {
+  metaRow: {
     marginTop: SPACE["3xs"],
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: SPACE.sm,
+  },
+  meta: {
     fontSize: TYPE_SIZE.caption,
     letterSpacing: TYPE_TRACK.data,
     textTransform: "uppercase",
+    flex: 1,
+  },
+  pct: {
+    fontSize: TYPE_SIZE.caption,
+    letterSpacing: TYPE_TRACK.data,
   },
   bar: {
     marginTop: SPACE.xs,
@@ -209,5 +255,37 @@ const styles = StyleSheet.create({
   actions: {
     marginTop: SPACE.sm,
     marginLeft: 28 + SPACE.sm,
+  },
+  rail: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACE.xs,
+  },
+  railPrimary: {
+    flex: 1,
+    minHeight: 44,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: SPACE.sm,
+  },
+  railPrimaryText: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
+  railGhost: {
+    minHeight: 44,
+    minWidth: 44,
+    paddingHorizontal: SPACE.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  railGhostText: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
   },
 });

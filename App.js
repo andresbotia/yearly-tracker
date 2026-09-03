@@ -49,9 +49,7 @@ import HabitHistory from "./components/HabitHistory";
 import ArtBackdrop from "./components/art/ArtBackdrop";
 import ArtworkCredit from "./components/art/ArtworkCredit";
 import RevampIntroModal from "./components/art/RevampIntroModal";
-import EditorialProgress, {
-  asciiBar,
-} from "./components/editorial/EditorialProgress";
+import EditorialProgress from "./components/editorial/EditorialProgress";
 import MetadataLabel from "./components/editorial/MetadataLabel";
 import SectionRule from "./components/editorial/SectionRule";
 import EditorialButton from "./components/editorial/EditorialButton";
@@ -67,7 +65,12 @@ import {
   ensurePaletteComplete,
 } from "./utils/theme";
 import { FontsProvider } from "./utils/fonts";
-import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "./utils/tokens";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "./utils/tokens";
+import { ReducedMotionProvider } from "./utils/motion";
+import AtelierDrawer from "./components/atelier/AtelierDrawer";
+import AtelierCounter from "./components/atelier/AtelierCounter";
+import MilestoneMark from "./components/atelier/MilestoneMark";
+import CompletionMark from "./components/atelier/CompletionMark";
 import {
   loadGoalsWithMeta,
   saveGoals,
@@ -542,6 +545,8 @@ export default function App() {
   const [editOpen, setEditOpen] = useState(false);
   const [editGoal, setEditGoal] = useState(null);
   const [editValue, setEditValue] = useState("0");
+  const [editDraftDone, setEditDraftDone] = useState(false);
+  const [completeFlash, setCompleteFlash] = useState(false);
   const [pickerUIValue, setPickerUIValue] = useState("#ffffff"); // drives the ColorPicker's value prop
   const [pickerRemountKey, setPickerRemountKey] = useState(0); // forces picker to refresh when typing
   const [hexEditing, setHexEditing] = useState(false);
@@ -1443,6 +1448,8 @@ export default function App() {
     } else {
       setEditValue("0");
     }
+    setEditDraftDone((goal.progress ?? 0) === 1);
+    setCompleteFlash(false);
 
     setEditOpen(true);
     playEditOpenAnim();
@@ -1452,6 +1459,8 @@ export default function App() {
     setEditOpen(false);
     setEditGoal(null);
     setEditValue("0");
+    setEditDraftDone(false);
+    setCompleteFlash(false);
   }
 
   async function bumpEditCount(delta) {
@@ -1469,6 +1478,7 @@ export default function App() {
 
   async function saveEditCount() {
     if (!editGoal || editGoal.type !== "count") return;
+    if (completeFlash) return;
 
     const t = editGoal.target || 0;
     const n = Number(editValue);
@@ -1481,24 +1491,39 @@ export default function App() {
     );
 
     const willBeComplete = t > 0 && nextProgress >= t;
-    if (willBeComplete) await hapticSuccess();
-    else await hapticLight();
-
     await persistGoals(next);
+    if (willBeComplete) {
+      await hapticSuccess();
+      setCompleteFlash(true);
+      await new Promise((r) => setTimeout(r, MOTION.completion));
+    } else {
+      await hapticLight();
+    }
     closeEdit();
   }
 
-  async function setMilestoneComplete(done) {
+  async function applyMilestone() {
     if (!editGoal || editGoal.type !== "boolean") return;
-
-    if (done) await hapticSuccess();
-    else await hapticLight();
+    if (completeFlash) return;
+    const done = !!editDraftDone;
 
     const next = goals.map((g) =>
       g.id === editGoal.id ? { ...g, progress: done ? 1 : 0 } : g,
     );
     await persistGoals(next);
+    if (done) {
+      await hapticSuccess();
+      setCompleteFlash(true);
+      await new Promise((r) => setTimeout(r, MOTION.completion));
+    } else {
+      await hapticLight();
+    }
     closeEdit();
+  }
+
+  async function setMilestoneComplete(done) {
+    if (!editGoal || editGoal.type !== "boolean") return;
+    setEditDraftDone(!!done);
   }
 
   async function openGoalDetails(goal) {
@@ -1993,6 +2018,7 @@ export default function App() {
 
   if (!ready) {
     return (
+      <ReducedMotionProvider>
       <FontsProvider loaded={fontsLoaded}>
         <GestureHandlerRootView
           style={[styles.safe, { backgroundColor: theme.bg }]}
@@ -2016,6 +2042,7 @@ export default function App() {
           </SafeAreaView>
         </GestureHandlerRootView>
       </FontsProvider>
+      </ReducedMotionProvider>
     );
   }
 
@@ -2031,6 +2058,7 @@ export default function App() {
   const createPreview = currentCreatePaletteDraft();
 
   return (
+    <ReducedMotionProvider>
     <FontsProvider loaded={fontsLoaded}>
     <GestureHandlerRootView
       style={[styles.safe, { backgroundColor: theme.bg }]}
@@ -3641,329 +3669,82 @@ export default function App() {
           </View>
         </Modal>
 
-        {/* Edit Progress */}
-        <Modal
+        <AtelierDrawer
           visible={editOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={closeEdit}
+          onClose={closeEdit}
+          theme={theme}
+          kicker="[AT]  /  CURRENT PROGRESS"
+          title={editGoal?.title}
+          footer={
+            <View style={[styles.modalActions, ANDROID && styles.noGap]}>
+              <Pressable
+                onPress={closeEdit}
+                style={({ pressed }) => [
+                  styles.modalBtn,
+                  {
+                    backgroundColor: pressed ? theme.border : theme.bg,
+                    borderColor: theme.border,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel"
+              >
+                <Text style={[styles.modalBtnText, { color: theme.text }]}>
+                  Cancel
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={
+                  editGoal?.type === "count" ? saveEditCount : applyMilestone
+                }
+                style={({ pressed }) => [
+                  styles.modalBtn,
+                  ANDROID && styles.ml10,
+                  {
+                    backgroundColor: pressed
+                      ? theme.primaryPressed
+                      : theme.primary,
+                    borderColor: theme.primary,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Apply progress"
+              >
+                <Text
+                  style={[
+                    styles.modalBtnText,
+                    { color: theme.primaryTextOn },
+                  ]}
+                >
+                  Apply
+                </Text>
+              </Pressable>
+            </View>
+          }
         >
-          <View style={styles.modalBackdrop}>
-            <Animated.View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-                {
-                  opacity: editAnim,
-                  transform: [
-                    {
-                      scale: editAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.97, 1],
-                      }),
-                    },
-                    {
-                      translateY: editAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [10, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              {/* keep the rest of your Edit Progress modal exactly as you already have it */}
-              {!!editGoal && (
-                <>
-                  <Text
-                    style={[styles.editTitle, { color: theme.text }]}
-                    numberOfLines={2}
-                  >
-                    {editGoal.title}
-                  </Text>
-
-                  {editGoal.type === "count" ? (
-                    <>
-                      {(() => {
-                        const cur = Number(editValue);
-                        const curSafe = Number.isFinite(cur)
-                          ? Math.max(0, Math.floor(cur))
-                          : 0;
-                        const target = Math.max(
-                          0,
-                          Number(editGoal.target || 0),
-                        );
-                        const pct =
-                          target > 0 ? Math.round((curSafe / target) * 100) : 0;
-
-                        return (
-                          <>
-                            <View style={styles.editMetaRow}>
-                              <Text
-                                style={[
-                                  styles.editHint,
-                                  { color: theme.mutedText },
-                                ]}
-                              >
-                                {`${curSafe} / ${target}`}
-                              </Text>
-                              <Text
-                                style={[
-                                  styles.editHint,
-                                  { color: theme.mutedText },
-                                ]}
-                              >
-                                {`${pct}%`}
-                              </Text>
-                            </View>
-
-                            <Text
-                              style={[
-                                styles.editHint,
-                                {
-                                  color: theme.text,
-                                  fontFamily: fontFamily("data", fontsLoaded),
-                                  letterSpacing: 1,
-                                  marginTop: 8,
-                                },
-                              ]}
-                            >
-                              {asciiBar(pct, 22, "+", ".")}
-                            </Text>
-                          </>
-                        );
-                      })()}
-
-                      <View
-                        style={[styles.stepperRow, ANDROID && styles.noGap]}
-                      >
-                        <Pressable
-                          onPress={() => bumpEditCount(-1)}
-                          style={({ pressed }) => [
-                            styles.stepperBtn,
-                            {
-                              backgroundColor: pressed
-                                ? theme.border
-                                : theme.bg,
-                              borderColor: theme.border,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.stepperBtnText,
-                              { color: theme.text },
-                            ]}
-                          >
-                            −
-                          </Text>
-                        </Pressable>
-
-                        <TextInput
-                          value={editValue}
-                          onChangeText={setEditValue}
-                          keyboardType={
-                            Platform.OS === "ios" ? "number-pad" : "numeric"
-                          }
-                          style={[
-                            styles.stepperValue,
-                            {
-                              borderColor: theme.border,
-                              color: theme.text,
-                              backgroundColor: theme.bg,
-                            },
-                          ]}
-                          maxLength={8}
-                        />
-
-                        <Pressable
-                          onPress={() => bumpEditCount(1)}
-                          style={({ pressed }) => [
-                            styles.stepperBtn,
-                            ANDROID && styles.ml10,
-                            {
-                              backgroundColor: pressed
-                                ? theme.border
-                                : theme.bg,
-                              borderColor: theme.border,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.stepperBtnText,
-                              { color: theme.text },
-                            ]}
-                          >
-                            +
-                          </Text>
-                        </Pressable>
-                      </View>
-
-                      <View
-                        style={[styles.modalActions, ANDROID && styles.noGap]}
-                      >
-                        <Pressable
-                          onPress={closeEdit}
-                          style={({ pressed }) => [
-                            styles.modalBtn,
-                            {
-                              backgroundColor: pressed
-                                ? theme.border
-                                : theme.bg,
-                              borderColor: theme.border,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[styles.modalBtnText, { color: theme.text }]}
-                          >
-                            Cancel
-                          </Text>
-                        </Pressable>
-
-                        <Pressable
-                          onPress={saveEditCount}
-                          style={({ pressed }) => [
-                            styles.modalBtn,
-                            ANDROID && styles.ml10,
-                            {
-                              backgroundColor: pressed
-                                ? theme.primaryPressed
-                                : theme.primary,
-                              borderColor: theme.primary,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.modalBtnText,
-                              { color: theme.primaryTextOn },
-                            ]}
-                          >
-                            Done
-                          </Text>
-                        </Pressable>
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      {(() => {
-                        const isDone = (editGoal?.progress ?? 0) === 1;
-
-                        return (
-                          <View
-                            style={[
-                              styles.milestoneMiniRow,
-                              ANDROID && styles.noGap,
-                            ]}
-                          >
-                            <Pressable
-                              onPress={() => setMilestoneComplete(false)}
-                              style={({ pressed }) => {
-                                const selected = !isDone;
-                                return [
-                                  styles.miniPill,
-                                  {
-                                    backgroundColor: selected
-                                      ? pressed
-                                        ? theme.primaryPressed
-                                        : theme.primary
-                                      : pressed
-                                        ? theme.border
-                                        : theme.bg,
-                                    borderColor: selected
-                                      ? theme.primary
-                                      : theme.border,
-                                  },
-                                ];
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.miniPillText,
-                                  {
-                                    color: !isDone
-                                      ? theme.primaryTextOn
-                                      : theme.text,
-                                  },
-                                ]}
-                              >
-                                Not yet
-                              </Text>
-                            </Pressable>
-
-                            <Pressable
-                              onPress={() => setMilestoneComplete(true)}
-                              style={({ pressed }) => {
-                                const selected = isDone;
-                                return [
-                                  styles.miniPill,
-                                  ANDROID && styles.ml10,
-                                  {
-                                    backgroundColor: selected
-                                      ? pressed
-                                        ? theme.primaryPressed
-                                        : theme.primary
-                                      : pressed
-                                        ? theme.border
-                                        : theme.bg,
-                                    borderColor: selected
-                                      ? theme.primary
-                                      : theme.border,
-                                  },
-                                ];
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.miniPillText,
-                                  {
-                                    color: isDone
-                                      ? theme.primaryTextOn
-                                      : theme.text,
-                                  },
-                                ]}
-                              >
-                                Done
-                              </Text>
-                            </Pressable>
-                          </View>
-                        );
-                      })()}
-
-                      <View
-                        style={[styles.modalActions, ANDROID && styles.noGap]}
-                      >
-                        <Pressable
-                          onPress={closeEdit}
-                          style={({ pressed }) => [
-                            styles.modalBtn,
-                            {
-                              backgroundColor: pressed
-                                ? theme.border
-                                : theme.bg,
-                              borderColor: theme.border,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[styles.modalBtnText, { color: theme.text }]}
-                          >
-                            Close
-                          </Text>
-                        </Pressable>
-                      </View>
-                    </>
-                  )}
-                </>
-              )}
-            </Animated.View>
-          </View>
-        </Modal>
+          {!!editGoal && editGoal.type === "count" ? (
+            <AtelierCounter
+              value={Number(editValue) || 0}
+              target={editGoal.target || 0}
+              theme={theme}
+              onChange={(n) => setEditValue(String(n))}
+            />
+          ) : null}
+          {!!editGoal && editGoal.type === "boolean" ? (
+            <MilestoneMark
+              complete={editDraftDone}
+              theme={theme}
+              onChange={setEditDraftDone}
+            />
+          ) : null}
+          <CompletionMark visible={completeFlash} theme={theme} />
+        </AtelierDrawer>
       </SafeAreaView>
     </GestureHandlerRootView>
     </FontsProvider>
+    </ReducedMotionProvider>
   );
 }
 

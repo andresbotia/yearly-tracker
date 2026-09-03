@@ -6,6 +6,7 @@ import { View, Image, StyleSheet } from "react-native";
 import { getArtVisual } from "../../assets/art/registry";
 import { useFontsLoaded } from "../../utils/fonts";
 import AsciiArtwork from "./AsciiArtwork";
+import LivingCanvas from "./LivingCanvas";
 
 function hexToRgba(hex, alpha = 1) {
   if (!hex || typeof hex !== "string") return `rgba(246,243,236,${alpha})`;
@@ -52,18 +53,20 @@ function ArtBackdrop({ theme, fontsLoaded }) {
       importantForAccessibility="no-hide-descendants"
     >
       {visual.image ? (
-        <Image
-          source={visual.image}
-          style={styles.image}
-          resizeMode="cover"
-          accessible={false}
-          accessibilityElementsHidden
-          accessibilityLabel={
-            artwork
-              ? `${artwork.title} by ${artwork.artist}, ${artwork.year}`
-              : undefined
-          }
-        />
+        <LivingCanvas active layer="art">
+          <Image
+            source={visual.image}
+            style={styles.image}
+            resizeMode="cover"
+            accessible={false}
+            accessibilityElementsHidden
+            accessibilityLabel={
+              artwork
+                ? `${artwork.title} by ${artwork.artist}, ${artwork.year}`
+                : undefined
+            }
+          />
+        </LivingCanvas>
       ) : null}
 
       <View
@@ -74,14 +77,14 @@ function ArtBackdrop({ theme, fontsLoaded }) {
       />
 
       {asciiOn && visual.ascii ? (
-        <View style={styles.asciiLayer}>
+        <LivingCanvas active layer="ascii" style={styles.asciiLayer}>
           <AsciiArtwork
             ascii={visual.ascii}
             theme={theme}
             opacity={asciiOpacity}
             fontsLoaded={loaded}
           />
-        </View>
+        </LivingCanvas>
       ) : null}
     </View>
   );

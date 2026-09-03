@@ -60,25 +60,39 @@ function hexToRgba(hex, alpha = 1) {
 
 function HabitCell({ value, size, theme, onPress, fontsLoaded, label }) {
   const scale = useSharedValue(1);
+  const flash = useSharedValue(0);
+  const prev = React.useRef(value);
 
   const scaleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
+  React.useEffect(() => {
+    if (prev.current === value) return;
+    prev.current = value;
+    flash.value = 1;
+    flash.value = withTiming(0, { duration: MOTION.micro });
+  }, [value, flash]);
+
   const char = habitStateChar(value);
-  const color =
+  const baseColor =
     value === 1
       ? theme.primary
       : value === 2
         ? theme.danger
         : theme.mutedText;
 
+  const charStyle = useAnimatedStyle(() => ({
+    opacity: 1,
+    transform: [{ scale: 1 + flash.value * 0.06 }],
+  }));
+
   return (
     <Animated.View style={scaleStyle}>
       <Pressable
         onPress={onPress}
         onPressIn={() => {
-          scale.value = withTiming(0.92, { duration: MOTION.reduced });
+          scale.value = withTiming(MOTION.pressScale, { duration: MOTION.micro });
         }}
         onPressOut={() => {
           scale.value = withTiming(1, { duration: MOTION.short });
@@ -88,17 +102,19 @@ function HabitCell({ value, size, theme, onPress, fontsLoaded, label }) {
         accessibilityLabel={label}
         accessibilityHint="Cycles empty, good, bad"
       >
-        <Text
-          style={[
-            styles.cellChar,
-            {
-              color,
-              fontFamily: fontFamily("data", fontsLoaded),
-            },
-          ]}
-        >
-          {char}
-        </Text>
+        <Animated.View style={charStyle}>
+          <Text
+            style={[
+              styles.cellChar,
+              {
+                color: baseColor,
+                fontFamily: fontFamily("data", fontsLoaded),
+              },
+            ]}
+          >
+            {char}
+          </Text>
+        </Animated.View>
       </Pressable>
     </Animated.View>
   );
