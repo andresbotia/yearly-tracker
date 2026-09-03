@@ -69,3 +69,6 @@ android/app/debug.keystore
 
 # Bundle artifacts
 *.jsbundle
+
+# Art pipeline cache (masters stay out of the app bundle)
+scripts/.art-cache/

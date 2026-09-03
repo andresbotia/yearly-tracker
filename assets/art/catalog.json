@@ -1,0 +1,85 @@
+[
+  {
+    "id": "cypresses",
+    "title": "Cypresses",
+    "artist": "Vincent van Gogh",
+    "year": "1889",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437980",
+    "accessionNumber": "49.30",
+    "source": "https://www.metmuseum.org/art/collection/search/437980",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP130999.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP130999.jpg"
+    ]
+  },
+  {
+    "id": "flowering-orchard",
+    "title": "The Flowering Orchard",
+    "artist": "Vincent van Gogh",
+    "year": "1888",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "436527",
+    "accessionNumber": "56.13",
+    "source": "https://www.metmuseum.org/art/collection/search/436527",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-14936-045.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-14936-045.jpg"
+    ]
+  },
+  {
+    "id": "water-lilies",
+    "title": "Water Lilies",
+    "artist": "Claude Monet",
+    "year": "1906",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "16568",
+    "accessionNumber": "1933.1157",
+    "source": "https://www.artic.edu/artworks/16568/water-lilies",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/adc61da8-d020-d84f-62fb-f5c7435f1f98/full/2000,/0/default.jpg",
+      "https://www.artic.edu/iiif/2/3c27b499-af56-f0d5-93b5-a7f2f1ad5813/full/2000,/0/default.jpg"
+    ],
+    "wikimediaFile": "Claude Monet - Water Lilies - 1933.1157 - Art Institute of Chicago.jpg"
+  },
+  {
+    "id": "morning-seine",
+    "title": "The Seine at Giverny",
+    "artist": "Claude Monet",
+    "year": "1897",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "46655",
+    "accessionNumber": "1963.10.180",
+    "source": "https://www.nga.gov/artworks/46655-seine-giverny",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "note": "Open-access canvas from Monet's morning-on-the-Seine campaign. The Met's similarly titled 1897 canvas is not marked public-domain for redistribution.",
+    "urls": [
+      "https://media.nga.gov/iiif/public/objects/4/6/6/5/5/46655-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ],
+    "wikimediaFile": "Claude Monet, The Seine at Giverny, 1897, NGA 46655.jpg"
+  },
+  {
+    "id": "vetheuil",
+    "title": "Banks of the Seine, Vétheuil",
+    "artist": "Claude Monet",
+    "year": "1880",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "46652",
+    "accessionNumber": "1963.10.177",
+    "source": "https://www.nga.gov/artworks/46652-banks-seine-vetheuil",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Claude_Monet%2C_Banks_of_the_Seine%2C_V%C3%A9theuil%2C_1880%2C_NGA_46652.jpg",
+      "https://media.nga.gov/iiif/public/objects/4/6/6/5/2/46652-primary-0-nativeres.ptif/full/!2400,/0/default.jpg"
+    ],
+    "wikimediaFile": "Claude Monet, Banks of the Seine, Vétheuil, 1880, NGA 46652.jpg"
+  }
+]

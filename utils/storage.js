@@ -1,4 +1,25 @@
 // utils/storage.js
+//
+// STORAGE INVENTORY (do not rename keys)
+// ---------------------------------------------------------------------------
+// Key                         Purpose                         Schema
+// rt_goals_v1                 Current-year goals              Goal[]
+// rt_hue_v1                   Theme choice                    string id | number hue | "custom:<id>"
+// rt_welcome_seen_v1          Welcome modal seen              "1"
+// rt_year_v1                  Legacy stored year              number string
+// yt_current_year_v1          Current tracked year            number string
+// yt_goal_history_v1          Yearly goal snapshots           HistoryEntry[]
+// yt_custom_themes_v1         User-created palettes           CustomTheme[]
+// yt_habits_v1                Habits + daily checks           Habit[]   (App.js)
+// yt_habits_welcome_seen_v1   Habits intro seen               "1"       (App.js)
+//
+// Goal: { id, title, type: "count"|"boolean", target, progress, createdAt }
+// Habit: { id, title, checks: { "YYYY-MM-DD": 0|1|2 } }  // 0 empty, 1 good, 2 bad
+// HistoryEntry: { year, savedAt, goals: Goal[], summary: { avgPercent, completedCount, totalCount } }
+// CustomTheme: { id, name, palette: { primary, bg, card, border, text, mutedText, primaryTextOn, primaryPressed, ringBg, ... }, createdAt }
+//
+// Readers of new fields must treat them as optional (?? default).
+// Unknown fields on persisted objects must be preserved.
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -17,6 +38,8 @@ const KEYS = {
   // ✅ New: custom themes
   customThemes: "yt_custom_themes_v1",
 };
+
+export const STORAGE_KEYS = KEYS;
 
 // -----------------------------
 // Goals
@@ -175,7 +198,7 @@ function normHex(hex) {
 function ensurePaletteShape(palette) {
   const p = { ...(palette || {}) };
 
-  const safe = {
+  const required = {
     primary: isHex6(p.primary) ? normHex(p.primary) : "#2b6dff",
     bg: isHex6(p.bg) ? normHex(p.bg) : "#f5f7fa",
     card: isHex6(p.card) ? normHex(p.card) : "#ffffff",
@@ -191,10 +214,17 @@ function ensurePaletteShape(palette) {
     ringBg: isHex6(p.ringBg) ? normHex(p.ringBg) : "#e1e8ff",
   };
 
-  return safe;
+  // Keep unknown palette keys (e.g. danger, future art fields).
+  const extra = {};
+  for (const [k, v] of Object.entries(p)) {
+    if (k in required) continue;
+    extra[k] = v;
+  }
+
+  return { ...required, ...extra };
 }
 
-function sanitizeCustomThemeRecord(rec) {
+export function sanitizeCustomThemeRecord(rec) {
   const id = rec?.id ? String(rec.id) : uid();
   const name =
     String(rec?.name || "")
@@ -202,12 +232,23 @@ function sanitizeCustomThemeRecord(rec) {
       .slice(0, 32) || "Custom Theme";
   const palette = ensurePaletteShape(rec?.palette);
 
-  return {
+  const base = {
     id,
     name,
     palette,
     createdAt: Number(rec?.createdAt) || Date.now(),
   };
+
+  // Preserve unknown top-level fields so future optional metadata survives.
+  const extra = {};
+  if (rec && typeof rec === "object") {
+    for (const [k, v] of Object.entries(rec)) {
+      if (k in base) continue;
+      extra[k] = v;
+    }
+  }
+
+  return { ...extra, ...base };
 }
 
 export async function loadCustomThemes() {

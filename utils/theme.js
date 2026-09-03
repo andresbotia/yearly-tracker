@@ -1,5 +1,8 @@
 // utils/theme.js
 
+import { ASCII, TYPOGRAPHY, VISUAL } from "./tokens";
+import { findArtTheme } from "../themes/artThemes";
+
 export const CUSTOM_THEME_PREFIX = "custom:";
 
 // Required (for your Custom Theme editor / validation)
@@ -475,12 +478,30 @@ export function ensurePaletteComplete(palette, mode = "light") {
   return safe;
 }
 
+function decorateTheme(palette, extra = {}) {
+  // Palette keys stay first so existing screens/widgets keep working.
+  // New fields are optional; readers must treat missing artwork as classic.
+  return {
+    ...palette,
+    hue: extra.hue,
+    kind: extra.kind || "classic",
+    artwork: extra.artwork ?? null,
+    typography: extra.typography || TYPOGRAPHY,
+    ascii: extra.ascii || { ...ASCII, enabled: false },
+    visual: extra.visual || VISUAL.classic,
+  };
+}
+
 // -----------------
 // Theme resolver
 // choice can be:
 // - built-in id: "bright-blue"
+// - art theme id: "cypresses" (new, additive)
 // - custom id: "custom:<uuid>"
 // - legacy numeric hue: 210
+//
+// Existing stored ids remain valid. Unknown ids still fall through to
+// the legacy hue path (same as before).
 // -----------------
 export function makeTheme(choice, customThemes = []) {
   // 1) Custom theme selection: "custom:<id>"
@@ -498,17 +519,40 @@ export function makeTheme(choice, customThemes = []) {
         found.palette,
         isDark ? "dark" : "light"
       );
-      return { ...palette, hue: choice };
+      return decorateTheme(palette, {
+        hue: choice,
+        kind: "custom",
+        artwork: found.artwork ?? null,
+        typography: found.typography || TYPOGRAPHY,
+        ascii: found.ascii || { ...ASCII, enabled: false },
+        visual: found.visual || VISUAL.classic,
+      });
     }
   }
 
-  // 2) Built-in themes
-  const builtIn = THEMES.find((t) => t.id === choice);
-  if (builtIn) {
-    return { ...builtIn.palette, hue: builtIn.id };
+  // 2) Art themes (new ids only — never collide with classic THEMES)
+  const art = findArtTheme(choice);
+  if (art) {
+    return decorateTheme(art.palette, {
+      hue: art.id,
+      kind: "art",
+      artwork: art.artwork,
+      typography: art.typography,
+      ascii: art.ascii,
+      visual: art.visual,
+    });
   }
 
-  // 3) Legacy fallback (older hue-based themes)
+  // 3) Built-in classic themes (ids unchanged)
+  const builtIn = THEMES.find((t) => t.id === choice);
+  if (builtIn) {
+    return decorateTheme(builtIn.palette, {
+      hue: builtIn.id,
+      kind: "classic",
+    });
+  }
+
+  // 4) Legacy fallback (older hue-based themes)
   const asNum =
     typeof choice === "number"
       ? choice
@@ -518,17 +562,19 @@ export function makeTheme(choice, customThemes = []) {
 
   const safeHue = Number.isFinite(asNum) ? asNum : 210;
 
-  return {
-    hue: safeHue,
-    bg: `hsl(${safeHue}, 25%, 97%)`,
-    card: `hsl(${safeHue}, 25%, 100%)`,
-    text: `hsl(${safeHue}, 20%, 12%)`,
-    mutedText: `hsl(${safeHue}, 10%, 42%)`,
-    primary: `hsl(${safeHue}, 80%, 45%)`,
-    primaryPressed: `hsl(${safeHue}, 80%, 40%)`,
-    primaryTextOn: `hsl(${safeHue}, 20%, 98%)`,
-    ringBg: `hsl(${safeHue}, 15%, 88%)`,
-    border: `hsl(${safeHue}, 15%, 86%)`,
-    danger: `hsl(0, 75%, 52%)`,
-  };
+  return decorateTheme(
+    {
+      bg: `hsl(${safeHue}, 25%, 97%)`,
+      card: `hsl(${safeHue}, 25%, 100%)`,
+      text: `hsl(${safeHue}, 20%, 12%)`,
+      mutedText: `hsl(${safeHue}, 10%, 42%)`,
+      primary: `hsl(${safeHue}, 80%, 45%)`,
+      primaryPressed: `hsl(${safeHue}, 80%, 40%)`,
+      primaryTextOn: `hsl(${safeHue}, 20%, 98%)`,
+      ringBg: `hsl(${safeHue}, 15%, 88%)`,
+      border: `hsl(${safeHue}, 15%, 86%)`,
+      danger: `hsl(0, 75%, 52%)`,
+    },
+    { hue: safeHue, kind: "legacy" }
+  );
 }
