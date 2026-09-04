@@ -54,6 +54,7 @@ import HabitHistory from "./components/HabitHistory";
 import ArtBackdrop from "./components/art/ArtBackdrop";
 
 import RevampIntroModal from "./components/art/RevampIntroModal";
+import RevampThemeChoiceModal from "./components/art/RevampThemeChoiceModal";
 import BrandSplash from "./components/brand/BrandSplash";
 import EditorialProgress from "./components/editorial/EditorialProgress";
 import MetadataLabel from "./components/editorial/MetadataLabel";
@@ -81,6 +82,10 @@ import { FontsProvider } from "./utils/fonts";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "./utils/tokens";
 import { useReducedMotion } from "./utils/motion";
 import AtelierDrawer from "./components/atelier/AtelierDrawer";
+import CatalogueOnboarding, {
+  ONBOARDING_STEPS,
+  measureNode,
+} from "./components/atelier/CatalogueOnboarding";
 import AtelierCounter from "./components/atelier/AtelierCounter";
 import AtelierSheet, {
   AtelierActions,
@@ -105,6 +110,10 @@ import {
   setRevampIntroSeen,
   loadRandomArtLast,
   saveRandomArtLast,
+  loadRevampThemeChoiceSeen,
+  setRevampThemeChoiceSeen,
+  loadOnboardingSeen,
+  setOnboardingSeen,
 } from "./utils/storage";
 import {
   ART_THEMES,
@@ -555,7 +564,6 @@ export default function App() {
     }
   }
 
-  const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -565,11 +573,24 @@ export default function App() {
   const [shareBusy, setShareBusy] = useState(false);
   const shareShotRef = useRef(null);
 
-  const [habitsWelcomeOpen, setHabitsWelcomeOpen] = useState(false);
   const [habitsWelcomeSeen, setHabitsWelcomeSeen] = useState(true);
   const [revampIntroSeen, setRevampIntroSeenState] = useState(true);
   const [revampIntroOpen, setRevampIntroOpen] = useState(false);
   const [wasExistingUser, setWasExistingUser] = useState(false);
+  const [themeChoiceSeen, setThemeChoiceSeenState] = useState(true);
+  const [themeChoiceOpen, setThemeChoiceOpen] = useState(false);
+  const [onboardingSeen, setOnboardingSeenState] = useState(true);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [onboardingAnchor, setOnboardingAnchor] = useState(null);
+  const habitsListRef = useRef(null);
+  const tabsMeasureRef = useRef(null);
+  const ledgerMeasureRef = useRef(null);
+  const ledgerHeaderRef = useRef(null);
+  const themeMeasureRef = useRef(null);
+  const addHabitMeasureRef = useRef(null);
+  const listViewportH = useRef(0);
+  const listContentH = useRef(0);
 
   const [title, setTitle] = useState("");
   const [type, setType] = useState("count");
@@ -1212,6 +1233,8 @@ export default function App() {
           storedCustomThemes,
           introSeen,
           lastRandomArt,
+          storedThemeChoiceSeen,
+          storedOnboardingSeen,
         ] = await Promise.all([
           loadGoalsWithMeta(),
           loadHue(),
@@ -1222,6 +1245,8 @@ export default function App() {
           loadCustomThemes(),
           loadRevampIntroSeen(),
           loadRandomArtLast(),
+          loadRevampThemeChoiceSeen(),
+          loadOnboardingSeen(),
         ]);
 
         if (!mounted) return;
@@ -1242,6 +1267,8 @@ export default function App() {
           setGoals(finalGoals);
         }
 
+        const isExistingUser = !!(welcomeSeen || introSeen);
+
         if (storedHue === RANDOM_ART_ID) {
           const picked = pickRandomArtId(lastRandomArt);
           setThemeChoice(RANDOM_ART_ID);
@@ -1250,6 +1277,13 @@ export default function App() {
           await saveRandomArtLast(picked);
         } else if (typeof storedHue === "number" || typeof storedHue === "string") {
           setThemeChoice(storedHue);
+        } else if (!isExistingUser) {
+          const picked = pickRandomArtId(lastRandomArt);
+          setThemeChoice(RANDOM_ART_ID);
+          setSessionArtId(picked);
+          setArtReveal(true);
+          await saveHue(RANDOM_ART_ID);
+          await saveRandomArtLast(picked);
         }
 
         if (!hasHabitStorage) {
@@ -1265,8 +1299,9 @@ export default function App() {
 
         setHabitsWelcomeSeen(habitsSeenFlag);
         setRevampIntroSeenState(introSeen);
-        setWasExistingUser(!!welcomeSeen);
-        if (!welcomeSeen) setWelcomeOpen(true);
+        setThemeChoiceSeenState(storedThemeChoiceSeen);
+        setOnboardingSeenState(storedOnboardingSeen);
+        setWasExistingUser(isExistingUser);
 
         if (storedYear == null) {
           await saveCurrentYear(year);
@@ -1347,41 +1382,181 @@ export default function App() {
   }, [ready]);
 
   useEffect(() => {
-    if (activeTab !== "habits") return;
-    if (habitsWelcomeSeen) return;
-    if (welcomeOpen) return;
+    if (!ready) return;
+    if (revampIntroSeen) return;
     if (yearRolloverOpen) return;
-
-    setHabitsWelcomeOpen(true);
-    setHabitsWelcomeSeen(true);
-    setHabitsWelcomeSeenFlag();
-  }, [activeTab, habitsWelcomeSeen, welcomeOpen, yearRolloverOpen]);
-
-  const blockingModal =
-    welcomeOpen ||
-    yearRolloverOpen ||
-    habitsWelcomeOpen ||
-    addOpen ||
-    habitAddOpen ||
-    customizeOpen ||
-    shareOpen ||
-    editOpen ||
-    goalDetailsOpen ||
-    habitEditOpen;
+    if (addOpen || habitAddOpen || customizeOpen || shareOpen || editOpen || goalDetailsOpen || habitEditOpen) {
+      return;
+    }
+    if (revampIntroOpen) return;
+    setRevampIntroOpen(true);
+  }, [
+    ready,
+    revampIntroSeen,
+    revampIntroOpen,
+    yearRolloverOpen,
+    addOpen,
+    habitAddOpen,
+    customizeOpen,
+    shareOpen,
+    editOpen,
+    goalDetailsOpen,
+    habitEditOpen,
+  ]);
 
   useEffect(() => {
     if (!ready) return;
-    if (revampIntroSeen) return;
-    if (blockingModal) return;
+    if (!wasExistingUser) return;
+    if (!revampIntroSeen) return;
     if (revampIntroOpen) return;
-    setRevampIntroOpen(true);
-  }, [ready, revampIntroSeen, blockingModal, revampIntroOpen]);
+    if (themeChoiceSeen) return;
+    if (themeChoiceOpen) return;
+    if (yearRolloverOpen) return;
+    if (addOpen || habitAddOpen || customizeOpen || shareOpen || editOpen || goalDetailsOpen || habitEditOpen) {
+      return;
+    }
+    setThemeChoiceOpen(true);
+  }, [
+    ready,
+    wasExistingUser,
+    revampIntroSeen,
+    revampIntroOpen,
+    themeChoiceSeen,
+    themeChoiceOpen,
+    yearRolloverOpen,
+    addOpen,
+    habitAddOpen,
+    customizeOpen,
+    shareOpen,
+    editOpen,
+    goalDetailsOpen,
+    habitEditOpen,
+  ]);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (wasExistingUser) return;
+    if (!revampIntroSeen) return;
+    if (revampIntroOpen) return;
+    if (themeChoiceOpen) return;
+    if (onboardingSeen) return;
+    if (onboardingOpen) return;
+    if (yearRolloverOpen) return;
+    if (addOpen || habitAddOpen || customizeOpen || shareOpen || editOpen || goalDetailsOpen || habitEditOpen) {
+      return;
+    }
+    if (activeTab !== "habits") return;
+    setOnboardingOpen(true);
+  }, [
+    ready,
+    wasExistingUser,
+    revampIntroSeen,
+    revampIntroOpen,
+    themeChoiceOpen,
+    onboardingSeen,
+    onboardingOpen,
+    yearRolloverOpen,
+    addOpen,
+    habitAddOpen,
+    customizeOpen,
+    shareOpen,
+    editOpen,
+    goalDetailsOpen,
+    habitEditOpen,
+    activeTab,
+  ]);
+
+  useEffect(() => {
+    if (!onboardingOpen) {
+      setOnboardingAnchor(null);
+      return;
+    }
+    const step = ONBOARDING_STEPS[onboardingStep];
+    if (!step) return;
+
+    const refs = {
+      ledger: habits.length ? ledgerMeasureRef : ledgerHeaderRef,
+      tabs: tabsMeasureRef,
+      theme: themeMeasureRef,
+      add: addHabitMeasureRef,
+    };
+
+    let cancelled = false;
+    let attempts = 0;
+
+    async function capture() {
+      if (step.id === "theme" || step.id === "add") {
+        try {
+          habitsListRef.current?.scrollToEnd?.({ animated: false });
+        } catch {}
+      } else if (step.id === "ledger") {
+        try {
+          habitsListRef.current?.scrollToOffset?.({ offset: 0, animated: false });
+        } catch {}
+      }
+      await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+      await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+      const rect = await measureNode(refs[step.id]);
+      if (cancelled) return;
+      if (rect) {
+        setOnboardingAnchor(rect);
+        return;
+      }
+      attempts += 1;
+      if (attempts < 24) {
+        setTimeout(capture, 50);
+      }
+    }
+
+    setOnboardingAnchor(null);
+    capture();
+    return () => {
+      cancelled = true;
+    };
+  }, [onboardingOpen, onboardingStep, habits.length]);
+
+  async function markLegacyWelcomesSeen() {
+    try {
+      await setWelcomeSeen();
+    } catch {}
+    setHabitsWelcomeSeen(true);
+    try {
+      await setHabitsWelcomeSeenFlag();
+    } catch {}
+  }
 
   async function closeRevampIntro() {
     setRevampIntroOpen(false);
     setRevampIntroSeenState(true);
     try {
       await setRevampIntroSeen();
+    } catch {}
+    await markLegacyWelcomesSeen();
+    if (!wasExistingUser) {
+      setThemeChoiceSeenState(true);
+      try {
+        await setRevampThemeChoiceSeen();
+      } catch {}
+    }
+  }
+
+  async function finishThemeChoice(nextTheme) {
+    setThemeChoiceOpen(false);
+    setThemeChoiceSeenState(true);
+    try {
+      await setRevampThemeChoiceSeen();
+    } catch {}
+    if (nextTheme === RANDOM_ART_ID) {
+      await handlePickTheme(RANDOM_ART_ID);
+    }
+  }
+
+  async function finishOnboarding() {
+    setOnboardingOpen(false);
+    setOnboardingAnchor(null);
+    setOnboardingSeenState(true);
+    try {
+      await setOnboardingSeen();
     } catch {}
   }
 
@@ -1399,14 +1574,6 @@ export default function App() {
     const ordered = sortGoals(nextGoals);
     setGoals(ordered);
     await saveGoals(ordered);
-  }
-
-  async function closeWelcome() {
-    setWelcomeOpen(false);
-    await setWelcomeSeen();
-
-    setHabitsWelcomeSeen(true);
-    await setHabitsWelcomeSeenFlag();
   }
 
   function normalizeNewGoal() {
@@ -1841,13 +2008,33 @@ export default function App() {
     setActiveTab(next);
   }
 
+  function rememberListViewport(info) {
+    const height = info?.layout?.height;
+    if (typeof height === "number" && Number.isFinite(height)) {
+      listViewportH.current = height;
+    }
+  }
+
+  function rememberListContentSize(_w, h) {
+    if (typeof h === "number" && Number.isFinite(h)) {
+      listContentH.current = h;
+    }
+  }
+
   function onListScrollOffset(offset) {
     const y = typeof offset === "number" && Number.isFinite(offset) ? offset : 0;
     if (y <= 0) {
       headerScrollY.value = 0;
       return;
     }
-    headerScrollY.value = y > HEADER_ANIM_RANGE ? HEADER_ANIM_RANGE : y;
+    const maxScroll = Math.max(0, listContentH.current - listViewportH.current);
+    if (maxScroll <= 0) {
+      // Short list: bottom rubber-band is not real scroll. Keep header still.
+      headerScrollY.value = 0;
+      return;
+    }
+    const real = y > maxScroll ? maxScroll : y;
+    headerScrollY.value = real > HEADER_ANIM_RANGE ? HEADER_ANIM_RANGE : real;
   }
 
   const canvasPaused =
@@ -1858,6 +2045,9 @@ export default function App() {
     shareOpen ||
     goalDetailsOpen ||
     habitEditOpen ||
+    revampIntroOpen ||
+    themeChoiceOpen ||
+    onboardingOpen ||
     artReveal ||
     themeExpand;
 
@@ -1872,7 +2062,9 @@ export default function App() {
             artwork={theme?.artwork}
             fontsLoaded={fontsLoaded}
           />
-          <AtelierTabs theme={theme} active={activeTab} onChange={selectTab} />
+          <View ref={tabsMeasureRef} collapsable={false}>
+            <AtelierTabs theme={theme} active={activeTab} onChange={selectTab} />
+          </View>
         </>
       ) : null}
     </View>
@@ -2007,7 +2199,11 @@ export default function App() {
           </Text>
           </EditorialSurface>
 
-          <View style={styles.habitsHeaderGrid}>
+          <View
+            ref={ledgerHeaderRef}
+            collapsable={false}
+            style={styles.habitsHeaderGrid}
+          >
             <View
               style={{
                 width: habitLayout.labelWidth,
@@ -2108,6 +2304,8 @@ export default function App() {
             ListHeaderComponent={topHeader}
             ListFooterComponent={<View style={styles.listBottomSpacer} />}
             onScrollOffsetChange={onListScrollOffset}
+            onContainerLayout={rememberListViewport}
+            onContentSizeChange={rememberListContentSize}
             bounces
             alwaysBounceVertical
             overScrollMode="always"
@@ -2182,14 +2380,17 @@ export default function App() {
           </ScrollView>
         ) : (
           <DraggableFlatList
+            ref={habitsListRef}
             activationDistance={12}
             data={habits}
             keyExtractor={(item) => item.id}
             style={styles.transparentList}
             containerStyle={styles.transparentList}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={styles.habitsListContent}
             ListHeaderComponent={topHeader}
             onScrollOffsetChange={onListScrollOffset}
+            onContainerLayout={rememberListViewport}
+            onContentSizeChange={rememberListContentSize}
             bounces
             alwaysBounceVertical
             overScrollMode="always"
@@ -2223,6 +2424,9 @@ export default function App() {
                 labelGap={habitLayout.labelGap}
                 onSwipeOpen={handleHabitSwipeOpen}
                 onSwipeClose={handleHabitSwipeClose}
+                measureRef={
+                  item.id === habits[0]?.id ? ledgerMeasureRef : undefined
+                }
               />
             )}
             ListEmptyComponent={
@@ -2239,9 +2443,17 @@ export default function App() {
                   <EditorialToolbar
                     theme={theme}
                     items={[
-                      { label: "Add habit", onPress: () => setHabitAddOpen(true) },
+                      {
+                        label: "Add habit",
+                        onPress: () => setHabitAddOpen(true),
+                        measureRef: addHabitMeasureRef,
+                      },
                       { label: "Share", onPress: () => setShareOpen(true) },
-                      { label: "Theme", onPress: openThemePicker },
+                      {
+                        label: "Theme",
+                        onPress: openThemePicker,
+                        measureRef: themeMeasureRef,
+                      },
                     ]}
                   />
                 </EditorialSurface>
@@ -2443,152 +2655,12 @@ export default function App() {
           onClose={closeRevampIntro}
           existingUser={wasExistingUser}
         />
-        {/* Habits welcome */}
-        <Modal
-          visible={habitsWelcomeOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={() => setHabitsWelcomeOpen(false)}
-        >
-          <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Habits
-              </Text>
-
-              <Text
-                style={[
-                  styles.modalSub,
-                  { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
-                ]}
-              >
-                Tap a cell to track that day. Tap cycles: . empty → + good → ×
-                bad → . empty.
-              </Text>
-
-              <View style={{ marginTop: 10 }}>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Simple habits (like reading) are basically On/Off.
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Working out can be marked “good” or “bad”.
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Swipe a habit left to edit or delete it.
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Tap the month name to view your habit history.
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Press and hold a habit to reorder it.
-                </Text>
-              </View>
-
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={() => setHabitsWelcomeOpen(false)}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Got it
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-        {/* Main welcome */}
-        <Modal
-          visible={welcomeOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={closeWelcome}
-        >
-          <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Welcome to Atelier Tracker
-              </Text>
-
-              <Text
-                style={[
-                  styles.modalSub,
-                  { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
-                ]}
-              >
-                “Success is the product of daily habits—not once-in-a-lifetime
-                transformations.”
-              </Text>
-              <Text
-                style={[
-                  styles.modalSub,
-                  { color: theme.mutedText, marginTop: 6 },
-                ]}
-              >
-                — James Clear
-              </Text>
-
-              <View style={{ marginTop: 14 }}>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • No accounts
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • No tracking or analytics
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Everything is stored locally on your phone
-                </Text>
-              </View>
-
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={closeWelcome}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Get Started
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
+        <RevampThemeChoiceModal
+          visible={themeChoiceOpen}
+          theme={theme}
+          onTryRandomArt={() => finishThemeChoice(RANDOM_ART_ID)}
+          onKeepCurrent={() => finishThemeChoice(null)}
+        />
         <AtelierDrawer
           visible={habitEditOpen}
           onClose={closeHabitEdit}
@@ -3294,6 +3366,20 @@ export default function App() {
           />
         </AtelierDrawer>
       </SafeAreaView>
+      <CatalogueOnboarding
+        visible={onboardingOpen}
+        theme={theme}
+        stepIndex={onboardingStep}
+        anchor={onboardingAnchor}
+        onSkip={finishOnboarding}
+        onNext={() => {
+          if (onboardingStep >= ONBOARDING_STEPS.length - 1) {
+            finishOnboarding();
+            return;
+          }
+          setOnboardingStep((n) => n + 1);
+        }}
+      />
     </GestureHandlerRootView>
     </FontsProvider>
   );
@@ -3306,6 +3392,9 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: SPACE.md,
     paddingBottom: SPACE["2xl"] + SPACE.xl,
+  },
+  habitsListContent: {
+    paddingHorizontal: SPACE.md,
   },
   listBottomSpacer: {
     height: SPACE["2xl"],
