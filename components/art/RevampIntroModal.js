@@ -1,5 +1,14 @@
 import React from "react";
-import { Modal, View, Text, StyleSheet, Pressable, Platform } from "react-native";
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Platform,
+  ScrollView,
+  useWindowDimensions,
+} from "react-native";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
 import MetadataLabel from "../editorial/MetadataLabel";
@@ -36,10 +45,12 @@ export default function RevampIntroModal({
   existingUser = false,
 }) {
   const fontsLoaded = useFontsLoaded();
+  const { height: windowHeight } = useWindowDimensions();
   const ink = theme?.text || "#1c1916";
   const muted = theme?.mutedText || "#6b645c";
   const previewId = theme?.artwork?.id || "cypresses";
   const copy = existingUser ? EXISTING : FRESH;
+  const maxCardH = Math.max(280, windowHeight - SPACE.md * 2);
 
   return (
     <Modal
@@ -55,65 +66,74 @@ export default function RevampIntroModal({
             {
               backgroundColor: theme?.card || "#fbf8f1",
               borderColor: theme?.text || "#1c1916",
+              maxHeight: maxCardH,
             },
           ]}
         >
-          <BrandMark size={48} />
-          <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
-            {copy.kicker}
-          </MetadataLabel>
-
-          <ArtHero
-            theme={theme}
-            artworkId={previewId}
-            fontsLoaded={fontsLoaded}
-            showCredit={false}
-            height={96}
-          />
-
-          <Text
-            style={[
-              styles.title,
-              { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
-            ]}
+          <ScrollView
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+            style={styles.cardScroll}
+            contentContainerStyle={styles.cardContent}
           >
-            {copy.title}
-          </Text>
+            <BrandMark size={48} />
+            <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
+              {copy.kicker}
+            </MetadataLabel>
 
-          <SectionRule theme={theme} style={styles.rule} />
+            <ArtHero
+              theme={theme}
+              artworkId={previewId}
+              fontsLoaded={fontsLoaded}
+              showCredit={false}
+              height={96}
+            />
 
-          {copy.quote ? (
-            <>
-              <Text
-                style={[
-                  styles.quote,
-                  { color: ink, fontFamily: fontFamily("body", fontsLoaded) },
-                ]}
-              >
-                {copy.quote}
-              </Text>
-              <Text
-                style={[
-                  styles.attribution,
-                  { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
-                ]}
-              >
-                {copy.attribution}
-              </Text>
-            </>
-          ) : null}
-
-          {copy.body.map((paragraph) => (
             <Text
-              key={paragraph}
               style={[
-                styles.body,
-                { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
+                styles.title,
+                { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
               ]}
             >
-              {paragraph}
+              {copy.title}
             </Text>
-          ))}
+
+            <SectionRule theme={theme} style={styles.rule} />
+
+            {copy.quote ? (
+              <>
+                <Text
+                  style={[
+                    styles.quote,
+                    { color: ink, fontFamily: fontFamily("body", fontsLoaded) },
+                  ]}
+                >
+                  {copy.quote}
+                </Text>
+                <Text
+                  style={[
+                    styles.attribution,
+                    { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
+                  ]}
+                >
+                  {copy.attribution}
+                </Text>
+              </>
+            ) : null}
+
+            {copy.body.map((paragraph) => (
+              <Text
+                key={paragraph}
+                style={[
+                  styles.body,
+                  { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
+                ]}
+              >
+                {paragraph}
+              </Text>
+            ))}
+          </ScrollView>
 
           <Pressable
             onPress={onClose}
@@ -158,9 +178,18 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     padding: SPACE.lg,
     gap: SPACE.sm,
+    flexShrink: 1,
     ...Platform.select({
       android: { elevation: 0 },
     }),
+  },
+  cardScroll: {
+    flexGrow: 0,
+    flexShrink: 1,
+  },
+  cardContent: {
+    gap: SPACE.sm,
+    flexGrow: 0,
   },
   title: {
     marginTop: SPACE.xs,
