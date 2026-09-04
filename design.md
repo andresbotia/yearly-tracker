@@ -4,7 +4,7 @@ A locked design system for this app. Screen redesigns read this file before
 emitting UI. Do not regenerate per screen — extend or amend this file when the
 system needs to grow.
 
-Product: Atelier Tracker. Brand mark: `[AT]`.
+Product: Atelier Tracker. Brand mark: the outlined `[AT]` in `assets/brand`.
 Genre: editorial. Macrostructure family: museum catalogue (app screens).
 Theme: custom museum-paper. Display: Fraunces 700 roman. Body: Source Serif 4.
 Data: IBM Plex Mono. Going with: audience = a private person tracking a year ·
@@ -19,16 +19,34 @@ editorial
 - Widgets: stay native; visible titles may say Atelier Tracker; payload contracts stay
 
 ## Identity
-`[AT]` is the provisional editorial brand mark until final logo assets exist.
+Final brand geometry lives in `assets/brand/` and `docs/brand/BRAND-SPEC.md`.
+Do not redraw the mark or type `[` `]` `AT` as a substitute.
 
-Use it tastefully:
+Brand colors:
 
-- app header kicker: `[AT]  ATELIER TRACKER  /  2026`
-- intro modal kicker
-- theme gallery collection label
-- splash/brand moments
+- Ink `#1C1916`
+- Museum paper `#F6F3EC`
+- Paper deep `#EDE7DA`
+- Muted ink `#6B645C`
+- Cypress `#3E4F45` — accent only; never a default control fill and never a
+  replacement for art-theme palettes
 
-Do not stamp `[AT]` on every page title. It is identity punctuation.
+Optical-size marks (use the matching file; do not shrink the large SVG):
+
+- ≥64px: primary mark
+- 32px / 24px: small-size constructions
+- 16px: letters only, brackets removed
+
+Wordmark and lockups are outlined Didone geometry. Never set
+“Atelier Tracker” in IBM Plex Mono. Mono is for catalogue/data
+(`/ 2026`, museum credits, `[AT] / COMPLETE`, archive labels).
+
+App icon: 1024 opaque square, ink field, ivory mark, no rounded corners,
+no wordmark. Splash: Museum Paper, ink mark, no wordmark.
+
+Header: 24px mark, then `/  2026`, then artwork title/credit, then tabs.
+Do not stamp the graphical logo on every page title. Catalogue notation
+such as `[AT] / PRINT` may stay textual.
 
 ## Theme
 Museum paper, not terminal green.
@@ -53,7 +71,7 @@ ARTWORK IS A FULL-CANVAS BACKDROP FOR ART THEMES.
 ```
 [ FULL SCREEN ARTWORK BACKGROUND ]
 
-        [AT] ATELIER TRACKER
+        [AT mark]  /  2026
         HABITS / GOALS
         DATA
         CONTENT
@@ -177,10 +195,10 @@ Header: immediate/low-motion. Year Archive: no progressive reveal.
 iPhone 7 is a first-class target. One artwork layer, one ASCII layer. Classic/custom themes must not run Living Canvas. Pause Living Canvas during drawers, sheets, and theme transitions. Crossfade at most two plates, then unmount the outgoing image. Year Archive renders one Text node per month, not hundreds of day views.
 
 ### Collapsing header
-Sticky kicker: `[AT]  ATELIER TRACKER  /  2026`.
+Sticky kicker: 24px `[AT]` mark, then `/  2026`.
 Expanded (scroll top): artwork title + museum credit, then HABITS / GOALS.
-Collapsed: kicker + tabs. Credit fades and collapses via Reanimated scroll values — no per-frame React state.
-Do not repeat the product name as a large serif title on Habits / Goals. The compact kicker is the brand; the artwork title is the changing headline.
+Collapsed: mark + year + tabs. Credit fades and collapses via Reanimated scroll values — no per-frame React state.
+Do not repeat the product name as a large serif title or horizontal lockup on Habits / Goals.
 
 ### Tabs
 HABITS / GOALS share a moving 1px ink indicator (~200ms). Incoming pane fades in from a small opposing offset. Not a carousel. No swipe between tabs (conflicts with habit cells and reorder).
@@ -242,13 +260,15 @@ Storage key: `yt_revamp_intro_seen_v1` (additive). Do not reuse
 
 Existing production users:
 
-- Kicker: `[AT] / NEW EDITION`
+- Final `[AT]` mark
+- Kicker: NEW EDITION
 - Title: Yearly Tracker is now Atelier Tracker
 - CTA: Enter Atelier
 
 Fresh installs:
 
-- Kicker: `[AT] / PRIVATE YEARLY JOURNAL`
+- Final `[AT]` mark
+- Kicker: PRIVATE YEARLY JOURNAL
 - Title: Welcome to Atelier Tracker
 - CTA: Enter Atelier
 - Do not tell them the app "changed"

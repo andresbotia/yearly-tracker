@@ -1,4 +1,6 @@
-# [AT] Atelier Tracker
+# Atelier Tracker
+
+![Atelier Tracker](assets/brand/lockups/atelier-lockup-horizontal-ink.png)
 
 A private, offline-first yearly journal for habits and goals.
 
@@ -34,6 +36,12 @@ All data is stored locally on your device. Nothing is uploaded or shared.
 - Choose an Atelier art theme, Random Art, a classic palette, or a custom theme
 
 Everything works fully offline. Artwork is bundled; the app never calls museum APIs at runtime.
+
+---
+
+## Brand
+
+Final identity assets live in `assets/brand/`. Geometry and usage rules are in `docs/brand/BRAND-SPEC.md`. The mark is outlined artwork, not typed `[AT]`.
 
 ---
 

@@ -346,6 +346,18 @@ function main() {
   if (/<Text[\s\S]*?>\s*Atelier Tracker\s*<\/Text>/.test(headerSrc)) {
     fail("redundant serif product title still in collapsing header");
   }
+  if (!headerSrc.includes("BrandMark") || headerSrc.includes("[AT]  ATELIER TRACKER")) {
+    fail("collapsing header is not using the final BrandMark");
+  }
+  const brandMark = path.join(ROOT, "assets", "brand", "marks", "atelier-mark-24.png");
+  const brandIcon = path.join(ROOT, "assets", "brand", "icons", "atelier-app-icon-1024.png");
+  const brandSpec = path.join(ROOT, "docs", "brand", "BRAND-SPEC.md");
+  if (!fs.existsSync(brandMark) || !fs.existsSync(brandIcon) || !fs.existsSync(brandSpec)) {
+    fail("final Atelier brand assets or BRAND-SPEC.md missing");
+  }
+  if (!appSrcAfter.includes("BrandSplash")) {
+    fail("loading identity is not using BrandSplash");
+  }
   if (!appSrcAfter.includes("hasArtwork") || !appSrcAfter.includes("artworkId")) {
     fail("widget payload missing artwork sharing fields");
   }

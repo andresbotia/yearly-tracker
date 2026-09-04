@@ -2,7 +2,9 @@
 
 Operating manual for coding agents working in this repository.
 
-User-facing product name: **Atelier Tracker**. Provisional brand mark: `[AT]`.
+User-facing product name: **Atelier Tracker**. Final brand geometry lives in
+`assets/brand/` and `docs/brand/BRAND-SPEC.md`. Do not redraw the `[AT]` mark
+or recreate it from typed brackets.
 Internal package/bundle identifiers remain `ResolutionTracker` /
 `com.andresbotia.ResolutionTracker` — do not rename them for cosmetics.
 
@@ -124,7 +126,7 @@ High-level identity:
 
 **MUSEUM CATALOGUE × IMPRESSIONISM × PERSONAL ARCHIVE**
 
-- `[AT]` is identity punctuation, not a stamp on every title.
+- The outlined `[AT]` mark is identity punctuation, not a stamp on every title.
 - Art themes: one full-screen artwork backdrop per screen, paper veil, one ASCII texture, faint paper washes/keylines on dense clusters.
 - Do not add large opaque cards, heavy shadows, or pill buttons.
 - Classic / custom / Museum Paper (no artwork): solid palette background.
