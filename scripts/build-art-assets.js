@@ -13,7 +13,7 @@ const CATALOG_PATH = path.join(ROOT, "assets", "art", "catalog.json");
 const CACHE_DIR = path.join(ROOT, "scripts", ".art-cache");
 const IMAGE_DIR = path.join(ROOT, "assets", "art", "images");
 const ASCII_DIR = path.join(ROOT, "assets", "art", "ascii");
-const MAX_DIM = 1600;
+const MAX_DIM = 1280;
 const ASCII_COLS = 52;
 const ASCII_RAMP = " .:-=+*#%@";
 const CHAR_ASPECT = 0.48;
@@ -74,7 +74,7 @@ function requestBuffer(url, redirects = 0) {
       }
     );
     req.on("error", reject);
-    req.setTimeout(45000, () => {
+    req.setTimeout(60000, () => {
       req.destroy(new Error(`Timeout fetching ${url}`));
     });
   });
@@ -227,6 +227,25 @@ async function processItem(item) {
     throw new Error(`${item.id} is not marked public domain; refusing to bundle`);
   }
 
+  const imageName = `${item.id}.jpg`;
+  const imgPath = path.join(IMAGE_DIR, imageName);
+  const asciiPath = path.join(ASCII_DIR, `${item.id}.txt`);
+  if (
+    !process.env.FORCE_ART &&
+    fs.existsSync(imgPath) &&
+    fs.existsSync(asciiPath)
+  ) {
+    console.log("  skip existing");
+    return {
+      id: item.id,
+      imageRel: `images/${imageName}`,
+      ascii: fs.readFileSync(asciiPath, "utf8"),
+      bytes: fs.statSync(imgPath).size,
+      width: 0,
+      height: 0,
+    };
+  }
+
   const cacheFile = path.join(CACHE_DIR, `${item.id}.jpg`);
   let raw;
   if (fs.existsSync(cacheFile) && fs.statSync(cacheFile).size > 2000) {
@@ -234,17 +253,18 @@ async function processItem(item) {
     raw = fs.readFileSync(cacheFile);
   } else {
     raw = await fetchArtworkBuffer(item);
-    fs.writeFileSync(cacheFile, raw);
+    if (raw[0] === 0xff && raw[1] === 0xd8) {
+      fs.writeFileSync(cacheFile, raw);
+    }
   }
 
   const decoded = decodeJpeg(raw);
   const resized = resizeRgba(decoded, MAX_DIM);
-  const jpegOut = encodeJpeg(resized, 74);
-  const imageName = `${item.id}.jpg`;
-  fs.writeFileSync(path.join(IMAGE_DIR, imageName), jpegOut);
+  const jpegOut = encodeJpeg(resized, 64);
+  fs.writeFileSync(imgPath, jpegOut);
 
   const ascii = toAscii(resized, ASCII_COLS);
-  fs.writeFileSync(path.join(ASCII_DIR, `${item.id}.txt`), ascii, "utf8");
+  fs.writeFileSync(asciiPath, ascii, "utf8");
 
   return {
     id: item.id,
