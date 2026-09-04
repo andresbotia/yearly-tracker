@@ -1,7 +1,29 @@
-import React, { useMemo, useRef, useState } from "react";
-import { View, Text, Pressable, TextInput, StyleSheet, Platform } from "react-native";
+import React, {
+  forwardRef,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  TextInput,
+  StyleSheet,
+  Platform,
+  InputAccessoryView,
+  Keyboard,
+} from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { runOnJS } from "react-native-reanimated";
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
 import {
@@ -14,26 +36,42 @@ import {
 import AnimatedAsciiBar from "../motion/AnimatedAsciiBar";
 import AnimatedNumber from "../motion/AnimatedNumber";
 
+const ACCESSORY_ID = "atelier-counter-done";
+
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
-export default function AtelierCounter({
-  value,
-  target,
-  theme,
-  onChange,
-}) {
+function parseDraft(raw, target, fallback) {
+  const n = Number(String(raw || "").trim());
+  if (!Number.isFinite(n)) return fallback;
+  return clamp(Math.floor(n), 0, target);
+}
+
+const AtelierCounter = forwardRef(function AtelierCounter(
+  { value, target, theme, onChange },
+  ref,
+) {
   const fontsLoaded = useFontsLoaded();
   const reduced = useReducedMotion();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
+  const draftRef = useRef("");
+  const editingRef = useRef(false);
+  const valueRef = useRef(0);
+  const targetRef = useRef(0);
+  const onChangeRef = useRef(onChange);
   const safeTarget = Math.max(0, Math.floor(Number(target) || 0));
   const safeValue = clamp(Math.floor(Number(value) || 0), 0, safeTarget);
+  editingRef.current = editing;
+  valueRef.current = safeValue;
+  targetRef.current = safeTarget;
+  onChangeRef.current = onChange;
   const pct = safeTarget > 0 ? Math.round((safeValue / safeTarget) * 100) : 0;
-  const pxPerUnit = scrubPixelsPerUnit(safeTarget);
+  const pxPerUnit = Math.max(6, scrubPixelsPerUnit(safeTarget) * 0.85);
   const ink = theme?.text || "#1c1916";
   const muted = theme?.mutedText || "#6b645c";
+  const hint = useSharedValue(0);
 
   const neighbors = useMemo(() => {
     const out = [];
@@ -47,8 +85,8 @@ export default function AtelierCounter({
 
   function commit(next) {
     const n = clamp(Math.floor(next), 0, safeTarget);
-    if (n === safeValue) return;
     onChange?.(n);
+    return n;
   }
 
   function step(dir) {
@@ -59,7 +97,6 @@ export default function AtelierCounter({
   }
 
   const hold = useHoldRepeat(step);
-
   const startRef = useRef(safeValue);
 
   function captureStart() {
@@ -67,8 +104,11 @@ export default function AtelierCounter({
   }
 
   function applyScrub(translationX) {
-    const delta = translationX / pxPerUnit;
-    const next = clamp(Math.round(startRef.current + delta), 0, safeTarget);
+    const next = clamp(
+      Math.round(startRef.current + translationX / pxPerUnit),
+      0,
+      safeTarget,
+    );
     if (next !== safeValue) {
       hapticTick();
       onChange?.(next);
@@ -76,7 +116,8 @@ export default function AtelierCounter({
   }
 
   const pan = Gesture.Pan()
-    .activeOffsetX(10)
+    .activeOffsetX(6)
+    .failOffsetY([-24, 24])
     .onBegin(() => {
       runOnJS(captureStart)();
     })
@@ -85,18 +126,50 @@ export default function AtelierCounter({
     });
 
   function openEntry() {
-    setDraft(String(safeValue));
+    const start = String(safeValue);
+    draftRef.current = start;
+    setDraft(start);
     setEditing(true);
   }
 
   function submitEntry() {
-    const n = Number(draft);
+    const current = valueRef.current;
+    const next = parseDraft(
+      draftRef.current,
+      targetRef.current,
+      current,
+    );
+    editingRef.current = false;
     setEditing(false);
-    if (!Number.isFinite(n)) return;
-    const next = clamp(Math.floor(n), 0, safeTarget);
-    if (next !== safeValue) hapticTick();
-    onChange?.(next);
+    Keyboard.dismiss();
+    if (next !== current) hapticTick();
+    onChangeRef.current?.(next);
+    return next;
   }
+
+  useImperativeHandle(ref, () => ({
+    flush() {
+      if (!editingRef.current) return valueRef.current;
+      return submitEntry();
+    },
+  }));
+
+  React.useEffect(() => {
+    if (reduced) return;
+    hint.value = withRepeat(
+      withSequence(
+        withTiming(6, { duration: 700 }),
+        withTiming(-6, { duration: 700 }),
+        withTiming(0, { duration: 500 }),
+      ),
+      1,
+      false,
+    );
+  }, [hint, reduced]);
+
+  const hintStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: reduced ? 0 : hint.value }],
+  }));
 
   const padded = (n) => padCount(n, safeTarget);
 
@@ -115,68 +188,133 @@ export default function AtelierCounter({
         if (e.nativeEvent.actionName === "decrement") step(-1);
       }}
     >
-      <Pressable
-        onPress={openEntry}
-        accessibilityRole="button"
-        accessibilityLabel="Enter exact progress"
-        style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+      <Text
+        style={[
+          styles.cue,
+          { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
+        ]}
       >
-        {editing ? (
-          <TextInput
-            value={draft}
-            onChangeText={setDraft}
-            onBlur={submitEntry}
-            onSubmitEditing={submitEntry}
-            keyboardType={Platform.OS === "ios" ? "number-pad" : "numeric"}
-            autoFocus
-            maxLength={8}
-            selectTextOnFocus
-            style={[
-              styles.hero,
-              styles.input,
-              {
-                color: ink,
-                borderColor: ink,
-                fontFamily: fontFamily("display", fontsLoaded),
-              },
-            ]}
-          />
-        ) : (
-          <AnimatedNumber
-            value={safeValue}
-            theme={theme}
-            role="display"
-            format={padded}
-            style={styles.hero}
-          />
-        )}
-      </Pressable>
-
-      <View style={[styles.rule, { backgroundColor: theme?.border || "#d8d0c4" }]} />
+        Drag the reel  ·  tap the number to type
+      </Text>
 
       <GestureDetector gesture={pan}>
-        <View style={styles.wheel} accessibilityElementsHidden>
-          {neighbors.map((n) => {
-            const active = n === safeValue;
-            return (
-              <Text
-                key={n}
+        <Animated.View
+          style={[
+            styles.scrub,
+            hintStyle,
+            { borderColor: theme?.border || "#d8d0c4" },
+          ]}
+        >
+          <Pressable
+            onPress={openEntry}
+            accessibilityRole="button"
+            accessibilityLabel="Enter exact progress"
+            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+          >
+            {editing ? (
+              <TextInput
+                value={draft}
+                onChangeText={(t) => {
+                  draftRef.current = t;
+                  setDraft(t);
+                }}
+                onBlur={submitEntry}
+                onSubmitEditing={submitEntry}
+                keyboardType={Platform.OS === "ios" ? "number-pad" : "numeric"}
+                inputAccessoryViewID={
+                  Platform.OS === "ios" ? ACCESSORY_ID : undefined
+                }
+                autoFocus
+                maxLength={8}
+                selectTextOnFocus
                 style={[
-                  styles.neighbor,
+                  styles.hero,
+                  styles.input,
                   {
-                    color: active ? ink : muted,
-                    opacity: active ? 1 : 0.55,
-                    fontFamily: fontFamily("data", fontsLoaded),
-                    transform: [{ scale: active && !reduced ? 1.06 : 1 }],
+                    color: ink,
+                    borderColor: ink,
+                    fontFamily: fontFamily("display", fontsLoaded),
                   },
                 ]}
-              >
-                {padded(n)}
-              </Text>
-            );
-          })}
-        </View>
+              />
+            ) : (
+              <AnimatedNumber
+                value={safeValue}
+                theme={theme}
+                role="display"
+                format={padded}
+                style={styles.hero}
+              />
+            )}
+          </Pressable>
+
+          <View style={[styles.rule, { backgroundColor: theme?.border || "#d8d0c4" }]} />
+
+          <View style={styles.wheel} accessibilityElementsHidden>
+            <Text
+              style={[
+                styles.cueMark,
+                { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
+              ]}
+            >
+              ‹
+            </Text>
+            {neighbors.map((n) => {
+              const active = n === safeValue;
+              return (
+                <Text
+                  key={n}
+                  style={[
+                    styles.neighbor,
+                    {
+                      color: active ? ink : muted,
+                      opacity: active ? 1 : 0.5,
+                      fontFamily: fontFamily("data", fontsLoaded),
+                    },
+                  ]}
+                >
+                  {padded(n)}
+                </Text>
+              );
+            })}
+            <Text
+              style={[
+                styles.cueMark,
+                { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
+              ]}
+            >
+              ›
+            </Text>
+          </View>
+        </Animated.View>
       </GestureDetector>
+
+      {Platform.OS === "ios" ? (
+        <InputAccessoryView nativeID={ACCESSORY_ID}>
+          <View
+            style={[
+              styles.accessory,
+              { backgroundColor: theme?.card || "#fbf8f1", borderColor: ink },
+            ]}
+          >
+            <Pressable
+              onPress={submitEntry}
+              accessibilityRole="button"
+              accessibilityLabel="Done entering number"
+              style={styles.accessoryBtn}
+            >
+              <Text
+                style={[
+                  styles.accessoryText,
+                  { color: ink, fontFamily: fontFamily("data", fontsLoaded) },
+                ]}
+              >
+                Done
+              </Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      ) : null}
 
       <View style={styles.stepRow}>
         <Pressable
@@ -187,10 +325,7 @@ export default function AtelierCounter({
           hitSlop={8}
           style={({ pressed }) => [
             styles.step,
-            {
-              borderColor: ink,
-              opacity: pressed ? MOTION.pressScale : 1,
-            },
+            { borderColor: ink, opacity: pressed ? MOTION.pressScale : 1 },
           ]}
           accessibilityRole="button"
           accessibilityLabel="Decrease progress"
@@ -205,10 +340,7 @@ export default function AtelierCounter({
           hitSlop={8}
           style={({ pressed }) => [
             styles.step,
-            {
-              borderColor: ink,
-              opacity: pressed ? MOTION.pressScale : 1,
-            },
+            { borderColor: ink, opacity: pressed ? MOTION.pressScale : 1 },
           ]}
           accessibilityRole="button"
           accessibilityLabel="Increase progress"
@@ -229,9 +361,29 @@ export default function AtelierCounter({
       </View>
     </View>
   );
-}
+});
+
+export default AtelierCounter;
 
 const styles = StyleSheet.create({
+  cue: {
+    fontSize: TYPE_SIZE.kicker,
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+    textAlign: "center",
+    marginBottom: SPACE.sm,
+  },
+  scrub: {
+    minHeight: 148,
+    paddingVertical: SPACE.md,
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: SPACE.sm,
+  },
+  cueMark: {
+    fontSize: TYPE_SIZE.body,
+    opacity: 0.45,
+  },
   hero: {
     fontSize: 40,
     fontWeight: "700",
@@ -249,19 +401,19 @@ const styles = StyleSheet.create({
     marginTop: SPACE.sm,
     marginBottom: SPACE.md,
     alignSelf: "center",
-    width: 72,
+    width: 96,
   },
   wheel: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: SPACE.sm,
-    minHeight: 36,
+    gap: SPACE.md,
+    minHeight: 44,
   },
   neighbor: {
-    fontSize: TYPE_SIZE.caption,
+    fontSize: TYPE_SIZE.body,
     letterSpacing: TYPE_TRACK.data,
-    minWidth: 36,
+    minWidth: 40,
     textAlign: "center",
   },
   stepRow: {
@@ -288,5 +440,22 @@ const styles = StyleSheet.create({
   pct: {
     fontSize: TYPE_SIZE.caption,
     letterSpacing: TYPE_TRACK.data,
+  },
+  accessory: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    alignItems: "flex-end",
+    paddingHorizontal: SPACE.md,
+    paddingVertical: SPACE.sm,
+  },
+  accessoryBtn: {
+    minHeight: 36,
+    justifyContent: "center",
+    paddingHorizontal: SPACE.sm,
+  },
+  accessoryText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
   },
 });
