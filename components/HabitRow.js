@@ -151,6 +151,7 @@ export default function HabitRow({
   onSwipeClose,
   removing = false,
   measureRef,
+  todayCellRef,
 }) {
   const swipeRef = useRef(null);
   const fontsLoaded = useFontsLoaded();
@@ -285,8 +286,28 @@ export default function HabitRow({
         </Pressable>
 
         <View style={[styles.squaresRow, { width: squaresW }]}>
-          {dates.map((d) => {
+          {dates.map((d, index) => {
             const v = (habit.checks || {})[d.key] || 0;
+            const isToday = index === dates.length - 1;
+            if (isToday && todayCellRef) {
+              return (
+                <View
+                  key={d.key}
+                  ref={todayCellRef}
+                  collapsable={false}
+                  style={{ width: squareSize, height: squareSize }}
+                >
+                  <HabitCell
+                    value={v}
+                    size={squareSize}
+                    theme={theme}
+                    fontsLoaded={fontsLoaded}
+                    label={`${habit.title}, ${d.key}, ${habitStateLabel(v)}`}
+                    onPress={() => onToggle?.(habit.id, d.key)}
+                  />
+                </View>
+              );
+            }
             return (
               <HabitCell
                 key={d.key}

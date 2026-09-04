@@ -1,5 +1,11 @@
-import React, { useEffect } from "react";
-import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  useWindowDimensions,
+} from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -64,6 +70,40 @@ function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
+function placeCard(anchor, cardH, windowWidth, windowHeight) {
+  const cardWidth = Math.min(windowWidth - SPACE.md * 2, 343);
+  const gap = SPACE.sm;
+  const cardLeft = clamp(
+    anchor.x + anchor.width / 2 - cardWidth / 2,
+    SPACE.md,
+    windowWidth - SPACE.md - cardWidth,
+  );
+  const minTop = SPACE.md;
+  const maxTop = windowHeight - SPACE.md - cardH;
+  const belowTop = anchor.y + anchor.height + gap;
+  const aboveTop = anchor.y - cardH - gap;
+
+  let placeBelow;
+  let cardTop;
+  if (maxTop < minTop) {
+    placeBelow = belowTop <= anchor.y;
+    cardTop = minTop;
+  } else if (belowTop <= maxTop) {
+    placeBelow = true;
+    cardTop = belowTop;
+  } else if (aboveTop >= minTop) {
+    placeBelow = false;
+    cardTop = aboveTop;
+  } else {
+    const spaceBelow = windowHeight - (anchor.y + anchor.height) - SPACE.md;
+    const spaceAbove = anchor.y - SPACE.md;
+    placeBelow = spaceBelow >= spaceAbove;
+    cardTop = clamp(placeBelow ? belowTop : aboveTop, minTop, maxTop);
+  }
+
+  return { cardWidth, cardLeft, cardTop, placeBelow };
+}
+
 export default function CatalogueOnboarding({
   visible,
   theme,
@@ -71,6 +111,7 @@ export default function CatalogueOnboarding({
   anchor,
   onSkip,
   onNext,
+  onTargetPress,
 }) {
   const fontsLoaded = useFontsLoaded();
   const reduced = useReducedMotion();
@@ -83,13 +124,20 @@ export default function CatalogueOnboarding({
   const indexLabel = `[${String(stepIndex + 1).padStart(2, "0")} / ${String(
     ONBOARDING_STEPS.length,
   ).padStart(2, "0")}]`;
+  const [cardH, setCardH] = useState(0);
+  const positioned = cardH > 1;
 
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(reduced ? 0 : 8);
 
   useEffect(() => {
-    if (!visible || !anchor) {
+    setCardH(0);
+  }, [stepIndex, visible, windowWidth, windowHeight]);
+
+  useEffect(() => {
+    if (!visible || !anchor || !positioned) {
       opacity.value = 0;
+      translateY.value = reduced ? 0 : 8;
       return;
     }
     const duration = reduced ? MOTION.reduced : MOTION.interaction;
@@ -100,7 +148,7 @@ export default function CatalogueOnboarding({
     if (!reduced) {
       translateY.value = withTiming(0, { duration, easing });
     }
-  }, [visible, stepIndex, anchor, reduced, opacity, translateY]);
+  }, [visible, stepIndex, anchor, positioned, reduced, opacity, translateY]);
 
   const cardStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -119,19 +167,13 @@ export default function CatalogueOnboarding({
     );
   }
 
-  const cardWidth = Math.min(windowWidth - SPACE.md * 2, 343);
-  const estimatedCardH = 168;
-  const gap = SPACE.sm;
-  const belowTop = anchor.y + anchor.height + gap;
-  const placeBelow = belowTop + estimatedCardH < windowHeight - SPACE.md;
-  const cardLeft = clamp(
-    anchor.x + anchor.width / 2 - cardWidth / 2,
-    SPACE.md,
-    windowWidth - SPACE.md - cardWidth,
+  const placement = placeCard(
+    anchor,
+    positioned ? cardH : 48,
+    windowWidth,
+    windowHeight,
   );
-  const cardTop = placeBelow
-    ? belowTop
-    : Math.max(SPACE.md, anchor.y - estimatedCardH - gap);
+  const { cardWidth, cardLeft, cardTop, placeBelow } = placement;
 
   const ruleX = clamp(
     anchor.x + anchor.width / 2,
@@ -140,7 +182,9 @@ export default function CatalogueOnboarding({
   );
   const ruleTop = placeBelow
     ? anchor.y + anchor.height
-    : cardTop + estimatedCardH;
+    : positioned
+      ? cardTop + cardH
+      : cardTop;
   const ruleHeight = placeBelow
     ? Math.max(0, cardTop - (anchor.y + anchor.height))
     : Math.max(0, anchor.y - ruleTop);
@@ -169,7 +213,25 @@ export default function CatalogueOnboarding({
         ]}
       />
 
-      {ruleHeight > 2 ? (
+      {onTargetPress ? (
+        <Pressable
+          onPress={onTargetPress}
+          accessibilityRole="button"
+          accessibilityLabel="Record today"
+          accessibilityHint="Cycles empty, good, bad"
+          style={[
+            styles.hit,
+            {
+              left: anchor.x,
+              top: anchor.y,
+              width: anchor.width,
+              height: anchor.height,
+            },
+          ]}
+        />
+      ) : null}
+
+      {positioned && ruleHeight > 2 ? (
         <View
           pointerEvents="none"
           style={[
@@ -185,6 +247,12 @@ export default function CatalogueOnboarding({
       ) : null}
 
       <Animated.View
+        collapsable={false}
+        pointerEvents={positioned ? "auto" : "none"}
+        onLayout={(e) => {
+          const next = Math.ceil(e.nativeEvent.layout.height);
+          if (next > 1 && next !== cardH) setCardH(next);
+        }}
         style={[
           styles.card,
           {
@@ -193,6 +261,7 @@ export default function CatalogueOnboarding({
             width: cardWidth,
             backgroundColor: paper,
             borderColor: ink,
+            zIndex: 2,
           },
           cardStyle,
         ]}
@@ -254,6 +323,10 @@ const styles = StyleSheet.create({
   target: {
     position: "absolute",
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  hit: {
+    position: "absolute",
+    zIndex: 1,
   },
   rule: {
     position: "absolute",
