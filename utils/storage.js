@@ -13,6 +13,7 @@
 // yt_habits_v1                Habits + daily checks           Habit[]   (App.js)
 // yt_habits_welcome_seen_v1   Habits intro seen               "1"       (App.js)
 // yt_revamp_intro_seen_v1     Revamp visual intro seen        "1"       (additive)
+// yt_random_art_last_v1       Last Random Art pick            string id (additive)
 //
 // Goal: { id, title, type: "count"|"boolean", target, progress, createdAt }
 // Habit: { id, title, checks: { "YYYY-MM-DD": 0|1|2 } }  // 0 empty, 1 good, 2 bad
@@ -41,6 +42,9 @@ const KEYS = {
 
   // Additive presentation flag. Absence is not missing/corrupt user data.
   revampIntroSeen: "yt_revamp_intro_seen_v1",
+
+  // Last Random Art pick. Presentation only; absence is not corrupt data.
+  randomArtLast: "yt_random_art_last_v1",
 };
 
 export const STORAGE_KEYS = KEYS;
@@ -120,6 +124,21 @@ export async function loadRevampIntroSeen() {
 
 export async function setRevampIntroSeen() {
   await AsyncStorage.setItem(KEYS.revampIntroSeen, "1");
+}
+
+export async function loadRandomArtLast() {
+  try {
+    return (await AsyncStorage.getItem(KEYS.randomArtLast)) || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveRandomArtLast(id) {
+  if (!id) return;
+  try {
+    await AsyncStorage.setItem(KEYS.randomArtLast, String(id));
+  } catch {}
 }
 
 // -----------------------------

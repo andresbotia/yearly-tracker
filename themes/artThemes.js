@@ -1,11 +1,11 @@
 // Art themes are additive. They never replace classic THEMES ids.
 // Existing saved themeChoice values (bright-blue, custom:<id>, numeric hues)
 // continue to resolve through utils/theme.js exactly as before.
-// Existing art ids (cypresses, flowering-orchard, water-lilies, morning-seine,
-// vetheuil, museum-paper) remain stable.
 
 import { ASCII, TYPOGRAPHY, VISUAL } from "../utils/tokens";
-import { artworkMetadata } from "../assets/art/catalog";
+import { ARTWORK_CATALOG, artworkMetadata } from "../assets/art/catalog";
+
+export const RANDOM_ART_ID = "random-art";
 
 const PAPER = {
   bg: "#f6f3ec",
@@ -18,19 +18,67 @@ const PAPER = {
   danger: "#9b2c2c",
 };
 
-function artTheme({ id, name, primary, primaryPressed, extras = {} }) {
-  const art = artworkMetadata(id);
+const NAMED_PALETTE = {
+  cypresses: ["#3f5a38", "#2f452b"],
+  "wheat-field-cypresses": ["#8a6b2e", "#6f5424"],
+  "women-picking-olives": ["#6b6a3a", "#52522c"],
+  "flowering-orchard": ["#8a4a3a", "#6f3a2e"],
+  "morning-seine": ["#5d6f7a", "#485863"],
+  haystacks: ["#8a6a38", "#6c522c"],
+  "water-lilies": ["#3b6468", "#2d4e52"],
+  "japanese-footbridge": ["#2f5a48", "#234538"],
+  "garden-vetheuil": ["#6d7a38", "#55602c"],
+  "garden-argenteuil": ["#4e6b42", "#3c5333"],
+  vetheuil: ["#3e6a4a", "#2f5239"],
+  "rouen-cathedral": ["#5a6278", "#454c5e"],
+  "villeneuve-bridge": ["#4a6f88", "#38566a"],
+  "versailles-road": ["#6a6e58", "#525544"],
+  "moret-winter": ["#5c6a74", "#46525a"],
+  "pontoise-hill": ["#6b7058", "#545745"],
+  "sainte-victoire-viaduct": ["#4a6a5e", "#385248"],
+  "girl-in-boat": ["#4e6e62", "#3c554b"],
+};
+
+const ARTIST_PALETTE = {
+  "Vincent van Gogh": ["#6a5a32", "#524526"],
+  "Claude Monet": ["#3b6468", "#2d4e52"],
+  "Alfred Sisley": ["#4a6f88", "#38566a"],
+  "Camille Pissarro": ["#6b7058", "#545745"],
+  "Paul Cézanne": ["#4a6a5e", "#385248"],
+  "Berthe Morisot": ["#4e6e62", "#3c554b"],
+  "Childe Hassam": ["#5d6f7a", "#485863"],
+  "Gustave Caillebotte": ["#5a6278", "#454c5e"],
+  "Eugène Boudin": ["#5c6a74", "#46525a"],
+  "Armand Guillaumin": ["#3e6a4a", "#2f5239"],
+  "John Singer Sargent": ["#6d7a38", "#55602c"],
+  "Johan Barthold Jongkind": ["#5d6f7a", "#485863"],
+};
+
+function paletteFor(item) {
+  return (
+    NAMED_PALETTE[item.id] ||
+    ARTIST_PALETTE[item.artist] || ["#4a5a48", "#384538"]
+  );
+}
+
+function shortName(title) {
+  const t = String(title || "");
+  if (t.length <= 28) return t;
+  return t.slice(0, 26).trim() + "…";
+}
+
+function artThemeFromCatalog(item) {
+  const [primary, primaryPressed] = paletteFor(item);
   return {
-    id,
-    name,
+    id: item.id,
+    name: shortName(item.title),
     kind: "art",
     palette: {
       ...PAPER,
       primary,
       primaryPressed,
-      ...extras,
     },
-    artwork: art,
+    artwork: artworkMetadata(item.id),
     typography: { ...TYPOGRAPHY },
     ascii: {
       ...ASCII,
@@ -40,124 +88,35 @@ function artTheme({ id, name, primary, primaryPressed, extras = {} }) {
   };
 }
 
-export const ART_THEME_GROUPS = [
-  { key: "van-gogh", label: "Van Gogh", artist: "Vincent van Gogh" },
-  { key: "monet", label: "Monet", artist: "Claude Monet" },
-  { key: "sisley", label: "Sisley", artist: "Alfred Sisley" },
-  { key: "pissarro", label: "Pissarro", artist: "Camille Pissarro" },
-  { key: "cezanne", label: "Cézanne", artist: "Paul Cézanne" },
-  { key: "morisot", label: "Morisot", artist: "Berthe Morisot" },
-];
+export function artistGroupLabel(artist) {
+  if (/van gogh/i.test(artist)) return "Van Gogh";
+  if (/monet/i.test(artist)) return "Monet";
+  if (/sisley/i.test(artist)) return "Sisley";
+  if (/pissarro/i.test(artist)) return "Pissarro";
+  if (/cézanne|cezanne/i.test(artist)) return "Cézanne";
+  if (/morisot/i.test(artist)) return "Morisot";
+  if (/hassam/i.test(artist)) return "Hassam";
+  if (/caillebotte/i.test(artist)) return "Caillebotte";
+  if (/boudin/i.test(artist)) return "Boudin";
+  if (/sargent/i.test(artist)) return "Sargent";
+  if (/guillaumin/i.test(artist)) return "Guillaumin";
+  if (/jongkind/i.test(artist)) return "Jongkind";
+  const parts = String(artist || "").split(" ").filter(Boolean);
+  return parts[parts.length - 1] || "Other";
+}
+
+export const ART_THEME_GROUPS = (() => {
+  const seen = [];
+  for (const item of ARTWORK_CATALOG) {
+    const label = artistGroupLabel(item.artist);
+    if (seen.some((g) => g.label === label)) continue;
+    seen.push({ key: label.toLowerCase(), label, artist: item.artist });
+  }
+  return seen;
+})();
 
 export const ART_THEMES = [
-  artTheme({
-    id: "cypresses",
-    name: "Cypresses",
-    primary: "#3f5a38",
-    primaryPressed: "#2f452b",
-  }),
-  artTheme({
-    id: "wheat-field-cypresses",
-    name: "Wheat Field with Cypresses",
-    primary: "#8a6b2e",
-    primaryPressed: "#6f5424",
-  }),
-  artTheme({
-    id: "women-picking-olives",
-    name: "Women Picking Olives",
-    primary: "#6b6a3a",
-    primaryPressed: "#52522c",
-  }),
-  artTheme({
-    id: "flowering-orchard",
-    name: "Flowering Orchard",
-    primary: "#8a4a3a",
-    primaryPressed: "#6f3a2e",
-  }),
-  artTheme({
-    id: "morning-seine",
-    name: "Morning Seine",
-    primary: "#5d6f7a",
-    primaryPressed: "#485863",
-  }),
-  artTheme({
-    id: "haystacks",
-    name: "Haystacks",
-    primary: "#8a6a38",
-    primaryPressed: "#6c522c",
-  }),
-  artTheme({
-    id: "water-lilies",
-    name: "Water Lilies",
-    primary: "#3b6468",
-    primaryPressed: "#2d4e52",
-  }),
-  artTheme({
-    id: "japanese-footbridge",
-    name: "Japanese Footbridge",
-    primary: "#2f5a48",
-    primaryPressed: "#234538",
-  }),
-  artTheme({
-    id: "garden-vetheuil",
-    name: "Garden at Vétheuil",
-    primary: "#6d7a38",
-    primaryPressed: "#55602c",
-  }),
-  artTheme({
-    id: "garden-argenteuil",
-    name: "Garden in Argenteuil",
-    primary: "#4e6b42",
-    primaryPressed: "#3c5333",
-  }),
-  artTheme({
-    id: "vetheuil",
-    name: "Vétheuil",
-    primary: "#3e6a4a",
-    primaryPressed: "#2f5239",
-  }),
-  artTheme({
-    id: "rouen-cathedral",
-    name: "Rouen Cathedral",
-    primary: "#5a6278",
-    primaryPressed: "#454c5e",
-  }),
-  artTheme({
-    id: "villeneuve-bridge",
-    name: "Villeneuve Bridge",
-    primary: "#4a6f88",
-    primaryPressed: "#38566a",
-  }),
-  artTheme({
-    id: "versailles-road",
-    name: "Versailles Road",
-    primary: "#6a6e58",
-    primaryPressed: "#525544",
-  }),
-  artTheme({
-    id: "moret-winter",
-    name: "Moret Winter",
-    primary: "#5c6a74",
-    primaryPressed: "#46525a",
-  }),
-  artTheme({
-    id: "pontoise-hill",
-    name: "Jalais Hill",
-    primary: "#6b7058",
-    primaryPressed: "#545745",
-  }),
-  artTheme({
-    id: "sainte-victoire-viaduct",
-    name: "Sainte-Victoire",
-    primary: "#4a6a5e",
-    primaryPressed: "#385248",
-  }),
-  artTheme({
-    id: "girl-in-boat",
-    name: "Girl in a Boat",
-    primary: "#4e6e62",
-    primaryPressed: "#3c554b",
-  }),
+  ...ARTWORK_CATALOG.map(artThemeFromCatalog),
   {
     id: "museum-paper",
     name: "Museum Paper",
@@ -183,7 +142,22 @@ export const ART_THEMES = [
 
 export const ART_THEME_IDS = ART_THEMES.map((t) => t.id);
 
+export function randomArtPool() {
+  return ART_THEMES.filter((t) => t.artwork && t.id !== "museum-paper");
+}
+
+export function pickRandomArtId(excludeId) {
+  const pool = randomArtPool();
+  const filtered = excludeId
+    ? pool.filter((t) => t.id !== excludeId)
+    : pool;
+  const list = filtered.length ? filtered : pool;
+  if (!list.length) return "cypresses";
+  return list[Math.floor(Math.random() * list.length)].id;
+}
+
 export function findArtTheme(choice) {
   if (typeof choice !== "string") return null;
+  if (choice === RANDOM_ART_ID) return null;
   return ART_THEMES.find((t) => t.id === choice) || null;
 }

@@ -500,6 +500,9 @@ function decorateTheme(palette, extra = {}) {
 // - custom id: "custom:<uuid>"
 // - legacy numeric hue: 210
 //
+// "random-art" is a stored mode, not a makeTheme input. App.js resolves it
+// to a bundled art id (sessionArtId) before calling makeTheme.
+//
 // Existing stored ids remain valid. Unknown ids still fall through to
 // the legacy hue path (same as before).
 // -----------------
