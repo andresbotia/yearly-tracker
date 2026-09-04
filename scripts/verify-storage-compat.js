@@ -342,6 +342,16 @@ function main() {
   if (!appSrcAfter.includes("CollapsingKicker") || !appSrcAfter.includes("AtelierTabs")) {
     fail("collapsing header or tab indicator missing from App.js");
   }
+  const headerSrc = read(path.join(ROOT, "components", "editorial", "CollapsingHeader.js"));
+  if (/<Text[\s\S]*?>\s*Atelier Tracker\s*<\/Text>/.test(headerSrc)) {
+    fail("redundant serif product title still in collapsing header");
+  }
+  if (!appSrcAfter.includes("hasArtwork") || !appSrcAfter.includes("artworkId")) {
+    fail("widget payload missing artwork sharing fields");
+  }
+  if (!appSrcAfter.includes("prepareWidgetArtwork")) {
+    fail("widget artwork sharing is not wired into App.js");
+  }
   if (!tokensSrc.includes("crossfade:") || !tokensSrc.includes("reveal:")) {
     fail("theme motion duration tokens missing");
   }
@@ -359,6 +369,11 @@ function main() {
     "themeKind",
     "themePrimary",
     "themeBg",
+    "themeText",
+    "year",
+    "artworkId",
+    "hasArtwork",
+    "widgetArtworkFilename",
   ]) {
     if (!payloadMatch[0].includes(field)) fail(`widget payload missing ${field}`);
   }

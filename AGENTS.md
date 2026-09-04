@@ -108,7 +108,7 @@ Existing art theme ids must keep resolving: `cypresses`, `flowering-orchard`, `w
 
 Android and iOS widgets read a native payload from `buildWidgetPayload` in `App.js`. Do not casually change field names, habit state integers, or theme payload shape. Widget UI may map `0/1/2` to `.` / `+` / `×` visually only.
 
-Additive widget fields (optional on native decode): `themeKind`, `themePrimary`, `themeBg`, `themeText`. Existing `theme` / `yearlyProgress` / `goals` / `habits` remain required.
+Additive widget fields (optional on native decode): `themeKind`, `themePrimary`, `themeBg`, `themeText`, `year`, `artworkId`, `hasArtwork`, `widgetArtworkFilename`. Existing `theme` / `yearlyProgress` / `goals` / `habits` remain required. Widgets consume the app’s resolved artwork file; they must not independently randomize Random Art.
 
 Bundle identifiers stay:
 

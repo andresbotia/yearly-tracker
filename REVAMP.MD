@@ -1,688 +1,870 @@
-# ATELIER COLLECTION 99 + REEL INTERACTION REFINEMENT
+# ATELIER WIDGET BACKGROUNDS + HEADER CLEANUP — PRE-BUILD PHASE
 
-Continue on `feature/revamp`.
+Status: implemented on `feature/revamp`. Waiting on Claude Design brand
+assets, then one development build. Do not start that build in this phase.
+
+Continue work on `feature/revamp`.
+
+This phase should finish all widget/background/native naming code changes that can
+be completed BEFORE the next iOS development build.
+
+DO NOT start an EAS build.
+DO NOT create a development build.
+DO NOT modify or merge into `main`.
+
+We are intentionally stopping at the native-build boundary because final logo /
+icon / splash assets are still pending from Claude Design.
 
 Before changing code:
 
-1. Read `AGENTS.md`
-2. Read `REVAMP.MD`
-3. Read `design.md`
-4. Inspect current implementation and recent commits
-5. Stay on `feature/revamp`
-6. Do not modify or merge into `main`
+1. Confirm current branch is `feature/revamp`
+2. Read `AGENTS.md`
+3. Read `REVAMP.MD`
+4. Read `design.md`
+5. Inspect recent commits
+6. Inspect current React Native widget payload generation
+7. Inspect the iOS WidgetKit extension
+8. Inspect Android widget implementation
+9. Search the repository for remaining USER-FACING `Yearly Tracker` strings
 
-This is a focused refinement of:
-
-- Atelier Counter reel interaction
-- gallery spacing/responsiveness
-- art collection curation
-
-All existing production compatibility rules remain in force.
+Preserve all production-data and compatibility rules.
 
 ---
 
-# 1. FIX THE ATELIER COUNTER REEL GESTURE
+# 1. REMOVE THE REDUNDANT LARGE ATELIER TRACKER HEADER
 
-The current progress reel concept is correct, but the physical interaction is not.
+Physical-device feedback:
 
-Current problem:
+The main screen currently shows the brand twice:
 
-The user appears to need to press/hold deliberately before the number begins to scrub.
+`[AT]  ATELIER TRACKER / 2026`
 
-The reel should instead feel like a physical horizontal instrument.
+and then:
 
-Desired behavior:
+`Atelier Tracker`
 
-TOUCH
-→ DRAG IMMEDIATELY
-→ VALUES MOVE
+followed by:
 
-There should be no perceived long-press requirement before scrubbing.
+`LOW TIDE AT POURVILLE, NEAR DIEPPE, 1882`
+`CLAUDE MONET · 1882 · CLEVELAND MUSEUM OF ART`
 
----
+This is redundant and wastes valuable vertical space.
 
-# 2. THE ENTIRE REEL IS DRAGGABLE
+Remove the large serif:
 
-Do not make only the center number draggable.
+`Atelier Tracker`
 
-The ENTIRE counter/reel container should be a horizontal gesture surface.
+from the primary Habits / Goals header.
 
-Conceptually this whole region:
+The compact brand kicker is enough:
 
-001 002 [003] 004 005
+`[AT]  ATELIER TRACKER / 2026`
 
-should accept dragging.
+Then move directly into the artwork identity:
 
-Also include the visual space immediately above/below the numbers as part of the hit area where practical.
+`LOW TIDE AT POURVILLE, NEAR DIEPPE, 1882`
+`CLAUDE MONET · 1882 · CLEVELAND MUSEUM OF ART`
 
-The user should be able to put their finger almost anywhere on the instrument and scrub.
+Desired hierarchy:
 
-Use a generous gesture target.
+[AT] ATELIER TRACKER / 2026
 
----
+LOW TIDE AT POURVILLE, NEAR DIEPPE, 1882
+CLAUDE MONET · 1882 · CLEVELAND MUSEUM OF ART
 
-# 3. HORIZONTAL PAN SHOULD ACTIVATE QUICKLY
+HABITS GOALS
+────────
 
-Use a pan gesture that activates after a small natural movement threshold.
+This should reclaim vertical space and make the artwork feel like the changing
+headline of the interface.
 
-Do NOT require long press.
+Do NOT remove page-specific titles where they are actually needed.
 
-Suggested philosophy:
+Examples:
 
-- very small horizontal movement begins scrubbing
-- horizontal intent wins when abs(dx) clearly exceeds abs(dy)
-- vertical movement should still allow the containing drawer/scroll behavior where appropriate
-- do not make the user fight gesture recognition
+Habit History
+Year Archive
+Art Gallery
 
-A threshold in the general range of a few points is appropriate.
+may still have their own page titles.
 
-Tune on device rather than blindly using one number.
-
-If gesture-handler/Reanimated is used:
-
-- keep the gesture work on the UI thread
-- avoid per-frame React setState
+Only remove redundant repeated PRODUCT branding.
 
 ---
 
-# 4. SEPARATE PAN FROM LONG-PRESS REPEAT
+# 2. UPDATE COLLAPSING HEADER LOGIC
 
-Long press remains useful for repeated + / − controls.
+The existing scroll-responsive header may currently assume the large serif
+`Atelier Tracker` title exists.
 
-It should NOT gate reel scrubbing.
+Update the collapsing header accordingly.
 
-Interaction model:
+Expanded state should now be approximately:
 
-DRAG REEL
-→ immediate continuous scrub
+[AT] ATELIER TRACKER / 2026
 
-TAP − / +
-→ one increment
+ARTWORK TITLE
+ARTIST · YEAR · MUSEUM
 
-HOLD − / +
-→ repeating increment
+Collapsed state:
 
-TAP CENTER NUMBER
-→ exact numeric entry
+[AT] ATELIER TRACKER 2026
 
-These are separate interaction paths.
+or another restrained compact equivalent.
 
----
+Do not leave awkward blank space where the old serif title was removed.
 
-# 5. REEL SHOULD FEEL PHYSICAL
+Rebalance:
 
-While scrubbing:
+- top spacing
+- artwork credit spacing
+- tabs
+- scroll thresholds
 
-- values translate continuously
-- centered value grows / darkens slightly
-- neighboring values fade toward the edges
-- crossing integer boundaries gives a light throttled haptic tick
-- release snaps cleanly to the nearest value
-- fast flick may travel farther, but remain predictable
-
-Do not make it feel like dragging static labels.
-
-The reel should visually move under the finger.
-
-Think:
-
-MECHANICAL INDEX
-×
-FILM COUNTER
-×
-PRECISION SLIDER
-
-Do not directly copy external references.
+Keep the header elegant on 375pt / iPhone 7.
 
 ---
 
-# 6. REEL DISCOVERABILITY
+# 3. FINAL WIDGET BEHAVIOR
 
-The user should understand the reel can move without reading instructions.
+The current palette tinting is NOT the final Atelier widget design.
 
-Improve visual affordance.
+For ArtThemes, the actual currently resolved painting should appear behind the
+widget content.
 
-Possible treatment:
+Example:
 
-‹ 001 002 [003] 004 005 ›
+App currently displays:
 
-or edge fading / partial neighboring values.
+LOW TIDE AT POURVILLE, NEAR DIEPPE
 
-The first time the drawer opens, an extremely subtle one-shot motion hint may move the rail a few pixels left/right and settle.
+Then the widgets should use the SAME painting.
 
-Do not repeatedly animate the hint.
+Widget structure:
 
-Existing cue copy such as "DRAG TO REEL" may remain if it helps, but the control should be understandable from its visual behavior alone.
+SELECTED ARTWORK
+↓
+SUBTLE ATELIER PAPER VEIL
+↓
+WIDGET DATA / TYPOGRAPHY
 
----
+The widget should feel like a miniature Atelier Tracker surface.
 
-# 7. EXACT ENTRY REMAINS
-
-Do not remove direct numeric entry.
-
-Tapping the large current number should continue opening exact entry.
-
-Ensure the earlier 0 → 55 bug stays fixed.
-
-Apply must commit the currently typed draft even if:
-
-- keyboard is still open
-- field has not blurred
-- starting progress was 0
-
-Do not regress this while rewriting the reel gesture.
+Do not simply use an extracted solid color.
 
 ---
 
-# 8. ART COLLECTION TARGET: 99 TOTAL
+# 4. FIX ALL REMAINING WIDGET BRANDING
 
-The current collection has 72 plates.
+The current physical-device widget still contains old branding such as:
 
-Curate the collection toward a FINAL TARGET OF APPROXIMATELY 99 ART THEMES.
+`Yearly Tracker Progress`
 
-Do not simply append exactly 27 arbitrary paintings.
+and:
 
-This is now a curatorial pass.
+`Yearly Tracker`
 
-If several current works feel redundant, weak as mobile backdrops, or nearly identical, they may be replaced.
+Remove all USER-FACING Yearly Tracker naming from widget presentation.
 
-Target:
+Search:
 
-~99 total excellent plates
+- Swift widget code
+- iOS widget extension Info.plist / build settings
+- Android widget labels
+- widget configuration names
+- widget descriptions
+- empty states
+- titles
+- display labels
+- app/widget names visible in the system UI
 
-rather than:
+Use Atelier branding instead.
 
-72 current + 27 mediocre additions
+Examples:
 
-Preserve IDs already used by existing users/dev storage whenever possible.
+`Yearly Tracker Progress`
+→ `Atelier Progress`
 
-Never silently delete an existing persisted theme ID without a fallback/alias strategy.
+`Yearly Tracker`
+→ `Atelier Tracker`
 
----
+Potential widget naming:
 
-# 9. EXPAND ACROSS ART HISTORY
+- Atelier Progress
+- Atelier Habits
+- Goal Highlight
+- Atelier Goals
 
-The collection is currently concentrated heavily around Impressionism and
-Post-Impressionism.
+Use judgment and keep names concise.
 
-Broaden Atelier into a more interesting private museum.
+IMPORTANT:
 
-The new works should come from different periods and visual traditions while
-still fitting the Atelier interface.
+Do NOT rename internal native targets, schemes, classes, bundle identifiers, or
+package identifiers merely for cosmetic reasons.
 
-Core principle:
+Keep:
 
-DIFFERENT ERA
-SAME ATMOSPHERE
+`com.andresbotia.ResolutionTracker`
 
-Works still need to function behind typography.
+`com.andresbotia.ResolutionTracker.widgets`
 
----
+and existing Android package/application identifiers.
 
-# 10. NEW CURATORIAL GROUPS
-
-Explore high-quality Open Access works from these directions.
-
-## EDO JAPANESE LANDSCAPE
-
-Priority artists:
-
-- Katsushika Hokusai
-- Utagawa Hiroshige
-
-Look for:
-
-- mountains
-- rivers
-- snow
-- mist
-- sea
-- bridges
-- restrained architectural landscapes
-
-Japanese prints are especially interesting for Atelier because:
-
-- flat compositions work well behind UI
-- large quiet regions help readability
-- strong linework complements ASCII / mono typography
-- they broaden the collection historically and culturally
-
-Do not overfill with only Great Wave-style high-drama compositions.
-
-Prefer quiet atmospheric prints too.
+Only change user-visible names.
 
 ---
 
-## ROMANTIC / EARLY 19TH-CENTURY LANDSCAPE
+# 5. ART THEME WIDGET BACKGROUND
 
-Priority:
+When the resolved theme is an ArtTheme:
 
-- J. M. W. Turner
-- similar Open Access landscape painters
+- display the actual artwork
+- fill the widget bounds using an appropriate crop/cover behavior
+- add a paper veil / tonal wash for readability
+- use resolved theme text/accent colors where appropriate
+- keep typography readable over very light and very dark paintings
 
-Look for:
+Do not make the artwork so opaque that widget information becomes hard to read.
 
-- mist
-- water
-- sunrise/sunset
-- broad skies
-- atmospheric color fields
+Do not make the veil so strong that the painting disappears.
 
-Prefer Turners with enough quiet space for interface text.
-
-Avoid extremely stormy/busy works if they fight the UI.
+The app and widget should clearly belong to the same active theme.
 
 ---
 
-## BARBIZON / PRE-IMPRESSIONIST LANDSCAPE
+# 6. RANDOM ART MUST STAY SYNCHRONIZED
 
-Priority:
+Random Art must NEVER independently randomize inside WidgetKit or Android widget
+code.
 
-- Jean-Baptiste-Camille Corot
-- related landscape painters
+The application is the authority.
 
-This group should add:
+Flow:
 
-- silver-gray skies
-- olive greens
-- calm rivers
-- soft pastoral environments
+Random Art mode
+→ app resolves the current artwork
+→ app displays that artwork
+→ app shares THAT resolved artwork with widgets
+→ widgets display the SAME artwork
 
-These may become some of the strongest practical backgrounds because of their
-restrained palettes.
+If Random Art behavior later changes from per-launch to daily selection, this
+architecture should still work because widgets consume the resolved artwork
+rather than generating their own choice.
 
----
+Do not let:
 
-## TONALISM / NOCTURNE
+App = Monet
 
-Priority:
+Widget = Van Gogh
 
-- James McNeill Whistler
-
-Consider atmospheric Nocturnes where the museum media is confirmed public
-domain/Open Access.
-
-These can provide:
-
-- deep slate
-- fog
-- gray-blue
-- sepia
-- quieter dark themes
-
-Do not make the whole library light/pastel.
+happen because both independently rolled a random number.
 
 ---
 
-## SYMBOLIST / FLORAL
+# 7. WIDGET-SAFE ARTWORK SHARING ARCHITECTURE
 
-Priority:
+Do not duplicate the entire ~99-art collection into the iOS widget extension.
 
-- Odilon Redon
+Do not send JPEG/base64 image data inside the JSON widget payload.
 
-Use selectively.
+Use the existing shared App Group infrastructure.
 
-Floral works can introduce:
+Preferred architecture:
 
-- unusual color
-- dreamlike atmosphere
-- stronger accent palettes
+CURRENT RESOLVED ARTWORK
+↓
+main app creates/copies widget-safe derivative
+↓
+shared App Group container
+↓
+widget payload references current shared artwork
+↓
+WidgetKit reads shared file
+↓
+renders background
 
-Only include pieces that remain usable beneath text.
+Conceptually something like:
 
----
+App Group/
+widget-payload.json
+atelier-widget-background.jpg
 
-## AMERICAN LANDSCAPE / LIGHT
+or another clean equivalent.
 
-Consider carefully curated works from:
-
-- Winslow Homer
-- Childe Hassam
-- John Singer Sargent landscapes/gardens
-- other museum Open Access landscape artists
-
-Some of these are already represented.
-
-Avoid adding near-duplicates just to increase artist counts.
-
----
-
-# 11. POSSIBLE COLLECTION BALANCE
-
-Do not rigidly enforce counts, but aim for a healthy library.
-
-Conceptual balance could be approximately:
-
-- Impressionism / Post-Impressionism: ~45–50
-- Edo Japanese prints: ~10–15
-- Romantic / atmospheric landscape: ~8–10
-- Barbizon / pre-Impressionist: ~8–10
-- Tonalist / Nocturne: ~5–8
-- Symbolist / floral / unusual quiet works: ~5–8
-- other carefully curated Open Access landscapes: remaining slots
-
-The final library should feel broad but coherent.
+Only the currently resolved widget artwork needs to be shared unless there is a
+specific technical reason to retain more.
 
 ---
 
-# 12. COPYRIGHT / OPEN ACCESS REQUIREMENT
+# 8. WIDGET IMAGE DERIVATIVE
 
-This rule is absolute.
+Use a reasonable widget-specific image size.
 
-Do NOT include an image simply because:
+The widget does NOT need the app's full-screen derivative.
 
-"the artist died a long time ago."
+Generate or copy an image that is:
 
-The reproduction/media itself must be suitable for bundling.
+- sufficiently sharp for systemLarge
+- lightweight
+- fast for WidgetKit to decode
+- appropriate for cover cropping
 
-For every candidate verify the authoritative museum page/API explicitly provides:
+Do not repeatedly perform expensive image processing every render.
 
-- Public Domain / CC0 / Open Access status
-  AND
-- downloadable media appropriate for reuse
+Prefer preparing the file when:
 
-Preferred authoritative sources remain:
+- theme changes
+- Random Art resolves
+- relevant app state/widget payload is refreshed
 
-- The Metropolitan Museum of Art
-- National Gallery of Art
-- Art Institute of Chicago
-- Cleveland Museum of Art
-- Rijksmuseum if its API/object media provides appropriate open reuse
-- similarly reputable museum Open Access programs
-
-Do NOT source shipped assets from:
-
-- Pinterest
-- WikiArt
-- blogs
-- wallpaper websites
-- Google image results
-- random CDNs
-
-Search/previews may help discovery only.
-
-The final bundled image must come from the authoritative Open Access source.
+Avoid unnecessary rewrites if the same artwork is already shared.
 
 ---
 
-# 13. RIGHTS EDGE CASE
+# 9. APP GROUP IMAGE LIFECYCLE
 
-Some museum records may label the underlying artwork Public Domain while still
-restricting the displayed digital media.
+When an ART theme becomes active:
 
-If the actual image cannot be downloaded/reused under the museum's Open Access
-terms:
+write/update the shared artwork.
 
-DO NOT BUNDLE IT.
-
-Find another authoritative version or choose another work.
-
-Record:
-
-- title
-- artist
-- date
-- museum
-- object id
-- source
-- rights
-- isPublicDomain
-
-for every included plate.
-
----
-
-# 14. ART QUALITY CONTROL
-
-Before finalizing ~99 works, inspect each derivative as a phone backdrop.
-
-Reject/reconsider works that:
-
-- become muddy under the paper veil
-- have important content constantly hidden by the UI
-- become illegible when `cover` cropped vertically
-- are nearly indistinguishable from another theme
-- are excessively busy
-- are too dark for the current type system
-- add little curatorial value
-
-Quality beats hitting exactly 99.
-
-99 is the ceiling/target, not a requirement to keep weak works.
-
----
-
-# 15. BUNDLE SIZE
-
-The 72-work collection already adds meaningful asset size.
-
-Before and after expansion, report:
-
-- total JPEG count
-- total JPEG bytes
-- approximate increase from this pass
-- largest individual derivatives
-
-Optimize intelligently.
-
-Do not ship museum-master images.
-
-Do not destroy visual quality to hit an arbitrary tiny size.
-
-If 99 optimized images produce an unreasonable app-size increase, report the
-tradeoff clearly rather than silently reducing quality.
-
----
-
-# 16. GALLERY GRID SPACING
-
-The current stamp-grid has a layout issue:
-
-Each row has three images, but the third tile leaves an awkward empty area /
-the spacing does not visually fill the available width evenly.
-
-Fix the grid geometry.
-
-For 375pt layout:
-
-- exactly 3 equal-width tile columns
-- exactly 2 equal inter-column gaps
-- equal left/right content margins
-- artwork image fills its tile width
-- label aligns with the artwork width
-- no phantom fourth-column space
-- no oversized trailing gutter
-
-Do not solve this with arbitrary per-device pixel values.
-
-Calculate tile width from:
-
-available content width
-− total intended gaps
-
-divided by number of columns.
-
-Conceptually:
-
-tileWidth =
-(containerWidth - gap \* (columns - 1)) / columns
-
-Use consistent gap tokens.
-
----
-
-# 17. RESPONSIVE GALLERY COLUMNS
-
-Keep the grid responsive.
-
-At narrow mobile widths:
-3 columns
-
-At wider phone/tablet widths:
-4 or another appropriate count
-
-But every configuration must distribute columns evenly across available width.
-
-Avoid `space-around` behavior that creates different edge gaps from internal
-gaps.
-
-Prefer explicit column width + consistent `gap`, or equivalent stable layout.
-
----
-
-# 18. GALLERY LABELS
-
-Titles below stamps should remain legible.
-
-Allow:
-
-- 2 lines where needed
-
-Avoid:
-
-- ugly `...` truncation where reasonable
-
-Very long works may use a deliberate shorter display title while retaining the
-full canonical title in metadata/detail view.
-
-Do not let one tall title destroy row rhythm.
-
----
-
-# 19. ARTIST FILTER STRIP
-
-The current artist chip strip also needs polish.
-
-In the physical-device gallery, artist names can become partially cut off at
-the right edge.
-
-Make the artist/filter rail clearly horizontally scrollable.
-
-Requirements:
-
-- full chip text remains available
-- comfortable left/right padding
-- selected state remains obvious
-- last chip can scroll completely into view
-- do not leave a permanently clipped half-chip as if the layout broke
-
-A tiny intentional partial-next-chip affordance is acceptable only if it looks
-deliberate.
-
----
-
-# 20. RANDOM ART
-
-Random Art should automatically include the final approved ~99 art themes.
-
-Do not include:
+When switching to:
 
 - Museum Paper
 - Classic
 - Custom
 
-unless intentionally changed later.
+remove or invalidate the shared artwork reference so stale art does not remain
+behind the widget.
 
-Preserve:
+Never allow:
 
-- current session behavior
-- skip-last-pick behavior
-- widget consistency
+User selects Museum Paper
+→ widget keeps showing previous Monet painting
 
----
+because an old shared image file remained available.
 
-# 21. THEME TRANSITION PERFORMANCE
-
-A 99-work library should NOT mean 99 full-resolution images mounted at once.
-
-The gallery should only mount/render what it needs.
-
-Continue using efficient list/grid virtualization.
-
-Theme selection crossfade should still keep at most the necessary outgoing +
-incoming canvas images mounted.
-
-Do not preload all full-size images into memory.
+The payload must clearly state whether artwork is active.
 
 ---
 
-# 22. DO NOT TOUCH BLOCKED BRAND ASSETS
+# 10. ADDITIVE WIDGET PAYLOAD
 
-Claude Design backlog remains blocked:
+Existing widget required fields must remain compatible.
 
-- final `[AT]` SVG
+Current core contract includes:
+
+- yearlyProgress
+- theme
+- goals
+- habits
+
+and the already-added theme tint fields.
+
+Do not remove or rename them.
+
+Add any additional artwork information BACKWARD-COMPATIBLY.
+
+Possible conceptual additions:
+
+`themeKind`
+`themePrimary`
+`themeBg`
+`themeText`
+`artworkId`
+`hasArtwork`
+`widgetArtworkFilename`
+
+Use the smallest clean contract appropriate to the existing implementation.
+
+Do not include absolute device/container paths in the persisted JSON if that is
+fragile across launches.
+
+Prefer a stable filename or logical identifier resolved inside the native
+extension.
+
+---
+
+# 11. IOS WIDGETKIT ARTWORK LOADING
+
+Update the Swift WidgetKit extension to read the shared artwork from the App
+Group container.
+
+Use platform-safe SwiftUI/WidgetKit behavior.
+
+For modern iOS:
+use proper WidgetKit container background handling.
+
+For older supported iOS:
+use an appropriate SwiftUI background fallback.
+
+The physical test device is an iPhone 7, so do NOT implement this only for
+iOS 17+.
+
+The existing backwards-compatible widget path must continue working.
+
+Conceptual structure:
+
+ZStack {
+artwork background
+Atelier paper veil
+widget content
+}
+
+The exact implementation should follow current WidgetKit best practices.
+
+---
+
+# 12. WIDGET PAPER VEIL
+
+Match the app's Atelier visual language.
+
+Potential art widget layering:
+
+Artwork
+→ warm paper overlay
+→ optional subtle tonal accent
+→ data
+
+Tune separately from the full app if necessary.
+
+Widgets are smaller and need stronger readability.
+
+Do not blindly reuse the app's exact 74% veil value if it makes the widget
+flat.
+
+Test/choose a widget-specific treatment that preserves:
+
+- artwork recognition
+- text contrast
+- progress readability
+
+---
+
+# 13. YEARLY PROGRESS WIDGET REDESIGN
+
+The current Yearly Progress widget still looks like the old generic app:
+
+Title
+5%
+blue system ProgressView
+
+Bring it into the Atelier visual language.
+
+Do NOT change its underlying percentage calculation.
+
+Suggested direction:
+
+[AT] / YEAR
+
+2026 PROGRESS
+
+05%
+
++...................
+
+or another restrained editorial interpretation.
+
+Avoid the default blue system ProgressView if it clashes with Atelier.
+
+Prefer:
+
+- ASCII/editorial progress
+- theme accent
+- ink typography
+- artwork background
+
+The widget should immediately look like it belongs to the redesigned app.
+
+Keep it readable and compact.
+
+---
+
+# 14. HABITS WIDGET REDESIGN
+
+Use the existing states:
+
+`.` empty
+`+` good
+`×` bad
+
+Preserve stored semantics:
+
+0 / 1 / 2
+
+Potential structure:
+
+[AT] / TODAY
+
+WORKOUT +
+CARDIO ×
+DRINK WATER +
+READ .
+
+Artwork behind the surface where applicable.
+
+Do not reintroduce generic circular status dots unless they serve a clear
+purpose.
+
+The ASCII character language should carry the state.
+
+---
+
+# 15. GOAL WIDGET REDESIGN
+
+For goal highlight / goal-list widgets:
+
+use the Atelier editorial language.
+
+Possible structure:
+
+[AT] / GOAL
+
+READ 20 BOOKS
+
+03 / 20
++++................. 15%
+
+or:
+
+01 READ 20 BOOKS 15%
+02 RUN 200 MILES 77%
+
+Preserve existing goal selection/calculation logic.
+
+Only redesign presentation.
+
+---
+
+# 16. CUSTOM THEMES IN WIDGETS
+
+When a Custom theme is selected:
+
+there is no painting.
+
+Use the resolved custom theme colors.
+
+At minimum:
+
+- custom background / primary tone becomes the widget surface
+- correct text color remains readable
+- accent/progress uses custom primary where appropriate
+
+Do not invent artwork.
+
+Do not remove Custom themes in this phase.
+
+---
+
+# 17. MUSEUM PAPER / CLASSIC WIDGETS
+
+Museum Paper:
+
+use a warm paper background and Atelier ink treatment.
+
+Classic themes:
+
+use their resolved palette.
+
+No stale painting.
+
+No fake painting.
+
+---
+
+# 18. WIDGET REFRESH WHEN THEME CHANGES
+
+Changing the app theme should refresh widgets.
+
+The sequence should be:
+
+user selects art
+→ resolved theme changes
+→ shared widget artwork updated
+→ widget payload updated
+→ widget timeline reload requested
+
+Likewise:
+
+art → custom
+art → Museum Paper
+custom → art
+Random Art resolves new artwork
+
+should all update widget presentation.
+
+Use the existing native bridge/update mechanism if one exists.
+
+Do not introduce unnecessary polling.
+
+---
+
+# 19. RANDOM ART + WIDGET REFRESH
+
+When Random Art resolves a new current artwork:
+
+share that new artwork with widgets before/requesting their refresh.
+
+Avoid race conditions where:
+
+payload points to new theme
+but shared image is still old.
+
+Recommended ordering:
+
+1. resolve Random Art
+2. prepare shared artwork
+3. write payload
+4. request widget reload
+
+or another safe equivalent.
+
+---
+
+# 20. FAILURE FALLBACK
+
+Widget artwork loading must fail gracefully.
+
+If:
+
+- image file missing
+- image cannot decode
+- App Group unavailable
+- payload from an older app build lacks artwork fields
+
+then:
+
+fallback to palette-based Atelier background.
+
+Never show:
+
+- blank transparent widget
+- crash
+- missing-image icon
+- stale unrelated art if avoidable
+
+Backward compatibility matters.
+
+---
+
+# 21. DO NOT BUNDLE THE ENTIRE COLLECTION IN THE WIDGET TARGET
+
+The app may contain approximately 99 artwork derivatives.
+
+Do not accidentally make the widget extension duplicate all those files in its
+own Copy Bundle Resources phase.
+
+Inspect Xcode/native project configuration.
+
+The extension should consume the selected shared App Group derivative.
+
+Report if the current native configuration duplicates artwork resources.
+
+---
+
+# 22. ANDROID PARITY
+
+Implement equivalent artwork-background behavior for Android widgets where
+technically practical.
+
+Same rules:
+
+Art theme
+→ actual current artwork
+
+Random Art
+→ same resolved app artwork
+
+Custom
+→ custom palette
+
+Paper / Classic
+→ palette
+
+Do not allow Android and iOS to use different Random Art selections.
+
+Use a practical shared-file/widget approach appropriate to Android.
+
+Preserve current widget update behavior.
+
+---
+
+# 23. MAIN APP HEADER SPACING AUDIT
+
+After removing the duplicate large `Atelier Tracker` title, inspect the main
+Habits and Goals views on narrow width.
+
+Check:
+
+- top safe area
+- kicker
+- artwork title
+- artist metadata
+- tab position
+- Ledger / Yearly metadata
+- collapsing header
+- first content section
+
+The screen should feel noticeably less vertically wasteful.
+
+Do not compensate by simply adding giant empty margins elsewhere.
+
+---
+
+# 24. ARTWORK TITLE RESPONSIVENESS
+
+The artwork title is now more visually important because it follows directly
+after the brand kicker.
+
+Allow it to wrap gracefully.
+
+Do NOT ellipsize important artwork names like:
+
+WHEAT FIELD WITH CYPRESSES
+
+LOW TIDE AT POURVILLE, NEAR DIEPPE, 1882
+
+Use responsive wrapping / typography.
+
+Museum metadata may wrap to a second line where necessary.
+
+Keep hierarchy strong.
+
+---
+
+# 25. CLAUDE DESIGN BLOCKED ITEMS — DO NOT IMPLEMENT YET
+
+We are waiting for Claude Design after approximately 10:50.
+
+DO NOT implement final:
+
+- `[AT]` SVG
 - app icon
-- wordmark
-- production splash
-- exact splash → header logo transition
-- App Store marketing assets
+- splash artwork
+- wordmark asset
+- final splash → logo motion
+- App Store marketing images
 
-Do not improvise those assets.
+Continue using the current textual `[AT]` treatment.
+
+Do not generate temporary image assets that will immediately be replaced.
 
 ---
 
-# 23. VERIFICATION
+# 26. DO NOT RUN A NATIVE BUILD
 
-Before completion:
+This phase intentionally stops BEFORE the build.
 
-Run:
+You may:
+
+- modify Swift
+- modify Kotlin/Java
+- modify native configuration
+- modify React Native widget sharing
+- run static/build-safe checks that do not produce/sign an app
+
+You must NOT:
+
+- run `eas build`
+- create an iOS development build
+- create an Android development build
+- submit anything
+- change signing credentials
+
+We will build AFTER final Claude identity assets are available.
+
+---
+
+# 27. VERIFICATION BEFORE BUILD
+
+Run everything that can be validated without producing the native artifact.
+
+At minimum:
 
 `npm run verify:storage`
 
 `npx expo-doctor`
 
+Babel/JS parse checks used by this project.
+
+Inspect Swift/Kotlin code for obvious compile issues as much as the Windows
+environment allows.
+
 Verify:
 
-COUNTER:
+MAIN APP:
 
-- touching anywhere on reel starts drag naturally
-- no long-hold required
-- vertical drawer interaction still usable
-- small target feels precise
-- large target remains usable
-- - / − tap works
-- - / − long press works
-- exact entry still works
-- 0 → 55 → Apply persists
-- haptic does not spam
+- duplicate serif Atelier Tracker title removed
+- kicker remains
+- artwork title/credit hierarchy correct
+- collapsed header works conceptually
+- no blank header space
 
-GALLERY:
+WIDGET PAYLOAD:
 
-- 3-column spacing is mathematically even on 375pt
-- wider layouts remain even
-- artist filter strip scrolls fully
-- title labels behave consistently
-- gallery remains smooth with ~99 works
-- Random Art includes new works
+- old required fields unchanged
+- new artwork fields additive
+- Random Art shares resolved artwork
+- custom theme palette survives
+- fixed art theme survives
 
-ART:
+FILES:
 
-- every bundled image has authoritative Open Access provenance
-- every derivative exists
-- no duplicate IDs
-- no broken requires
-- no restricted reproduction accidentally bundled
+- widget derivative writes to expected shared location
+- stale artwork invalidation exists
+- failure fallback exists
+- no base64 image payload
+- no full art library duplicated into extension
 
-STORAGE:
+NAMING:
 
-- all existing theme IDs still resolve
-- existing user selection remains safe
-- random-art remains safe
-- custom themes remain safe
+- search repository for USER-FACING `Yearly Tracker`
+- update intended visible strings
+- do NOT rename technical IDs/classes/targets unnecessarily
+
+IOS:
+
+- WidgetKit artwork background code exists
+- iOS <17 fallback still exists
+- theme change triggers reload
+- no obvious stale-art path
+
+ANDROID:
+
+- equivalent theme background behavior where practical
+- no broken existing update path
+
+---
+
+# 28. FINAL PRE-BUILD REPORT
+
+At completion STOP.
+
+Do not build.
 
 Report:
 
-1. counter gesture changes
-2. gallery layout changes
-3. final number of art themes
-4. works/artists/eras added
-5. works removed/replaced and why
-6. authoritative museum sources
-7. rights validation
-8. asset-size impact
-9. build/storage verification
-10. commits
-11. remaining physical-device testing
+1. Main header changes
+2. Every remaining visible `Yearly Tracker` string changed
+3. Any intentionally retained internal `YearlyTracker` technical names and why
+4. iOS widget artwork architecture
+5. Android widget artwork architecture
+6. Widget payload additions
+7. Random Art synchronization behavior
+8. Fixed-art synchronization behavior
+9. Custom / Paper / Classic behavior
+10. Widget visual redesign
+11. Shared artwork file lifecycle
+12. Failure fallback
+13. Static verification results
+14. Files changed
+15. Commits created
+16. Exact native changes that will require the next development build
+17. Confirmation that NO EAS/native build was started
+18. Items still waiting on Claude Design
+
+End with:
+
+READY FOR CLAUDE BRAND ASSETS + FINAL DEVELOPMENT BUILD
 
 Stay on `feature/revamp`.
 

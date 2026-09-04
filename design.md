@@ -178,8 +178,9 @@ iPhone 7 is a first-class target. One artwork layer, one ASCII layer. Classic/cu
 
 ### Collapsing header
 Sticky kicker: `[AT]  ATELIER TRACKER  /  2026`.
-Expanded (scroll top): serif title + artwork credit.
-Collapsed: kicker only. Title/credit fade via Reanimated scroll values — no per-frame React state.
+Expanded (scroll top): artwork title + museum credit, then HABITS / GOALS.
+Collapsed: kicker + tabs. Credit fades and collapses via Reanimated scroll values — no per-frame React state.
+Do not repeat the product name as a large serif title on Habits / Goals. The compact kicker is the brand; the artwork title is the changing headline.
 
 ### Tabs
 HABITS / GOALS share a moving 1px ink indicator (~200ms). Incoming pane fades in from a small opposing offset. Not a carousel. No swipe between tabs (conflicts with habit cells and reorder).
@@ -272,10 +273,17 @@ Texture, not a gimmick. One Text node per plate. Ramp: ` .:-=+*#%@`.
 ~52 columns. Generated at build time by `scripts/build-art-assets.js`.
 
 ## Widgets
-Native widgets keep the existing payload contract. Additive hex fields
-(`themePrimary`, `themeBg`, `themeText`, `themeKind`) tint the widget
-background. Random Art sends the session’s resolved plate, not `random-art`.
-Custom themes send their primary/background. Keep text contrast high.
+Native widgets keep the existing payload contract. Additive fields
+(`themePrimary`, `themeBg`, `themeText`, `themeKind`, `year`, `artworkId`,
+`hasArtwork`, `widgetArtworkFilename`) are optional on decode.
+
+Art themes share the currently resolved painting into the App Group / app
+files as a widget-sized JPEG. Widgets draw that image, then a paper veil,
+then editorial data. They never pick Random Art themselves.
+
+Custom / Museum Paper / Classic use the resolved palette as a solid surface.
+No stale painting. Visible names: Atelier Progress, Atelier Habits,
+Goal Highlight, Atelier Goals. Keep text contrast high.
 
 ## Persistence
 Visual redesign never renames AsyncStorage keys or reshapes stored objects.
