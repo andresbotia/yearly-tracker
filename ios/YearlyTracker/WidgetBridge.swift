@@ -10,13 +10,21 @@ class WidgetBridge: NSObject {
 
   @objc(setWidgetPayload:)
   func setWidgetPayload(_ payloadJson: NSString) {
-    guard let data = (payloadJson as String).data(using: .utf8) else { return }
-    guard let payload = try? JSONDecoder().decode(SharedStore.WidgetPayload.self, from: data) else { return }
-    SharedStore.savePayload(payload)
+    SharedStore.savePayloadJSON(payloadJson as String)
   }
 
   @objc
   func clearWidgetPayload() {
     SharedStore.clearPayload()
+  }
+
+  @objc(setWidgetArtwork:artworkId:)
+  func setWidgetArtwork(_ sourceUri: NSString, artworkId: NSString) {
+    SharedStore.writeArtwork(from: sourceUri as String, artworkId: artworkId as String)
+  }
+
+  @objc
+  func clearWidgetArtwork() {
+    SharedStore.clearArtwork()
   }
 }

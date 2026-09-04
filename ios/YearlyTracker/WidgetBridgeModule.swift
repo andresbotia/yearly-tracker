@@ -5,13 +5,21 @@ public class WidgetBridgeModule: Module {
     Name("WidgetBridge")
 
     Function("setWidgetPayload") { (payloadJson: String) in
-      guard let data = payloadJson.data(using: .utf8) else { return }
-      guard let payload = try? JSONDecoder().decode(SharedStore.WidgetPayload.self, from: data) else { return }
-      SharedStore.savePayload(payload)
+      SharedStore.savePayloadJSON(payloadJson)
     }
 
     Function("clearWidgetPayload") {
       SharedStore.clearPayload()
+    }
+
+    AsyncFunction("setWidgetArtwork") { (sourceUri: String, artworkId: String) in
+      SharedStore.writeArtwork(from: sourceUri, artworkId: artworkId)
+      return true
+    }
+
+    AsyncFunction("clearWidgetArtwork") {
+      SharedStore.clearArtwork()
+      return true
     }
   }
 }
