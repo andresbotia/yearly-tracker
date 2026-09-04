@@ -76,7 +76,7 @@ class GoalHighlightWidgetProvider : AppWidgetProvider() {
 
       for (id in ids) {
         val views = RemoteViews(context.packageName, R.layout.widget_goal_highlight)
-        views.setInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme))
+        views.setInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme, payloadObj))
 
         if (top == null) {
           views.setTextViewText(R.id.goalTitle, "No goals yet")

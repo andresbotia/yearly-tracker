@@ -33,8 +33,21 @@ struct Entry: TimelineEntry {
 
 private func clamp01(_ x: Double) -> Double { max(0.0, min(1.0, x)) }
 
-private func themeContainerColor(_ theme: String?) -> Color {
-    switch (theme ?? "").lowercased() {
+private func colorFromHex(_ hex: String?) -> Color? {
+    guard var h = hex?.trimmingCharacters(in: .whitespacesAndNewlines), !h.isEmpty else { return nil }
+    if h.hasPrefix("#") { h.removeFirst() }
+    guard h.count == 6, let n = UInt32(h, radix: 16) else { return nil }
+    let r = Double((n >> 16) & 0xFF) / 255.0
+    let g = Double((n >> 8) & 0xFF) / 255.0
+    let b = Double(n & 0xFF) / 255.0
+    return Color(red: r, green: g, blue: b)
+}
+
+private func themeContainerColor(_ payload: SharedStore.WidgetPayload?) -> Color {
+    if let c = colorFromHex(payload?.themeBg) ?? colorFromHex(payload?.themePrimary) {
+        return c.opacity(0.28)
+    }
+    switch (payload?.theme ?? "").lowercased() {
     case "ocean", "oceanblue", "blue":
         return Color(red: 0.00, green: 0.55, blue: 0.85).opacity(0.22)
     case "dark":
@@ -46,8 +59,8 @@ private func themeContainerColor(_ theme: String?) -> Color {
     }
 }
 
-private func themeLegacyBackground(_ theme: String?) -> Color {
-    themeContainerColor(theme)
+private func themeLegacyBackground(_ payload: SharedStore.WidgetPayload?) -> Color {
+    themeContainerColor(payload)
 }
 
 
@@ -137,11 +150,11 @@ struct YearlyProgressWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             if #available(iOS 17.0, *) {
                 YearlyProgressView(entry: entry)
-                    .containerBackground(themeContainerColor(entry.payload?.theme), for: .widget)
+                    .containerBackground(themeContainerColor(entry.payload), for: .widget)
             } else {
                 YearlyProgressView(entry: entry)
                     .padding()
-                    .background(themeLegacyBackground(entry.payload?.theme))
+                    .background(themeLegacyBackground(entry.payload))
             }
         }
         .configurationDisplayName("Yearly Progress")
@@ -209,11 +222,11 @@ struct HabitsWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             if #available(iOS 17.0, *) {
                 HabitsView(entry: entry)
-                    .containerBackground(themeContainerColor(entry.payload?.theme), for: .widget)
+                    .containerBackground(themeContainerColor(entry.payload), for: .widget)
             } else {
                 HabitsView(entry: entry)
                     .padding()
-                    .background(themeLegacyBackground(entry.payload?.theme))
+                    .background(themeLegacyBackground(entry.payload))
             }
         }
         .configurationDisplayName("Habits")
@@ -270,11 +283,11 @@ struct HighlightGoalWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             if #available(iOS 17.0, *) {
                 HighlightGoalView(entry: entry)
-                    .containerBackground(themeContainerColor(entry.payload?.theme), for: .widget)
+                    .containerBackground(themeContainerColor(entry.payload), for: .widget)
             } else {
                 HighlightGoalView(entry: entry)
                     .padding()
-                    .background(themeLegacyBackground(entry.payload?.theme))
+                    .background(themeLegacyBackground(entry.payload))
             }
         }
         .configurationDisplayName("Goal Highlight")
@@ -341,11 +354,11 @@ struct GoalsListWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             if #available(iOS 17.0, *) {
                 GoalsListView(entry: entry)
-                    .containerBackground(themeContainerColor(entry.payload?.theme), for: .widget)
+                    .containerBackground(themeContainerColor(entry.payload), for: .widget)
             } else {
                 GoalsListView(entry: entry)
                     .padding()
-                    .background(themeLegacyBackground(entry.payload?.theme))
+                    .background(themeLegacyBackground(entry.payload))
             }
         }
         .configurationDisplayName("Goals List")

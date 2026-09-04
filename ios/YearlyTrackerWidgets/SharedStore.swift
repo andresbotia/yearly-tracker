@@ -19,6 +19,10 @@ enum SharedStore {
         let yearlyProgress: Double   // 0...1
         let goals: [Goal]
         let habits: [Habit]
+        let themePrimary: String? = nil
+        let themeBg: String? = nil
+        let themeText: String? = nil
+        let themeKind: String? = nil
 
         struct Goal: Codable {
             let id: String

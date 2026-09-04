@@ -58,7 +58,7 @@ class HabitsWidgetProvider : AppWidgetProvider() {
 
         val views = RemoteViews(context.packageName, layoutId)
 
-        views.safeSetInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme))
+        views.safeSetInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme, payloadObj))
 
         // Title: always default (do NOT override with debug text)
         views.safeSetText(R.id.title, "Habits")

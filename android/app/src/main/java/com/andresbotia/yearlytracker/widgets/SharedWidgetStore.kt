@@ -41,8 +41,21 @@ object SharedWidgetStore {
 
   fun pctInt01(x: Double): Int = (clamp01(x) * 100.0).roundToInt()
 
-  // Theme background approximation (ARGB ints)
-  fun themeBgColor(theme: String?): Int {
+  fun parseHexColor(hex: String?): Int? {
+    if (hex.isNullOrBlank()) return null
+    val h = hex.trim().removePrefix("#")
+    if (h.length != 6) return null
+    return try {
+      (0xFF000000 or h.toLong(16)).toInt()
+    } catch (_: Exception) {
+      null
+    }
+  }
+
+  // Theme background approximation (ARGB ints). Prefers additive palette hex.
+  fun themeBgColor(theme: String?, payload: JSONObject? = null): Int {
+    parseHexColor(payload?.optString("themeBg"))?.let { return (it and 0x00FFFFFF) or 0x47000000 }
+    parseHexColor(payload?.optString("themePrimary"))?.let { return (it and 0x00FFFFFF) or 0x38000000 }
     return when ((theme ?: "").lowercase()) {
       "ocean", "oceanblue", "blue" -> 0x38008CD9.toInt()
       "dark" -> 0x40000000.toInt()

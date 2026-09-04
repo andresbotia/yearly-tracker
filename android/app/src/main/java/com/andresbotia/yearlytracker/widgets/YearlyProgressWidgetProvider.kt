@@ -70,7 +70,7 @@ class YearlyProgressWidgetProvider : AppWidgetProvider() {
       for (id in ids) {
         val views = RemoteViews(context.packageName, R.layout.widget_yearly_progress)
 
-        views.setInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme))
+        views.setInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme, payloadObj))
 
         // Title: ignore DBG* debug text; otherwise use it; else default label
         val title = if (!debugText.isNullOrBlank() && !debugText.startsWith("DBG")) {

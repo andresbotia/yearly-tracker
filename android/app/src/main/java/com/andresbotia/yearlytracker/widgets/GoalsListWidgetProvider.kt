@@ -66,7 +66,7 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
         views.safeSetInt(
           R.id.root,
           "setBackgroundColor",
-          SharedWidgetStore.themeBgColor(theme)
+          SharedWidgetStore.themeBgColor(theme, payloadObj)
         )
 
         // Title: always default (do NOT override with debug text)
