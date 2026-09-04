@@ -14,8 +14,7 @@ import {
 import ViewShot from "react-native-view-shot";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
-import MetadataLabel from "../editorial/MetadataLabel";
-import EditorialButton from "../editorial/EditorialButton";
+import AtelierSheet, { AtelierActions } from "../atelier/AtelierSheet";
 
 const ANDROID = Platform.OS === "android";
 
@@ -26,8 +25,8 @@ function OptionTile({ option, selected, theme, onPress, fontsLoaded }) {
       style={({ pressed }) => [
         styles.optionTile,
         {
-          backgroundColor: selected ? theme.primary : theme.bg,
-          borderColor: selected ? theme.primary : theme.text,
+          backgroundColor: selected ? theme.text : "transparent",
+          borderColor: selected ? theme.text : theme.border,
           opacity: pressed ? 0.7 : 1,
         },
       ]}
@@ -36,7 +35,7 @@ function OptionTile({ option, selected, theme, onPress, fontsLoaded }) {
         style={[
           styles.optionLabel,
           {
-            color: selected ? theme.primaryTextOn : theme.text,
+            color: selected ? theme.card || "#f6f3ec" : theme.text,
             fontFamily: fontFamily("data", fontsLoaded),
           },
         ]}
@@ -48,7 +47,7 @@ function OptionTile({ option, selected, theme, onPress, fontsLoaded }) {
           style={[
             styles.optionDesc,
             {
-              color: selected ? theme.primaryTextOn : theme.mutedText,
+              color: selected ? theme.card || "#f6f3ec" : theme.mutedText,
               fontFamily: fontFamily("body", fontsLoaded),
             },
           ]}
@@ -94,29 +93,12 @@ export default function ShareModal({
     >
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
-        <View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: theme.card,
-              borderColor: theme.border,
-            },
-          ]}
+        <AtelierSheet
+          theme={theme}
+          kicker="[AT]  /  PRINT"
+          title="Share"
+          style={styles.sheet}
         >
-          <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
-            Print
-          </MetadataLabel>
-          <Text
-            style={[
-              styles.title,
-              {
-                color: theme.text,
-                fontFamily: fontFamily("display", fontsLoaded),
-              },
-            ]}
-          >
-            Share
-          </Text>
           <Text
             style={[
               styles.subtext,
@@ -171,11 +153,11 @@ export default function ShareModal({
                           styles.pickChip,
                           {
                             backgroundColor: selected
-                              ? theme.primary
-                              : theme.bg,
+                              ? theme.text
+                              : "transparent",
                             borderColor: selected
-                              ? theme.primary
-                              : theme.text,
+                              ? theme.text
+                              : theme.border,
                             opacity: pressed ? 0.7 : 1,
                           },
                         ]}
@@ -185,7 +167,7 @@ export default function ShareModal({
                             styles.pickText,
                             {
                               color: selected
-                                ? theme.primaryTextOn
+                                ? theme.card || "#f6f3ec"
                                 : theme.text,
                               fontFamily: fontFamily("data", fontsLoaded),
                             },
@@ -242,11 +224,11 @@ export default function ShareModal({
                           styles.pickChip,
                           {
                             backgroundColor: selected
-                              ? theme.primary
-                              : theme.bg,
+                              ? theme.text
+                              : "transparent",
                             borderColor: selected
-                              ? theme.primary
-                              : theme.text,
+                              ? theme.text
+                              : theme.border,
                             opacity: pressed ? 0.7 : 1,
                           },
                         ]}
@@ -256,7 +238,7 @@ export default function ShareModal({
                             styles.pickText,
                             {
                               color: selected
-                                ? theme.primaryTextOn
+                                ? theme.card || "#f6f3ec"
                                 : theme.text,
                               fontFamily: fontFamily("data", fontsLoaded),
                             },
@@ -284,24 +266,15 @@ export default function ShareModal({
             </View>
           )}
 
-          <View style={styles.actions}>
-            <EditorialButton
-              label="Cancel"
-              theme={theme}
-              variant="secondary"
-              onPress={onClose}
-              style={{ flex: 1 }}
-            />
-            <EditorialButton
-              label={shareBusy ? "Preparing" : "Share"}
-              theme={theme}
-              variant="primary"
-              onPress={onShare}
-              disabled={shareBusy || shareDisabled}
-              style={{ flex: 1 }}
-            />
-          </View>
-        </View>
+          <AtelierActions
+            theme={theme}
+            cancelLabel="Back"
+            confirmLabel={shareBusy ? "Preparing" : "Share"}
+            onCancel={onClose}
+            onConfirm={onShare}
+            confirmDisabled={shareBusy || shareDisabled}
+          />
+        </AtelierSheet>
 
         <ViewShot
           ref={shareShotRef}

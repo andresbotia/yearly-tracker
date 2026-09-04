@@ -264,10 +264,10 @@ const styles = StyleSheet.create({
   railPrimary: {
     flex: 1,
     minHeight: 44,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: "center",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    alignItems: "flex-start",
     justifyContent: "center",
-    paddingHorizontal: SPACE.sm,
+    paddingHorizontal: SPACE["2xs"],
   },
   railPrimaryText: {
     fontSize: TYPE_SIZE.kicker,
