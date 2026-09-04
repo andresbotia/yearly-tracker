@@ -318,6 +318,90 @@ function main() {
   if (!onboardSrc.includes("[") || !onboardSrc.includes("Skip")) {
     fail("catalogue onboarding missing index or skip");
   }
+  if (onboardSrc.includes("estimatedCardH")) {
+    fail("catalogue onboarding still uses estimated card height");
+  }
+  if (!onboardSrc.includes("onLayout") || !onboardSrc.includes("onTargetPress")) {
+    fail("catalogue onboarding missing measured card or interactive target");
+  }
+  if (!onboardSrc.includes('pointerEvents="auto"')) {
+    fail("catalogue onboarding overlay must keep blocking pointer events");
+  }
+  if (!introSrc.includes("ScrollView") || !introSrc.includes("maxHeight")) {
+    fail("Atelier welcome is not scroll-safe on short screens");
+  }
+  if (!introSrc.includes("Enter Atelier") || !introSrc.includes("Personal yearly archive")) {
+    fail("short-screen welcome lost required copy");
+  }
+  if (!gallerySrc.includes("Replay guide") || !gallerySrc.includes("onReplayGuide")) {
+    fail("Replay Guide missing from ThemeGallery");
+  }
+  if (!appSrcAfter.includes("replayCatalogueGuide")) {
+    fail("Replay Guide is not wired in App.js");
+  }
+  if (!appSrcAfter.includes("todayCellMeasureRef") || !appSrcAfter.includes("todayCellRef")) {
+    fail("onboarding today-cell measurement is not wired");
+  }
+  if (!appSrcAfter.includes("handleOnboardingTodayToggle") || !appSrcAfter.includes("onTargetPress")) {
+    fail("onboarding Step 1 is not wired to the real habit toggle path");
+  }
+  if (!appSrcAfter.includes("toggleHabit(habit.id, dayKey)")) {
+    fail("onboarding Step 1 must call the real toggleHabit path");
+  }
+
+  const qaPath = path.join(ROOT, "utils", "devFirstRunQa.js");
+  if (!fs.existsSync(qaPath)) fail("missing utils/devFirstRunQa.js");
+  const qaSrc = read(qaPath);
+  for (const name of [
+    "simulateFreshInstall",
+    "simulateOldYearlyTrackerUser",
+    "simulateEarlierRevampUser",
+    "replayOnboardingFlags",
+    "resetThemeChoicePrompt",
+  ]) {
+    const re = new RegExp(
+      String.raw`export async function ${name}\([^)]*\)\s*\{\s*if \(!__DEV__\) return;`
+    );
+    if (!re.test(qaSrc)) fail(`${name} is not hard-gated on __DEV__`);
+  }
+  if (!/export function reloadForQa\(\)\s*\{\s*if \(!__DEV__\) return;/.test(qaSrc)) {
+    fail("reloadForQa is not hard-gated on __DEV__");
+  }
+  for (const key of [
+    "rt_goals_v1",
+    "yt_habits_v1",
+    "yt_goal_history_v1",
+    "yt_custom_themes_v1",
+    "rt_hue_v1",
+  ]) {
+    if (new RegExp(String.raw`(?:setItem|removeItem)\([^)]*${key}`).test(qaSrc)) {
+      fail(`DEV QA must not mutate user data key ${key}`);
+    }
+  }
+  if (!qaSrc.includes("DATA_KEYS") || !qaSrc.includes("STORAGE_KEYS.goals") || !qaSrc.includes("yt_habits_v1")) {
+    fail("DEV QA helper must blocklist production data keys");
+  }
+  const qaUiPath = path.join(ROOT, "components", "atelier", "DevFirstRunQa.js");
+  if (!fs.existsSync(qaUiPath)) fail("missing DevFirstRunQa");
+  const qaUiSrc = read(qaUiPath);
+  if (!qaUiSrc.includes("if (!__DEV__) return null")) {
+    fail("QA UI must not render unless __DEV__");
+  }
+  if (!qaUiSrc.includes("[DEV] / FIRST-RUN STATES")) {
+    fail("QA card missing required kicker");
+  }
+  const headerSrcForQa = read(
+    path.join(ROOT, "components", "editorial", "CollapsingHeader.js")
+  );
+  if (!headerSrcForQa.includes("__DEV__") || !headerSrcForQa.includes("onMarkLongPress")) {
+    fail("header QA trigger is not DEV-gated");
+  }
+  if (!appSrcAfter.includes("{__DEV__ ? (") || !appSrcAfter.includes("DevFirstRunQa")) {
+    fail("DEV QA UI is not gated in App.js");
+  }
+  if (!appSrcAfter.includes("async function qaSimulateFresh") || !appSrcAfter.includes("if (!__DEV__) return;")) {
+    fail("App.js QA mutations are not DEV-gated");
+  }
   if (!appSrcAfter.includes("habitsListContent") || !appSrcAfter.includes("listBottomSpacer")) {
     fail("Habits/Goals list footer spacer contract missing");
   }
