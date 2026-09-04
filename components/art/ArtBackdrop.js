@@ -20,28 +20,32 @@ import AsciiArtwork from "./AsciiArtwork";
 import LivingCanvas from "./LivingCanvas";
 
 function ArtImage({ visual, theme, opacity, scale, paused }) {
-  const style = useAnimatedStyle(() => ({
+  const fadeStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
+  }));
+  const scaleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
   const artwork = visual.meta || theme?.artwork || null;
   if (!visual.image) return null;
   return (
-    <Animated.View style={[styles.imageWrap, style]}>
-      <LivingCanvas active={!paused} layer="art">
-        <Image
-          source={visual.image}
-          style={styles.image}
-          resizeMode="cover"
-          accessible={false}
-          accessibilityElementsHidden
-          accessibilityLabel={
-            artwork
-              ? `${artwork.title} by ${artwork.artist}, ${artwork.year}`
-              : undefined
-          }
-        />
-      </LivingCanvas>
+    <Animated.View style={[styles.imageWrap, fadeStyle]}>
+      <Animated.View style={[styles.imageWrap, scaleStyle]}>
+        <LivingCanvas active={!paused} layer="art">
+          <Image
+            source={visual.image}
+            style={styles.image}
+            resizeMode="cover"
+            accessible={false}
+            accessibilityElementsHidden
+            accessibilityLabel={
+              artwork
+                ? `${artwork.title} by ${artwork.artist}, ${artwork.year}`
+                : undefined
+            }
+          />
+        </LivingCanvas>
+      </Animated.View>
     </Animated.View>
   );
 }

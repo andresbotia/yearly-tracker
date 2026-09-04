@@ -37,17 +37,10 @@ export function CollapsingIdentity({
   const fadeStyle = useAnimatedStyle(() => {
     const y = scrollY.value;
     if (reduced) {
-      const hidden = y > HEADER_COLLAPSE * 0.65;
-      return {
-        opacity: hidden ? 0 : 1,
-        transform: [{ translateY: 0 }],
-      };
+      return { opacity: y > HEADER_COLLAPSE * 0.65 ? 0 : 1 };
     }
     const t = interpolate(y, [0, HEADER_COLLAPSE], [0, 1], Extrapolation.CLAMP);
-    return {
-      opacity: 1 - t,
-      transform: [{ translateY: -t * 10 }],
-    };
+    return { opacity: 1 - t };
   });
 
   if (!visible) return null;

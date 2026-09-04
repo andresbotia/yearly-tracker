@@ -50,22 +50,26 @@ export default function AtelierDrawer({
     );
   }, [visible, reduced, progress]);
 
-  const sheetStyle = useAnimatedStyle(() => ({
+  const fadeStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+  }));
+  const riseStyle = useAnimatedStyle(() => ({
     transform: [
       {
         translateY: reduced ? 0 : (1 - progress.value) * 22,
       },
     ],
-    opacity: progress.value,
   }));
 
   const dimStyle = useAnimatedStyle(() => ({
     opacity: progress.value * 0.36,
   }));
 
+  if (!shown) return null;
+
   return (
     <Modal
-      visible={shown}
+      visible
       transparent
       animationType="none"
       onRequestClose={onClose}
@@ -80,6 +84,7 @@ export default function AtelierDrawer({
             style={[styles.dim, dimStyle]}
           />
         </Pressable>
+        <Animated.View style={fadeStyle}>
         <Animated.View
           style={[
             styles.sheet,
@@ -87,7 +92,7 @@ export default function AtelierDrawer({
               backgroundColor: theme?.card || "#fbf8f1",
               borderColor: ink,
             },
-            sheetStyle,
+            riseStyle,
           ]}
         >
           <View
@@ -118,6 +123,7 @@ export default function AtelierDrawer({
             <View style={styles.body}>{children}</View>
             {footer ? <View style={styles.footer}>{footer}</View> : null}
           </SafeAreaView>
+        </Animated.View>
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>

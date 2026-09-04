@@ -37,7 +37,7 @@ export default function AtelierTabs({ theme, active, onChange }) {
   }, [active, reduced]);
 
   const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: x.value }],
+    left: x.value,
     width: w.value,
   }));
 

@@ -48,6 +48,9 @@ function HabitCell({ value, size, theme, onPress, fontsLoaded, label }) {
   const scaleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+  const flashStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + flash.value * 0.06 }],
+  }));
 
   React.useEffect(() => {
     if (prev.current === value) return;
@@ -64,27 +67,22 @@ function HabitCell({ value, size, theme, onPress, fontsLoaded, label }) {
         ? theme.danger
         : theme.mutedText;
 
-  const charStyle = useAnimatedStyle(() => ({
-    opacity: 1,
-    transform: [{ scale: 1 + flash.value * 0.06 }],
-  }));
-
   return (
-    <Animated.View style={scaleStyle}>
-      <Pressable
-        onPress={onPress}
-        onPressIn={() => {
-          scale.value = withTiming(MOTION.pressScale, { duration: MOTION.micro });
-        }}
-        onPressOut={() => {
-          scale.value = withTiming(1, { duration: MOTION.short });
-        }}
-        style={[styles.cell, { width: size, height: size }]}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        accessibilityHint="Cycles empty, good, bad"
-      >
-        <Animated.View style={charStyle}>
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withTiming(MOTION.pressScale, { duration: MOTION.micro });
+      }}
+      onPressOut={() => {
+        scale.value = withTiming(1, { duration: MOTION.short });
+      }}
+      style={[styles.cell, { width: size, height: size }]}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint="Cycles empty, good, bad"
+    >
+      <Animated.View style={scaleStyle}>
+        <Animated.View style={flashStyle}>
           <Text
             style={[
               styles.cellChar,
@@ -97,8 +95,8 @@ function HabitCell({ value, size, theme, onPress, fontsLoaded, label }) {
             {char}
           </Text>
         </Animated.View>
-      </Pressable>
-    </Animated.View>
+      </Animated.View>
+    </Pressable>
   );
 }
 
