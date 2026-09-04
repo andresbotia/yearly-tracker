@@ -59,8 +59,10 @@ A user who updates from Yearly Tracker to Atelier Tracker must keep the same goa
 | `yt_habits_welcome_seen_v1` | Habits intro seen | `"1"` (App.js) |
 | `yt_revamp_intro_seen_v1` | Atelier/revamp intro seen | `"1"` (additive) |
 | `yt_random_art_last_v1` | Last Random Art plate | string art id (additive) |
+| `yt_revamp_theme_choice_seen_v1` | Existing-user style choice | `"1"` (additive) |
+| `yt_onboarding_seen_v1` | New-user catalogue onboarding | `"1"` (additive) |
 
-`yt_revamp_intro_seen_v1` and `yt_random_art_last_v1` are presentation-only. Their absence is not missing or corrupt user data. Do not reuse `rt_welcome_seen_v1` for the rebrand intro.
+`yt_revamp_intro_seen_v1`, `yt_random_art_last_v1`, `yt_revamp_theme_choice_seen_v1`, and `yt_onboarding_seen_v1` are presentation-only. Their absence is not missing or corrupt user data. Do not reuse `rt_welcome_seen_v1` for the rebrand intro or the style-choice prompt. Do not reuse `yt_revamp_intro_seen_v1` for the style-choice prompt.
 
 `rt_hue_v1` may now also be `random-art`. That stored mode is resolved on launch to one bundled artwork for the session. Widgets receive the resolved plate/palette, not a new random choice on every refresh.
 

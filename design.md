@@ -251,8 +251,14 @@ confirm is primary fill. Type choices use ink-fill toggles, not pills.
 
 Never display multiple modals at once. Order:
 
-1. Existing onboarding / rollover / habits intro
-2. Then the one-time Atelier / revamp introduction
+1. Annual rollover (if needed)
+2. One Atelier welcome: fresh install, or existing-user rebrand introduction
+3. Existing-user style choice (additive, once)
+4. New-user contextual catalogue onboarding
+
+Do not show the retired Yearly Tracker welcome card or the separate Habits
+intro modal. Keep their storage keys (`rt_welcome_seen_v1`,
+`yt_habits_welcome_seen_v1`) as compatibility signals.
 
 ### Atelier introduction
 Storage key: `yt_revamp_intro_seen_v1` (additive). Do not reuse
@@ -264,14 +270,27 @@ Existing production users:
 - Kicker: NEW EDITION
 - Title: Yearly Tracker is now Atelier Tracker
 - CTA: Enter Atelier
+- Then the style-choice card (`yt_revamp_theme_choice_seen_v1`):
+  TRY RANDOM ART writes `random-art` through the normal theme path;
+  KEEP MY CURRENT THEME writes no theme value
 
 Fresh installs:
 
 - Final `[AT]` mark
-- Kicker: PRIVATE YEARLY JOURNAL
+- Kicker: PERSONAL YEARLY ARCHIVE
 - Title: Welcome to Atelier Tracker
+- James Clear quote, then concise product copy
 - CTA: Enter Atelier
+- Default theme is Random Art (`rt_hue_v1` = `random-art`)
 - Do not tell them the app "changed"
+- After Enter Atelier, a four-step catalogue tour
+  (`yt_onboarding_seen_v1`) on the real Habits screen. Skip or finish
+  persists the flag. Reduced motion: fade only.
+
+### Catalogue onboarding
+Museum-paper annotation, hairline pointer, mono index `[01 / 04]`.
+Short copy only. No speech bubbles, cartoon hands, system coach marks,
+heavy dimming, or confetti. Wait for target geometry before drawing.
 
 ## Theme gallery
 Stamp-grid / catalog wall, not a long list.

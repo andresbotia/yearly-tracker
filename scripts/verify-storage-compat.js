@@ -284,6 +284,43 @@ function main() {
   if (REQUIRED_KEYS.includes("yt_random_art_last_v1")) {
     fail("yt_random_art_last_v1 must remain additive, not a required old key");
   }
+  if (!storageSrc.includes("yt_revamp_theme_choice_seen_v1")) {
+    fail("revamp theme-choice key missing from storage.js");
+  }
+  if (REQUIRED_KEYS.includes("yt_revamp_theme_choice_seen_v1")) {
+    fail("yt_revamp_theme_choice_seen_v1 must remain additive, not a required old key");
+  }
+  if (!storageSrc.includes("yt_onboarding_seen_v1")) {
+    fail("onboarding key missing from storage.js");
+  }
+  if (REQUIRED_KEYS.includes("yt_onboarding_seen_v1")) {
+    fail("yt_onboarding_seen_v1 must remain additive, not a required old key");
+  }
+  if (!appSrcAfter.includes("saveHue(RANDOM_ART_ID)")) {
+    fail("fresh-install Random Art default is not wired through saveHue");
+  }
+  if (appSrcAfter.includes("Get Started") && appSrcAfter.includes("James Clear")) {
+    fail("legacy first-run welcome UI is still in App.js");
+  }
+  const introSrc = read(path.join(ROOT, "components", "art", "RevampIntroModal.js"));
+  if (!introSrc.includes("James Clear") || !introSrc.includes("Personal yearly archive")) {
+    fail("fresh Atelier welcome is missing required copy");
+  }
+  const choicePath = path.join(ROOT, "components", "art", "RevampThemeChoiceModal.js");
+  if (!fs.existsSync(choicePath)) fail("missing RevampThemeChoiceModal");
+  const choiceSrc = read(choicePath);
+  if (!choiceSrc.includes("Keep my current theme") || !choiceSrc.includes("Try Random Art")) {
+    fail("style-choice card is missing required actions");
+  }
+  const onboardPath = path.join(ROOT, "components", "atelier", "CatalogueOnboarding.js");
+  if (!fs.existsSync(onboardPath)) fail("missing CatalogueOnboarding");
+  const onboardSrc = read(onboardPath);
+  if (!onboardSrc.includes("[") || !onboardSrc.includes("Skip")) {
+    fail("catalogue onboarding missing index or skip");
+  }
+  if (!appSrcAfter.includes("habitsListContent") || !appSrcAfter.includes("listBottomSpacer")) {
+    fail("Habits/Goals list footer spacer contract missing");
+  }
   const backdropPath = path.join(ROOT, "components", "art", "ArtBackdrop.js");
   if (!fs.existsSync(backdropPath)) fail("missing components/art/ArtBackdrop.js");
   const backdropSrc = read(backdropPath);
