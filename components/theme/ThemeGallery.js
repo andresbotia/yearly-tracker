@@ -71,6 +71,7 @@ export default function ThemeGallery({
   customThemes,
   onPick,
   onDeleteCustom,
+  onReplayGuide,
 }) {
   const fontsLoaded = useFontsLoaded();
   const { width } = useWindowDimensions();
@@ -328,6 +329,30 @@ export default function ThemeGallery({
           </Pressable>
         ))
       )}
+
+      {onReplayGuide ? (
+        <Pressable
+          onPress={onReplayGuide}
+          accessibilityRole="button"
+          accessibilityLabel="Replay guide"
+          style={({ pressed }) => [
+            styles.replay,
+            { opacity: pressed ? 0.6 : 1 },
+          ]}
+        >
+          <Text
+            style={[
+              styles.replayLabel,
+              {
+                color: theme.mutedText,
+                fontFamily: fontFamily("data", fontsLoaded),
+              },
+            ]}
+          >
+            Replay guide
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 
@@ -475,6 +500,18 @@ const styles = StyleSheet.create({
     bottom: 6,
     width: 7,
     height: 7,
+  },
+  replay: {
+    marginTop: SPACE.lg,
+    minHeight: 44,
+    justifyContent: "center",
+    alignSelf: "flex-start",
+  },
+  replayLabel: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
   },
   stampCaption: {
     marginTop: 4,
