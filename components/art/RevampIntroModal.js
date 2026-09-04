@@ -5,9 +5,10 @@ import { useFontsLoaded } from "../../utils/fonts";
 import MetadataLabel from "../editorial/MetadataLabel";
 import SectionRule from "../editorial/SectionRule";
 import ArtHero from "./ArtHero";
+import BrandMark from "../brand/BrandMark";
 
 const EXISTING = {
-  kicker: "[AT]  /  New edition",
+  kicker: "New edition",
   title: "Yearly Tracker is now Atelier Tracker",
   body: [
     "Your goals, habits, and history are exactly where you left them.",
@@ -17,7 +18,7 @@ const EXISTING = {
 };
 
 const FRESH = {
-  kicker: "[AT]  /  Private yearly journal",
+  kicker: "Private yearly journal",
   title: "Welcome to Atelier Tracker",
   body: [
     "Track your habits, goals, and year through a quiet, art-led interface.",
@@ -54,6 +55,7 @@ export default function RevampIntroModal({
             },
           ]}
         >
+          <BrandMark size={48} />
           <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
             {copy.kicker}
           </MetadataLabel>

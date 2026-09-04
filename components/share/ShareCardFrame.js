@@ -5,6 +5,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
+import BrandMark from "../brand/BrandMark";
 
 export function useScale(width) {
   const scale = width / 1080;
@@ -78,19 +79,25 @@ export function ShareCardFrame({
           contentStyle,
         ]}
       >
-        <Text
-          style={[
-            styles.kicker,
-            {
-              color: theme.mutedText,
-              fontFamily: fontFamily("data", fontsLoaded),
-              fontSize: s(18),
-              letterSpacing: s(4),
-            },
-          ]}
-        >
-          {String(kicker).toUpperCase()}
-        </Text>
+        <View style={[styles.brandRow, { marginBottom: s(10) }]}>
+          <BrandMark size={Math.max(24, s(32))} />
+          {kicker && String(kicker).toLowerCase() !== "atelier tracker" ? (
+            <Text
+              style={[
+                styles.kicker,
+                {
+                  color: theme.mutedText,
+                  fontFamily: fontFamily("data", fontsLoaded),
+                  fontSize: s(18),
+                  letterSpacing: s(4),
+                  marginLeft: s(16),
+                },
+              ]}
+            >
+              {String(kicker).toUpperCase()}
+            </Text>
+          ) : null}
+        </View>
         {children}
         <View style={{ flex: 1 }} />
         <Text
@@ -124,6 +131,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   kicker: {
     fontWeight: "600",

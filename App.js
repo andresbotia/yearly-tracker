@@ -54,6 +54,7 @@ import HabitHistory from "./components/HabitHistory";
 import ArtBackdrop from "./components/art/ArtBackdrop";
 
 import RevampIntroModal from "./components/art/RevampIntroModal";
+import BrandSplash from "./components/brand/BrandSplash";
 import EditorialProgress from "./components/editorial/EditorialProgress";
 import MetadataLabel from "./components/editorial/MetadataLabel";
 import SectionRule from "./components/editorial/SectionRule";
@@ -2057,31 +2058,8 @@ export default function App() {
   if (!ready) {
     return (
       <FontsProvider loaded={fontsLoaded}>
-        <GestureHandlerRootView
-          style={[styles.safe, { backgroundColor: theme.bg }]}
-        >
-          <ArtBackdrop
-            theme={theme}
-            fontsLoaded={fontsLoaded}
-            paused
-            reveal={artReveal}
-          />
-          <SafeAreaView style={[styles.safe, styles.transparent]}>
-            <View style={styles.loadingWrap}>
-              <MetadataLabel theme={theme}>[AT] Atelier Tracker</MetadataLabel>
-              <Text
-                style={[
-                  styles.loadingTitle,
-                  {
-                    color: theme.text,
-                    fontFamily: fontFamily("display", fontsLoaded),
-                  },
-                ]}
-              >
-                Opening the ledger
-              </Text>
-            </View>
-          </SafeAreaView>
+        <GestureHandlerRootView style={styles.safe}>
+          <BrandSplash />
         </GestureHandlerRootView>
       </FontsProvider>
     );

@@ -12,15 +12,19 @@ import { useFontsLoaded } from "../../utils/fonts";
 import { useReducedMotion } from "../../utils/motion";
 import MetadataLabel from "./MetadataLabel";
 import ArtworkCredit from "../art/ArtworkCredit";
+import BrandMark from "../brand/BrandMark";
 
 export const HEADER_COLLAPSE = 40;
 
 export function CollapsingKicker({ theme, year, fontsLoaded }) {
   const loaded = useFontsLoaded() || !!fontsLoaded;
   return (
-    <MetadataLabel theme={theme} fontsLoaded={loaded}>
-      {`[AT]  ATELIER TRACKER  /  ${year}`}
-    </MetadataLabel>
+    <View style={styles.kickerRow}>
+      <BrandMark size={24} />
+      <MetadataLabel theme={theme} fontsLoaded={loaded}>
+        {`/  ${year}`}
+      </MetadataLabel>
+    </View>
   );
 }
 
@@ -78,6 +82,12 @@ export function CollapsingIdentity({
 }
 
 const styles = StyleSheet.create({
+  kickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 24,
+  },
   identity: {
     marginTop: SPACE["2xs"],
   },

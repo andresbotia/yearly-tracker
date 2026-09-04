@@ -25,6 +25,7 @@ import {
 import { ART_IMAGES } from "../../assets/art/images";
 import MetadataLabel from "../editorial/MetadataLabel";
 import SectionRule from "../editorial/SectionRule";
+import BrandMark from "../brand/BrandMark";
 
 function groupLabel(artist) {
   return artistGroupLabel(artist);
@@ -103,9 +104,12 @@ export default function ThemeGallery({
 
   const header = (
     <View>
-      <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
-        [AT]  Atelier collection
-      </MetadataLabel>
+      <View style={styles.brandRow}>
+        <BrandMark size={24} />
+        <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
+          Atelier collection
+        </MetadataLabel>
+      </View>
       <Text
         style={[
           styles.sectionNote,
@@ -388,6 +392,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: SPACE.lg,
+  },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACE.xs,
+    marginBottom: SPACE["2xs"],
   },
   sectionNote: {
     marginTop: SPACE["2xs"],

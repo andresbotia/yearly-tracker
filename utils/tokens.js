@@ -6,6 +6,16 @@
 
 export const ASCII_RAMP = " .:-=+*#%@";
 
+// Final Atelier identity colors (Claude brand spec). Do not use Cypress
+// as a default control fill or as a replacement for art-theme palettes.
+export const BRAND = {
+  ink: "#1C1916",
+  paper: "#F6F3EC",
+  paperDeep: "#EDE7DA",
+  mutedInk: "#6B645C",
+  cypress: "#3E4F45",
+};
+
 export const SPACE = {
   "3xs": 2,
   "2xs": 4,
