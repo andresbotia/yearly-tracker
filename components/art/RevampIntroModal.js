@@ -18,8 +18,11 @@ const EXISTING = {
 };
 
 const FRESH = {
-  kicker: "Private yearly journal",
+  kicker: "Personal yearly archive",
   title: "Welcome to Atelier Tracker",
+  quote:
+    "“Success is the product of daily habits—not once-in-a-lifetime transformations.”",
+  attribution: "— James Clear",
   body: [
     "Track your habits, goals, and year through a quiet, art-led interface.",
     "No account. No tracking. Your data stays on your device.",
@@ -78,6 +81,27 @@ export default function RevampIntroModal({
           </Text>
 
           <SectionRule theme={theme} style={styles.rule} />
+
+          {copy.quote ? (
+            <>
+              <Text
+                style={[
+                  styles.quote,
+                  { color: ink, fontFamily: fontFamily("body", fontsLoaded) },
+                ]}
+              >
+                {copy.quote}
+              </Text>
+              <Text
+                style={[
+                  styles.attribution,
+                  { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
+                ]}
+              >
+                {copy.attribution}
+              </Text>
+            </>
+          ) : null}
 
           {copy.body.map((paragraph) => (
             <Text
@@ -147,6 +171,17 @@ const styles = StyleSheet.create({
   },
   rule: {
     marginTop: SPACE.xs,
+    marginBottom: SPACE.xs,
+  },
+  quote: {
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "400",
+    lineHeight: 22,
+  },
+  attribution: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "400",
+    letterSpacing: TYPE_TRACK.data,
     marginBottom: SPACE.xs,
   },
   body: {

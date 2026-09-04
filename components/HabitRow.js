@@ -150,6 +150,7 @@ export default function HabitRow({
   onSwipeOpen,
   onSwipeClose,
   removing = false,
+  measureRef,
 }) {
   const swipeRef = useRef(null);
   const fontsLoaded = useFontsLoaded();
@@ -220,6 +221,8 @@ export default function HabitRow({
       }}
     >
       <View
+        ref={measureRef}
+        collapsable={false}
         style={[
           styles.row,
           {

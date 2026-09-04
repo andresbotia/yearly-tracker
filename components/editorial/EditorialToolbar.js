@@ -16,33 +16,39 @@ export default function EditorialToolbar({ items = [], theme, style }) {
       {items.map((item) => {
         const color = item.danger ? danger : ink;
         return (
-          <PressableInk
+          <View
             key={item.label}
-            onPress={item.onPress}
-            disabled={item.disabled}
-            haptic="select"
-            accessibilityRole="button"
-            accessibilityLabel={item.accessibilityLabel || item.label}
-            style={[
-              styles.cell,
-              {
-                borderColor: color,
-              },
-            ]}
-            innerStyle={styles.cellInner}
+            ref={item.measureRef}
+            collapsable={false}
+            style={styles.cellWrap}
           >
-            <Text
+            <PressableInk
+              onPress={item.onPress}
+              disabled={item.disabled}
+              haptic="select"
+              accessibilityRole="button"
+              accessibilityLabel={item.accessibilityLabel || item.label}
               style={[
-                styles.label,
+                styles.cell,
                 {
-                  color,
-                  fontFamily: fontFamily("data", fontsLoaded),
+                  borderColor: color,
                 },
               ]}
+              innerStyle={styles.cellInner}
             >
-              {item.label}
-            </Text>
-          </PressableInk>
+              <Text
+                style={[
+                  styles.label,
+                  {
+                    color,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+              >
+                {item.label}
+              </Text>
+            </PressableInk>
+          </View>
         );
       })}
     </View>
@@ -54,6 +60,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "stretch",
     gap: SPACE.xs,
+  },
+  cellWrap: {
+    flex: 1,
   },
   cell: {
     flex: 1,
