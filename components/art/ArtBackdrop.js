@@ -135,10 +135,6 @@ function ArtBackdrop({
     }
 
     if (nextId === lastId.current) {
-      if (plate) {
-        incomingRef.current = plate;
-        setIncoming(plate);
-      }
       return;
     }
 

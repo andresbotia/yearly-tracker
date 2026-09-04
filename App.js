@@ -26,7 +26,6 @@ import ColorPicker, {
 } from "reanimated-color-picker";
 
 import Reanimated, {
-  FadeIn,
   useSharedValue,
   useAnimatedStyle,
 } from "react-native-reanimated";
@@ -64,11 +63,6 @@ import {
   CollapsingKicker,
   CollapsingIdentity,
 } from "./components/editorial/CollapsingHeader";
-import {
-  listEntering,
-  listExiting,
-  listLayout,
-} from "./components/motion/AnimatedListItem";
 import {
   THEMES,
   makeTheme,
@@ -462,7 +456,6 @@ export default function App() {
   const [removingGoalId, setRemovingGoalId] = useState(null);
   const [removingHabitId, setRemovingHabitId] = useState(null);
   const headerScrollY = useSharedValue(0);
-  const tabDir = useRef(0);
   const reducedMotion = useReducedMotion();
   const counterRef = useRef(null);
 
@@ -1832,8 +1825,6 @@ export default function App() {
   };
 
   function selectTab(next) {
-    const order = { habits: 0, goals: 1, history: 2, archive: 3 };
-    tabDir.current = (order[next] ?? 0) >= (order[activeTab] ?? 0) ? 1 : -1;
     closeOpenHabitSwipe();
     headerScrollY.value = 0;
     setActiveTab(next);
@@ -1853,13 +1844,6 @@ export default function App() {
     habitEditOpen ||
     artReveal ||
     themeExpand;
-
-  const tabEntering = reducedMotion
-    ? FadeIn.duration(MOTION.reduced)
-    : FadeIn.duration(MOTION.tab).withInitialValues({
-        opacity: 0,
-        transform: [{ translateX: tabDir.current * 14 }],
-      });
 
   const stickyChrome = (
     <View style={styles.stickyChrome}>
@@ -2121,11 +2105,7 @@ export default function App() {
       />
       <SafeAreaView style={[styles.safe, styles.transparent]}>
         {stickyChrome}
-        <Reanimated.View
-          key={activeTab}
-          style={styles.tabPane}
-          entering={tabEntering}
-        >
+        <View style={styles.tabPane}>
         {activeTab === "goals" ? (
           <DraggableFlatList
             activationDistance={12}
@@ -2136,10 +2116,6 @@ export default function App() {
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
             onScrollOffsetChange={onListScrollOffset}
-            itemEnteringAnimation={listEntering(reducedMotion)}
-            itemExitingAnimation={listExiting(reducedMotion)}
-            itemLayoutAnimation={listLayout(reducedMotion)}
-            enableLayoutAnimationExperimental
             onDragBegin={() => {
               if (!goalDragging) {
                 setGoalDragging(true);
@@ -2216,10 +2192,6 @@ export default function App() {
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
             onScrollOffsetChange={onListScrollOffset}
-            itemEnteringAnimation={listEntering(reducedMotion)}
-            itemExitingAnimation={listExiting(reducedMotion)}
-            itemLayoutAnimation={listLayout(reducedMotion)}
-            enableLayoutAnimationExperimental
             onDragBegin={() => {
               closeOpenHabitSwipe();
               if (!habitDragging) {
@@ -2271,7 +2243,7 @@ export default function App() {
             }
           />
         )}
-        </Reanimated.View>
+        </View>
         {!!undo && (
           <View
             style={[

@@ -35,8 +35,7 @@ export function CollapsingIdentity({
   const ink = theme?.text || "#1c1916";
 
   const fadeStyle = useAnimatedStyle(() => {
-    if (!visible) return { opacity: 0, height: 0, marginTop: 0 };
-    const y = scrollY?.value ?? 0;
+    const y = scrollY.value;
     if (reduced) {
       const hidden = y > HEADER_COLLAPSE * 0.65;
       return {

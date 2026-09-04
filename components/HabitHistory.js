@@ -10,11 +10,10 @@ import {
   Platform,
   Pressable,
 } from "react-native";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
-import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "../utils/tokens";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../utils/tokens";
 import { habitStateChar, habitStateLabel } from "../utils/habitAscii";
 import { useFontsLoaded } from "../utils/fonts";
-import { hapticTick, useReducedMotion } from "../utils/motion";
+import { hapticTick } from "../utils/motion";
 import MetadataLabel from "./editorial/MetadataLabel";
 import EditorialEmpty from "./editorial/EditorialEmpty";
 import SectionRule from "./editorial/SectionRule";
@@ -75,7 +74,6 @@ export default function HabitHistory({
   todayDate,
 }) {
   const fontsLoaded = useFontsLoaded();
-  const reduced = useReducedMotion();
   const todayYear = todayDate.getFullYear();
   const todayMonth = todayDate.getMonth();
   const currentMonthScrollRef = useRef(null);
@@ -262,20 +260,7 @@ export default function HabitHistory({
             const indexLabel = String(month.monthIndex + 1).padStart(2, "0");
 
             return (
-              <Animated.View
-                key={month.label}
-                style={styles.monthSection}
-                entering={
-                  reduced
-                    ? FadeIn.duration(MOTION.reduced)
-                    : FadeIn.duration(MOTION.tab)
-                }
-                exiting={
-                  reduced
-                    ? FadeOut.duration(MOTION.reduced)
-                    : FadeOut.duration(MOTION.short)
-                }
-              >
+              <View key={month.label} style={styles.monthSection}>
                 <View style={styles.monthHeaderRow}>
                   <Text
                     style={[
@@ -472,7 +457,7 @@ export default function HabitHistory({
                   </ScrollView>
                 </View>
                 <SectionRule theme={theme} />
-              </Animated.View>
+              </View>
             );
           })}
         </View>
