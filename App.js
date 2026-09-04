@@ -68,6 +68,7 @@ import AtelierTabs from "./components/editorial/AtelierTabs";
 import {
   CollapsingKicker,
   CollapsingIdentity,
+  HEADER_ANIM_RANGE,
 } from "./components/editorial/CollapsingHeader";
 import {
   THEMES,
@@ -1841,7 +1842,12 @@ export default function App() {
   }
 
   function onListScrollOffset(offset) {
-    headerScrollY.value = offset;
+    const y = typeof offset === "number" && Number.isFinite(offset) ? offset : 0;
+    if (y <= 0) {
+      headerScrollY.value = 0;
+      return;
+    }
+    headerScrollY.value = y > HEADER_ANIM_RANGE ? HEADER_ANIM_RANGE : y;
   }
 
   const canvasPaused =
@@ -2100,7 +2106,14 @@ export default function App() {
             containerStyle={styles.transparentList}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
+            ListFooterComponent={<View style={styles.listBottomSpacer} />}
             onScrollOffsetChange={onListScrollOffset}
+            bounces
+            alwaysBounceVertical
+            overScrollMode="always"
+            contentInsetAdjustmentBehavior="never"
+            automaticallyAdjustContentInsets={false}
+            automaticallyAdjustsScrollIndicatorInsets={false}
             onDragBegin={() => {
               if (!goalDragging) {
                 setGoalDragging(true);
@@ -2177,6 +2190,12 @@ export default function App() {
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
             onScrollOffsetChange={onListScrollOffset}
+            bounces
+            alwaysBounceVertical
+            overScrollMode="always"
+            contentInsetAdjustmentBehavior="never"
+            automaticallyAdjustContentInsets={false}
+            automaticallyAdjustsScrollIndicatorInsets={false}
             onDragBegin={() => {
               closeOpenHabitSwipe();
               if (!habitDragging) {
@@ -2215,16 +2234,19 @@ export default function App() {
               />
             }
             ListFooterComponent={
-              <EditorialSurface theme={theme} padded={false} style={styles.actionsRow}>
-                <EditorialToolbar
-                  theme={theme}
-                  items={[
-                    { label: "Add habit", onPress: () => setHabitAddOpen(true) },
-                    { label: "Share", onPress: () => setShareOpen(true) },
-                    { label: "Theme", onPress: openThemePicker },
-                  ]}
-                />
-              </EditorialSurface>
+              <View>
+                <EditorialSurface theme={theme} padded={false} style={styles.actionsRow}>
+                  <EditorialToolbar
+                    theme={theme}
+                    items={[
+                      { label: "Add habit", onPress: () => setHabitAddOpen(true) },
+                      { label: "Share", onPress: () => setShareOpen(true) },
+                      { label: "Theme", onPress: openThemePicker },
+                    ]}
+                  />
+                </EditorialSurface>
+                <View style={styles.listBottomSpacer} />
+              </View>
             }
           />
         )}
@@ -3283,7 +3305,10 @@ const styles = StyleSheet.create({
   transparentList: { flex: 1, backgroundColor: "transparent" },
   listContent: {
     paddingHorizontal: SPACE.md,
-    paddingBottom: SPACE["2xl"] + SPACE.lg,
+    paddingBottom: SPACE["2xl"] + SPACE.xl,
+  },
+  listBottomSpacer: {
+    height: SPACE["2xl"],
   },
 
   stickyChrome: {

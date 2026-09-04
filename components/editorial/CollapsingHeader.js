@@ -15,6 +15,10 @@ import ArtworkCredit from "../art/ArtworkCredit";
 import BrandMark from "../brand/BrandMark";
 
 export const HEADER_COLLAPSE = 40;
+// Header animation only needs the useful top range. Bottom rubber-band
+// offsets must not keep driving this value or the sticky chrome will
+// relayout on every overscroll frame.
+export const HEADER_ANIM_RANGE = 200;
 
 export function CollapsingKicker({ theme, year, fontsLoaded }) {
   const loaded = useFontsLoaded() || !!fontsLoaded;
@@ -40,7 +44,7 @@ export function CollapsingIdentity({
   const measured = useSharedValue(0);
 
   const collapseStyle = useAnimatedStyle(() => {
-    const y = scrollY.value;
+    const y = Math.max(0, scrollY.value);
     const h = measured.value;
     if (h <= 0) {
       return { opacity: 1 };
@@ -50,6 +54,13 @@ export function CollapsingIdentity({
       return {
         opacity: hide ? 0 : 1,
         height: hide ? 0 : h,
+        overflow: "hidden",
+      };
+    }
+    if (y >= h) {
+      return {
+        opacity: 0,
+        height: 0,
         overflow: "hidden",
       };
     }

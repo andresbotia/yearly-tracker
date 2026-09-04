@@ -8,7 +8,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "build:art": "node scripts/build-art-assets.js",
-    "verify:storage": "node scripts/verify-storage-compat.js"
+    "verify:storage": "node scripts/verify-storage-compat.js",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",
@@ -35,6 +36,7 @@
   "private": true,
   "devDependencies": {
     "babel-preset-expo": "^54.0.9",
-    "jpeg-js": "^0.4.4"
+    "jpeg-js": "^0.4.4",
+    "patch-package": "^8.0.1"
   }
 }

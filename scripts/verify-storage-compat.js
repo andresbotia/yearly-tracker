@@ -349,6 +349,12 @@ function main() {
   if (!headerSrc.includes("BrandMark") || headerSrc.includes("[AT]  ATELIER TRACKER")) {
     fail("collapsing header is not using the final BrandMark");
   }
+  if (!headerSrc.includes("HEADER_ANIM_RANGE") || !appSrcAfter.includes("HEADER_ANIM_RANGE")) {
+    fail("header scroll animation is not capped separately from list overscroll");
+  }
+  if (!appSrcAfter.includes("contentInsetAdjustmentBehavior=\"never\"")) {
+    fail("Goals/Habits lists missing native overscroll inset fix");
+  }
   const brandMark = path.join(ROOT, "assets", "brand", "marks", "atelier-mark-24.png");
   const brandIcon = path.join(ROOT, "assets", "brand", "icons", "atelier-app-icon-1024.png");
   const brandSpec = path.join(ROOT, "docs", "brand", "BRAND-SPEC.md");
