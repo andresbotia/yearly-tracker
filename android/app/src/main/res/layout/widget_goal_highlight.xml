@@ -27,16 +27,30 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <TextView
-      android:id="@+id/kicker"
+    <LinearLayout
+      android:id="@+id/kickerRow"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:text="[AT] / GOAL"
-      android:textAllCaps="true"
-      android:fontFamily="monospace"
-      android:textSize="10sp"
-      android:letterSpacing="0.08"
-      android:textColor="#9B1C1916" />
+      android:orientation="horizontal"
+      android:gravity="center_vertical">
+      <ImageView
+        android:id="@+id/brandMark"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/atelier_mark_24"
+        android:contentDescription="@null" />
+      <TextView
+        android:id="@+id/kicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:text="/ GOAL"
+        android:textAllCaps="true"
+        android:fontFamily="monospace"
+        android:textSize="10sp"
+        android:letterSpacing="0.08"
+        android:textColor="#9B1C1916" />
+    </LinearLayout>
 
     <TextView
       android:id="@+id/goalTitle"

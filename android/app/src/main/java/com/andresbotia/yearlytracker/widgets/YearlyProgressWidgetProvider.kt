@@ -76,7 +76,7 @@ class YearlyProgressWidgetProvider : AppWidgetProvider() {
         } catch (_: Exception) {
         }
 
-        views.setTextViewText(R.id.kicker, "[AT] / $year")
+        views.setTextViewText(R.id.kicker, "/ $year")
         views.setTextViewText(R.id.title, "$year PROGRESS")
         views.setTextViewText(R.id.pct, SharedWidgetStore.pctLabel(pct01))
         views.setTextViewText(R.id.bar, SharedWidgetStore.asciiBar(pct01, 22))

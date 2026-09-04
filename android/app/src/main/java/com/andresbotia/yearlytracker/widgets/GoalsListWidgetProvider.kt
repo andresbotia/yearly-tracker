@@ -74,7 +74,7 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
           R.id.moreLine
         )
 
-        views.safeSetText(R.id.kicker, "[AT] / GOALS")
+        views.safeSetText(R.id.kicker, "/ GOALS")
         views.safeSetText(R.id.title, "GOALS")
 
         val visibleLines =

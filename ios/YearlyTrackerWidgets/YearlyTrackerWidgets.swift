@@ -90,6 +90,33 @@ private func kickerFont() -> Font {
     .system(size: 10, weight: .semibold, design: .monospaced)
 }
 
+private struct AtelierMark: View {
+    var size: CGFloat = 24
+
+    var body: some View {
+        Image(size <= 16 ? "AtelierMark16" : "AtelierMark24")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
+    }
+}
+
+private struct AtelierKicker: View {
+    let suffix: String
+    let payload: SharedStore.WidgetPayload?
+
+    var body: some View {
+        HStack(spacing: 6) {
+            AtelierMark(size: 24)
+            Text(suffix)
+                .font(kickerFont())
+                .foregroundColor(mutedInk(payload))
+            Spacer(minLength: 0)
+        }
+    }
+}
+
 private func displayFont(_ size: CGFloat) -> Font {
     .system(size: size, weight: .bold, design: .serif)
 }
@@ -140,9 +167,7 @@ private struct EmptyStateView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("[AT]")
-                .font(kickerFont())
-                .foregroundColor(mutedInk(payload))
+            AtelierMark(size: 16)
             Text(title)
                 .font(displayFont(16))
                 .foregroundColor(inkColor(payload))
@@ -166,9 +191,7 @@ private struct YearlyProgressView: View {
         let pct = clamp01(payload?.yearlyProgress ?? 0)
 
         VStack(alignment: .leading, spacing: 8) {
-            Text("[AT] / \(year)")
-                .font(kickerFont())
-                .foregroundColor(mutedInk(payload))
+            AtelierKicker(suffix: "/ \(year)", payload: payload)
 
             Text("\(year) PROGRESS")
                 .font(kickerFont())
@@ -227,9 +250,7 @@ private struct HabitsView: View {
 
         return AnyView(
             VStack(alignment: .leading, spacing: 8) {
-                Text("[AT] / TODAY")
-                    .font(kickerFont())
-                    .foregroundColor(mutedInk(payload))
+                AtelierKicker(suffix: "/ TODAY", payload: payload)
 
                 Text("HABITS")
                     .font(kickerFont())
@@ -305,9 +326,7 @@ private struct HighlightGoalView: View {
 
         return AnyView(
             VStack(alignment: .leading, spacing: 8) {
-                Text("[AT] / GOAL")
-                    .font(kickerFont())
-                    .foregroundColor(mutedInk(payload))
+                AtelierKicker(suffix: "/ GOAL", payload: payload)
 
                 Text(g.title)
                     .font(displayFont(15))
@@ -362,9 +381,7 @@ private struct GoalsListView: View {
 
         return AnyView(
             VStack(alignment: .leading, spacing: 8) {
-                Text("[AT] / GOALS")
-                    .font(kickerFont())
-                    .foregroundColor(mutedInk(payload))
+                AtelierKicker(suffix: "/ GOALS", payload: payload)
 
                 if goals.isEmpty {
                     Text("No goals yet")

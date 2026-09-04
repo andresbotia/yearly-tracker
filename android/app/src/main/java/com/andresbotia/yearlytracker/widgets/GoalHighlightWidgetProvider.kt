@@ -82,7 +82,7 @@ class GoalHighlightWidgetProvider : AppWidgetProvider() {
         } catch (_: Exception) {
         }
 
-        views.setTextViewText(R.id.kicker, "[AT] / GOAL")
+        views.setTextViewText(R.id.kicker, "/ GOAL")
         if (top == null) {
           views.setTextViewText(R.id.goalTitle, "No goals yet")
           views.setTextViewText(R.id.pct, "00%")

@@ -73,7 +73,7 @@ class HabitsWidgetProvider : AppWidgetProvider() {
           R.id.moreLine
         )
 
-        views.safeSetText(R.id.kicker, "[AT] / TODAY")
+        views.safeSetText(R.id.kicker, "/ TODAY")
         views.safeSetText(R.id.title, "HABITS")
 
         val visibleLines =
