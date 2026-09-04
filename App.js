@@ -86,6 +86,15 @@ import CatalogueOnboarding, {
   ONBOARDING_STEPS,
   measureNode,
 } from "./components/atelier/CatalogueOnboarding";
+import DevFirstRunQa from "./components/atelier/DevFirstRunQa";
+import {
+  simulateFreshInstall,
+  simulateOldYearlyTrackerUser,
+  simulateEarlierRevampUser,
+  replayOnboardingFlags,
+  resetThemeChoicePrompt,
+  reloadForQa,
+} from "./utils/devFirstRunQa";
 import AtelierCounter from "./components/atelier/AtelierCounter";
 import AtelierSheet, {
   AtelierActions,
@@ -583,10 +592,13 @@ export default function App() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingAnchor, setOnboardingAnchor] = useState(null);
+  const [onboardingTargetKind, setOnboardingTargetKind] = useState(null);
+  const [devQaOpen, setDevQaOpen] = useState(false);
   const habitsListRef = useRef(null);
   const tabsMeasureRef = useRef(null);
   const ledgerMeasureRef = useRef(null);
   const ledgerHeaderRef = useRef(null);
+  const todayCellMeasureRef = useRef(null);
   const themeMeasureRef = useRef(null);
   const addHabitMeasureRef = useRef(null);
   const listViewportH = useRef(0);
@@ -1469,13 +1481,13 @@ export default function App() {
   useEffect(() => {
     if (!onboardingOpen) {
       setOnboardingAnchor(null);
+      setOnboardingTargetKind(null);
       return;
     }
     const step = ONBOARDING_STEPS[onboardingStep];
     if (!step) return;
 
     const refs = {
-      ledger: habits.length ? ledgerMeasureRef : ledgerHeaderRef,
       tabs: tabsMeasureRef,
       theme: themeMeasureRef,
       add: addHabitMeasureRef,
@@ -1496,10 +1508,24 @@ export default function App() {
       }
       await new Promise((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise((resolve) => requestAnimationFrame(() => resolve()));
-      const rect = await measureNode(refs[step.id]);
+      let rect = null;
+      let kind = null;
+      if (step.id === "ledger") {
+        if (habits.length) {
+          rect = await measureNode(todayCellMeasureRef);
+          if (rect) kind = "today";
+        }
+        if (!rect) {
+          rect = await measureNode(ledgerHeaderRef);
+          kind = null;
+        }
+      } else {
+        rect = await measureNode(refs[step.id]);
+      }
       if (cancelled) return;
       if (rect) {
         setOnboardingAnchor(rect);
+        setOnboardingTargetKind(kind);
         return;
       }
       attempts += 1;
@@ -1509,6 +1535,7 @@ export default function App() {
     }
 
     setOnboardingAnchor(null);
+    setOnboardingTargetKind(null);
     capture();
     return () => {
       cancelled = true;
@@ -1554,10 +1581,68 @@ export default function App() {
   async function finishOnboarding() {
     setOnboardingOpen(false);
     setOnboardingAnchor(null);
+    setOnboardingTargetKind(null);
     setOnboardingSeenState(true);
     try {
       await setOnboardingSeen();
     } catch {}
+  }
+
+  function handleOnboardingTodayToggle() {
+    const habit = habits[0];
+    const dayKey = dates[dates.length - 1]?.key;
+    if (!habit || !dayKey) return;
+    toggleHabit(habit.id, dayKey);
+  }
+
+  async function replayCatalogueGuide() {
+    await hapticLight();
+    setCustomizeOpen(false);
+    setOnboardingStep(0);
+    setOnboardingAnchor(null);
+    setOnboardingTargetKind(null);
+    selectTab("habits");
+    setOnboardingOpen(true);
+  }
+
+  async function qaSimulateFresh() {
+    if (!__DEV__) return;
+    await simulateFreshInstall();
+    setDevQaOpen(false);
+    reloadForQa();
+  }
+
+  async function qaSimulateOldUser() {
+    if (!__DEV__) return;
+    await simulateOldYearlyTrackerUser();
+    setDevQaOpen(false);
+    reloadForQa();
+  }
+
+  async function qaSimulateEarlierRevamp() {
+    if (!__DEV__) return;
+    await simulateEarlierRevampUser();
+    setDevQaOpen(false);
+    reloadForQa();
+  }
+
+  async function qaReplayOnboarding() {
+    if (!__DEV__) return;
+    await replayOnboardingFlags();
+    setDevQaOpen(false);
+    setOnboardingSeenState(false);
+    setOnboardingStep(0);
+    setOnboardingAnchor(null);
+    setOnboardingTargetKind(null);
+    selectTab("habits");
+    setOnboardingOpen(true);
+  }
+
+  async function qaResetThemeChoice() {
+    if (!__DEV__) return;
+    await resetThemeChoicePrompt();
+    setDevQaOpen(false);
+    reloadForQa();
   }
 
   useEffect(() => {
@@ -2048,12 +2133,25 @@ export default function App() {
     revampIntroOpen ||
     themeChoiceOpen ||
     onboardingOpen ||
+    (__DEV__ && devQaOpen) ||
     artReveal ||
     themeExpand;
 
   const stickyChrome = (
     <View style={styles.stickyChrome}>
-      <CollapsingKicker theme={theme} year={year} fontsLoaded={fontsLoaded} />
+      <CollapsingKicker
+        theme={theme}
+        year={year}
+        fontsLoaded={fontsLoaded}
+        onMarkLongPress={
+          __DEV__
+            ? async () => {
+                await hapticLight();
+                setDevQaOpen(true);
+              }
+            : undefined
+        }
+      />
       {activeTab === "habits" || activeTab === "goals" ? (
         <>
           <CollapsingIdentity
@@ -2427,6 +2525,9 @@ export default function App() {
                 measureRef={
                   item.id === habits[0]?.id ? ledgerMeasureRef : undefined
                 }
+                todayCellRef={
+                  item.id === habits[0]?.id ? todayCellMeasureRef : undefined
+                }
               />
             )}
             ListEmptyComponent={
@@ -2661,6 +2762,18 @@ export default function App() {
           onTryRandomArt={() => finishThemeChoice(RANDOM_ART_ID)}
           onKeepCurrent={() => finishThemeChoice(null)}
         />
+        {__DEV__ ? (
+          <DevFirstRunQa
+            visible={devQaOpen}
+            theme={theme}
+            onClose={() => setDevQaOpen(false)}
+            onSimulateFresh={qaSimulateFresh}
+            onSimulateOldUser={qaSimulateOldUser}
+            onSimulateEarlierRevamp={qaSimulateEarlierRevamp}
+            onReplayOnboarding={qaReplayOnboarding}
+            onResetThemeChoice={qaResetThemeChoice}
+          />
+        ) : null}
         <AtelierDrawer
           visible={habitEditOpen}
           onClose={closeHabitEdit}
@@ -2978,6 +3091,7 @@ export default function App() {
                     customThemes={customThemeCards}
                     onPick={handlePickTheme}
                     onDeleteCustom={deleteCustomTheme}
+                    onReplayGuide={replayCatalogueGuide}
                   />
 
                   <AtelierActions
@@ -3371,6 +3485,11 @@ export default function App() {
         theme={theme}
         stepIndex={onboardingStep}
         anchor={onboardingAnchor}
+        onTargetPress={
+          onboardingStep === 0 && onboardingTargetKind === "today"
+            ? handleOnboardingTodayToggle
+            : undefined
+        }
         onSkip={finishOnboarding}
         onNext={() => {
           if (onboardingStep >= ONBOARDING_STEPS.length - 1) {
