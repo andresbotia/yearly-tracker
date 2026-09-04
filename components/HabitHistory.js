@@ -1,7 +1,7 @@
 // components/HabitHistory.js
 // Presentation-only redesign. Month/year math and stored checks are unchanged.
 
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -10,13 +10,16 @@ import {
   Platform,
   Pressable,
 } from "react-native";
-import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../utils/tokens";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "../utils/tokens";
 import { habitStateChar, habitStateLabel } from "../utils/habitAscii";
 import { useFontsLoaded } from "../utils/fonts";
+import { hapticTick, useReducedMotion } from "../utils/motion";
 import MetadataLabel from "./editorial/MetadataLabel";
 import EditorialEmpty from "./editorial/EditorialEmpty";
 import SectionRule from "./editorial/SectionRule";
 import EditorialSurface from "./editorial/EditorialSurface";
+import PressableInk from "./motion/PressableInk";
 
 const ANDROID = Platform.OS === "android";
 
@@ -48,18 +51,38 @@ function monthDays(year, monthIndex) {
   return out;
 }
 
+const MONTH_SHORT = [
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC",
+];
+
 export default function HabitHistory({
   theme,
   habits,
   historyYear,
   onBack,
+  onOpenArchive,
   todayDate,
 }) {
   const fontsLoaded = useFontsLoaded();
+  const reduced = useReducedMotion();
   const todayYear = todayDate.getFullYear();
   const todayMonth = todayDate.getMonth();
   const currentMonthScrollRef = useRef(null);
   const didScrollRef = useRef(false);
+  const [selectedMonth, setSelectedMonth] = useState(
+    historyYear === todayYear ? todayMonth : 0,
+  );
 
   const months = useMemo(() => {
     if (historyYear > todayYear) return [];
@@ -93,8 +116,22 @@ export default function HabitHistory({
     });
   }, [historyYear, todayYear, todayDate]);
 
+  useEffect(() => {
+    const maxMonth = historyYear < todayYear ? 11 : todayMonth;
+    setSelectedMonth((current) => Math.min(current, maxMonth));
+  }, [historyYear, todayYear, todayMonth]);
+
   const ink = theme.text;
   const muted = theme.mutedText;
+  const selected = months.find((m) => m.monthIndex === selectedMonth) || months[0];
+  const availableMonths = useMemo(() => {
+    const maxMonth = historyYear < todayYear ? 11 : todayMonth;
+    const out = [];
+    for (let m = 0; m <= maxMonth; m += 1) {
+      out.push(m);
+    }
+    return out;
+  }, [historyYear, todayYear, todayMonth]);
 
   return (
     <View>
@@ -113,30 +150,46 @@ export default function HabitHistory({
               Habit history
             </Text>
           </View>
-          <Pressable
-            onPress={onBack}
-            style={({ pressed }) => [
-              styles.historyBackBtn,
-              {
-                borderColor: theme.text,
-                opacity: pressed ? 0.65 : 1,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Back to habits"
-          >
-            <Text
-              style={[
-                styles.historyBackText,
-                {
-                  color: ink,
-                  fontFamily: fontFamily("data", fontsLoaded),
-                },
-              ]}
+          <View style={styles.historyActions}>
+            {onOpenArchive ? (
+              <PressableInk
+                onPress={onOpenArchive}
+                style={[styles.historyBackBtn, { borderColor: theme.text }]}
+                accessibilityRole="button"
+                accessibilityLabel="Open year archive"
+              >
+                <Text
+                  style={[
+                    styles.historyBackText,
+                    {
+                      color: ink,
+                      fontFamily: fontFamily("data", fontsLoaded),
+                    },
+                  ]}
+                >
+                  Archive
+                </Text>
+              </PressableInk>
+            ) : null}
+            <PressableInk
+              onPress={onBack}
+              style={[styles.historyBackBtn, { borderColor: theme.text }]}
+              accessibilityRole="button"
+              accessibilityLabel="Back to habits"
             >
-              Back
-            </Text>
-          </Pressable>
+              <Text
+                style={[
+                  styles.historyBackText,
+                  {
+                    color: ink,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+              >
+                Back
+              </Text>
+            </PressableInk>
+          </View>
         </View>
         <Text
           style={[
@@ -150,6 +203,50 @@ export default function HabitHistory({
 
       <SectionRule theme={theme} />
 
+      {availableMonths.length > 0 && habits.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.monthStrip}
+        >
+          {availableMonths.map((m) => {
+            const on = m === selectedMonth;
+            return (
+              <Pressable
+                key={MONTH_SHORT[m]}
+                onPress={() => {
+                  if (m === selectedMonth) return;
+                  hapticTick();
+                  setSelectedMonth(m);
+                  didScrollRef.current = false;
+                }}
+                style={styles.monthChip}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={MONTH_SHORT[m]}
+              >
+                <Text
+                  style={[
+                    styles.monthChipText,
+                    {
+                      color: on ? ink : muted,
+                      fontFamily: fontFamily("data", fontsLoaded),
+                    },
+                  ]}
+                >
+                  {MONTH_SHORT[m]}
+                </Text>
+                {on ? (
+                  <View style={[styles.monthChipRule, { backgroundColor: ink }]} />
+                ) : (
+                  <View style={styles.monthChipRule} />
+                )}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+
       {habits.length === 0 || months.length === 0 ? (
         <EditorialEmpty
           theme={theme}
@@ -159,16 +256,26 @@ export default function HabitHistory({
         />
       ) : (
         <View style={styles.monthsStack}>
-          {months.map((month, monthIdx) => {
+          {(selected ? [selected] : months).map((month, monthIdx) => {
             const isCurrentMonth =
               historyYear === todayYear && month.monthIndex === todayMonth;
-            const indexLabel = String(months.length - monthIdx).padStart(
-              2,
-              "0",
-            );
+            const indexLabel = String(month.monthIndex + 1).padStart(2, "0");
 
             return (
-              <View key={month.label} style={styles.monthSection}>
+              <Animated.View
+                key={month.label}
+                style={styles.monthSection}
+                entering={
+                  reduced
+                    ? FadeIn.duration(MOTION.reduced)
+                    : FadeIn.duration(MOTION.tab)
+                }
+                exiting={
+                  reduced
+                    ? FadeOut.duration(MOTION.reduced)
+                    : FadeOut.duration(MOTION.short)
+                }
+              >
                 <View style={styles.monthHeaderRow}>
                   <Text
                     style={[
@@ -365,7 +472,7 @@ export default function HabitHistory({
                   </ScrollView>
                 </View>
                 <SectionRule theme={theme} />
-              </View>
+              </Animated.View>
             );
           })}
         </View>
@@ -400,6 +507,11 @@ const styles = StyleSheet.create({
     letterSpacing: TYPE_TRACK.data,
     textTransform: "uppercase",
   },
+  historyActions: {
+    flexDirection: "row",
+    gap: SPACE.xs,
+    flexShrink: 0,
+  },
   historyBackBtn: {
     borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: SPACE.xs,
@@ -414,6 +526,28 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
 
+  monthStrip: {
+    gap: SPACE.sm,
+    paddingVertical: SPACE.sm,
+    paddingRight: SPACE.sm,
+  },
+  monthChip: {
+    minWidth: 36,
+    minHeight: 36,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    paddingBottom: 4,
+  },
+  monthChipText: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+  },
+  monthChipRule: {
+    marginTop: 4,
+    height: 1,
+    width: 22,
+  },
   monthsStack: { marginTop: SPACE.xs, gap: SPACE.lg },
   monthSection: { gap: SPACE.sm },
   monthHeaderRow: {
