@@ -2,362 +2,323 @@ Continue Atelier Tracker on `feature/revamp`.
 
 Do not merge main.
 Do not run EAS/native builds.
-Read AGENTS.md, REVAMP.MD and design.md first.
+Widgets are working perfectly — leave native/widget architecture alone.
 
-This is a focused FIRST-LAUNCH / ONBOARDING / HABITS-SCROLL polish pass.
-Do not redesign unrelated screens and do not touch working widget architecture.
+Read:
 
-DEVICE QA FEEDBACK
+- AGENTS.md
+- REVAMP.MD
+- design.md
+- latest commits
 
-The latest native development build looks substantially improved and the
-widgets are working/syncing correctly. LEAVE WIDGETS ALONE unless a shared
-theme-storage change naturally requires the existing sync path to run.
+Implement this focused physical-device QA polish pass.
 
-====================================================
+==================================================
 
-1. # CONSOLIDATE THE DUPLICATE WELCOME EXPERIENCES
+1. # MAKE ONBOARDING STEP 1 ACTUALLY INTERACTIVE
 
-The app currently shows multiple first-user welcome experiences:
+Current problem:
 
-- legacy main welcome with the James Clear quote
-- Atelier RevampIntroModal
-- potentially the legacy Habits welcome flow
+[01 / 04] DAILY LEDGER says:
+“Tap a mark to record today.”
 
-Consolidate these.
+But CatalogueOnboarding blocks the real habit interaction because the
+full-screen overlay captures pointer events.
 
-NEW USERS must see ONE Atelier-branded welcome only.
+Fix this without making the rest of the app interactive during onboarding.
 
-Use RevampIntroModal / the current Atelier art-led card as the basis.
+For Step 1 only:
 
-Fresh-user layout/copy:
+- highlight the ACTUAL today's habit mark/cell, preferably the first starter
+  habit's today cell, not the entire habit row
+- allow that highlighted cell to be tapped while onboarding remains visible
+- it must call the SAME real habit state-change path used normally
+- preserve the exact semantics:
+  . -> + -> × -> .
+- preserve real persistence
+- preserve haptics
+- widget sync can occur naturally through the existing path
+- user may tap it multiple times
+- do NOT auto-advance after one tap
+- NEXT remains the way to continue
 
-kicker:
-PERSONAL YEARLY ARCHIVE
+Do not simply make the whole onboarding overlay `pointerEvents="box-none"`.
 
-title:
-Welcome to Atelier Tracker
+Everything outside the explicitly highlighted interactive target must remain
+blocked so users cannot accidentally:
 
-Include the existing James Clear quote:
+- switch tabs
+- open Theme
+- open Add Habit
+- Share
+- drag rows
+- trigger unrelated actions
 
-“Success is the product of daily habits—not once-in-a-lifetime transformations.”
-— James Clear
+Preferred architecture:
+full blocking overlay
 
-Then retain concise product copy along the lines of:
+- one transparent/positioned interactive hit target matching the measured real
+  today cell
+- that hit target invokes the real habit toggle handler.
 
-Track your habits, goals, and year through a quiet, art-led interface.
+If there are no habits, gracefully fall back to highlighting the ledger header
+and keep Step 1 informational rather than crashing.
 
-No account. No tracking. Your data stays on your device.
+================================================== 2. DYNAMIC ONBOARDING CARD MEASUREMENT
+==================================================
 
-CTA:
-ENTER ATELIER
+CatalogueOnboarding currently uses an estimated card height (~168px) when
+deciding whether to place the annotation above or below its target.
 
-Retain:
+Remove that assumption.
 
-- real Atelier mark
-- artwork hero
-- museum/editorial styling
-- hairline rules
-- Fraunces / body / mono hierarchy
+Measure the actual rendered annotation card height using layout measurement,
+then position/clamp using the true card height.
 
-Remove the separate legacy first-run welcome UI so a fresh install cannot see
-two welcome cards back-to-back.
+Requirements:
 
-Also retire the separate legacy Habits onboarding modal from presentation.
+- never run off the top/bottom of screen
+- work around 375x667 devices
+- work on taller devices
+- tolerate longer localized/accessibility text
+- pointer hairline still connects correctly
+- avoid visual jump if possible; initial hidden measurement or stable
+  second-pass positioning is fine
+- reduced-motion behavior remains correct
+
+Also clamp horizontally as today.
+
+================================================== 3. SHORT-SCREEN WELCOME SAFETY
+==================================================
+
+The new Atelier welcome looks good. Do NOT redesign it.
+
+Make it safe for shorter devices / larger text.
+
+Keep:
+
+- mark
+- PERSONAL YEARLY ARCHIVE
+- artwork
+- title
+- James Clear quote
+- product copy
+- ENTER ATELIER
+- existing styling
+
+If the content cannot fit vertically:
+
+- allow the CARD CONTENT to scroll
+- keep sensible top/bottom padding
+- CTA must remain reachable
+- do not permanently force scrolling on normal/tall devices
+- preserve modal appearance
+
+Do not shrink typography aggressively just to make it fit.
+
+================================================== 4. DEV-ONLY QA / FIRST-RUN STATE MENU
+==================================================
+
+Add a small QA tool for development testing only.
+
+Suggested trigger:
+LONG PRESS the small `[AT]` brand mark in the main header.
+
+This QA system MUST NOT work in production.
+
+Use React Native's compile-time development flag:
+`__DEV__`
+
+Defense in depth:
+
+A. QA trigger only exists/attaches when `__DEV__ === true`
+
+B. QA UI only renders when `__DEV__ === true`
+
+C. EVERY QA mutation/reset function must start with:
+`if (!__DEV__) return;`
+
+D. Production/TestFlight/App Store behavior must contain:
+
+- no visible QA affordance
+- no long-press QA action
+- no QA modal
+- no QA reset/mutation path that can execute
+
+Do not use an environment string that could accidentally be left configured.
+`__DEV__` is the primary hard gate.
+
+QA card should match Atelier styling and say something like:
+
+[DEV] / FIRST-RUN STATES
+
+Options:
+
+1. SIMULATE FRESH INSTALL
+2. SIMULATE OLD YEARLY TRACKER USER
+3. SIMULATE EARLIER REVAMP USER
+4. REPLAY ONBOARDING
+5. RESET THEME-CHOICE PROMPT
+6. CLOSE
 
 IMPORTANT:
-DO NOT delete or rename old storage keys:
+Do NOT wipe real goals/habits/history/custom themes unless an option explicitly
+says it will.
 
-- rt_welcome_seen_v1
-- yt_habits_welcome_seen_v1
-- yt_revamp_intro_seen_v1
+The first-run-state simulations should manipulate PRESENTATION / MIGRATION
+FLAGS only wherever possible.
 
-They are part of production migration/history.
+OLD YEARLY TRACKER USER should produce a state equivalent to:
 
-They may remain as compatibility signals, but there must be only one visual
-fresh-user welcome flow going forward.
+- rt_welcome_seen_v1 = "1"
+- yt_revamp_intro_seen_v1 absent
+- yt_revamp_theme_choice_seen_v1 absent
+- yt_onboarding_seen_v1 = "1"
+- preserve current rt_hue_v1
+- preserve all goals/habits/history
 
-==================================================== 2. NEW USERS DEFAULT TO RANDOM ART
-====================================================
+Then reload/re-evaluate the launch flow so we can test:
+rebrand intro -> visual-edition choice.
 
-A truly fresh install should start with the Random Art theme.
+EARLIER REVAMP USER:
 
-Use the EXISTING Random Art system and existing rt_hue_v1 persistence contract.
+- rt_welcome_seen_v1 = "1"
+- yt_revamp_intro_seen_v1 = "1"
+- yt_revamp_theme_choice_seen_v1 absent
+- yt_onboarding_seen_v1 = "1"
+- preserve current theme/data
 
-Do not invent another random-art implementation.
+Expected:
+only the visual-edition choice.
 
-Fresh user:
-themeChoice -> random-art
-resolve one real bundled artwork
-persist through existing theme mechanism
-widget receives same resolved artwork through existing sync
+REPLAY ONBOARDING:
 
-Do not overwrite an existing user's saved theme.
+- only reset yt_onboarding_seen_v1
+- do not reset user data/theme
+- set state so onboarding can appear again appropriately
 
-Starter goals/habits seeding semantics remain unchanged.
+RESET THEME-CHOICE:
 
-==================================================== 3. EXISTING USERS: SECONDARY STYLE CHOICE
-====================================================
+- only reset yt_revamp_theme_choice_seen_v1
 
-Existing users should keep their current saved theme unless they explicitly
-choose otherwise.
+For SIMULATE FRESH INSTALL, do NOT silently destroy the developer's real data.
+Either:
 
-Their flow should be:
+- simulate fresh presentation flags in-memory, OR
+- clearly make this a presentation-only fresh-launch simulation.
 
-STEP 1:
-existing rebrand introduction:
-Yearly Tracker is now Atelier Tracker
+Do not delete:
+rt_goals_v1
+yt_habits_v1
+yt_goal_history_v1
+yt_custom_themes_v1
 
-Keep the reassurance that goals, habits, history and local data remain intact.
+unless an explicitly labeled destructive dev action is later added.
+We do not need a destructive action now.
 
-STEP 2:
-after dismissing that card, show a second small Atelier-styled decision card.
+If AsyncStorage.removeItem is needed for additive flags, keep that code inside
+the **DEV** guarded QA helper only.
 
-Suggested copy:
+================================================== 5. OPTIONAL REPLAY GUIDE ENTRY
+==================================================
 
-kicker:
-NEW VISUAL EDITION
+Add a very subtle normal-user way to replay the guide later.
 
-title:
-Try the new Atelier canvas?
+Good location:
+Theme / collection area, low-priority metadata/action.
 
-body:
-Atelier Tracker can now rotate artwork from the collection as the background
-of your yearly journal. You can try it now or keep your current theme.
+Copy:
+REPLAY GUIDE
 
-actions:
-TRY RANDOM ART
-KEEP MY CURRENT THEME
+This is NOT dev-only.
 
 Behavior:
 
-TRY RANDOM ART:
+- reopens the same catalogue onboarding
+- does NOT modify goals/habits/theme
+- may reset/write yt_onboarding_seen_v1 as necessary
+- should not make onboarding automatically appear every launch afterward
 
-- set theme through the normal existing theme persistence path
-- select random-art
-- allow normal widget synchronization
-- user can change theme later as usual
+Keep this visually quiet.
 
-KEEP MY CURRENT THEME:
-
-- DO NOT WRITE A NEW THEME VALUE
-- leave their exact current theme untouched
-
-Add an additive migration flag, for example:
-yt_revamp_theme_choice_seen_v1
-
-Do not overload yt_revamp_intro_seen_v1 for this because users who already
-opened an earlier revamp build should still receive this new choice exactly once.
-
-Update storage verification for the additive key.
-
-==================================================== 4. MINIMAL CONTEXTUAL ONBOARDING FOR NEW USERS
-====================================================
-
-After a NEW user presses ENTER ATELIER, provide a short guided tour using the
-REAL app screen.
-
-Do NOT create a generic full-screen carousel.
-
-Use Atelier-style contextual catalogue annotations / coach marks.
-
-Goal:
-teach the app without destroying the quiet minimal visual language.
-
-Suggested 4 steps:
-
-01 / DAILY LEDGER
-Point toward the habit marks/rows.
-Explain:
-Tap a mark to record today.
-. empty + good × bad
-
-02 / HABITS + GOALS
-Point toward the tab strip.
-Explain that Habits tracks daily rhythm and Goals tracks longer-term progress.
-
-03 / YOUR CANVAS
-Point toward Theme.
-Explain that the Theme control changes the artwork/atmosphere and Random Art
-rotates through the collection.
-
-04 / MAKE IT YOURS
-Point toward Add Habit / Add Goal as appropriate.
-Explain that these controls grow the journal with the user's year.
-
-DESIGN:
-
-- small museum-paper annotation
-- thin hairline
-- mono catalogue number: [01 / 04]
-- short text only
-- no giant rounded speech bubbles
-- no cartoon hands
-- no blue system coach marks
-- no dark generic tooltip styling
-- no excessive dimming
-- no gamification
-- no confetti
-
-A tiny pointer/hairline toward the relevant real control is encouraged.
-
-Transitions:
-
-- subtle fade / translate
-- use existing motion tokens
-- Reduced Motion = fade only
-- no long delays
-
-Allow:
-SKIP
-NEXT / GOT IT as appropriate
-
-If target geometry is not ready yet, wait until layout measurement is available
-rather than positioning incorrectly.
-
-Must work at approximately 375pt width.
-
-Only NEW users receive this guided tour.
-
-Use an additive key:
-yt_onboarding_seen_v1
-
-Once completed OR skipped, persist it.
-
-Do not show onboarding while another drawer/modal is open.
-
-==================================================== 5. HABITS BOTTOM-OVERSCROLL GLITCH
-====================================================
-
-I supplied a physical-device screen recording.
-
-The Goals bottom overscroll is now correct.
-
-Habits still glitches when the user reaches the bottom and continues dragging:
-the list/header visibly jumps instead of stretching/releasing naturally.
-
-Inspect Goals vs Habits implementation carefully rather than rewriting the
-scroll system.
-
-IMPORTANT CURRENT DIFFERENCE:
-
-Goals DraggableFlatList currently has:
-
-ListFooterComponent={<View style={styles.listBottomSpacer} />}
-
-Habits does NOT appear to have the equivalent ListFooterComponent.
-
-Both already use:
-
-- contentContainerStyle={styles.listContent}
-- onScrollOffsetChange={onListScrollOffset}
-- bounces
-- alwaysBounceVertical
-- overScrollMode="always"
-- contentInsetAdjustmentBehavior="never"
-- automaticallyAdjustContentInsets={false}
-
-The shared onListScrollOffset already clamps ONLY headerScrollY to
-HEADER_ANIM_RANGE, which is correct.
-
-First investigate whether the missing real Habits footer/spacer is causing the
-short bottom content boundary to fight the collapsing-header geometry.
-
-Make the Habits bottom geometry behave like the now-correct Goals list.
-
-Likely desired pattern:
-
-- real ListFooterComponent bottom spacer
-- safe bottom breathing room
-- no mutation/clamping of native list scroll position
-- header animation derived separately
-- native iOS elastic overscroll remains enabled
-
-Be careful not to accidentally double-apply padding/spacers.
-
-Test mentally/static-review:
-
-- 0 habits
-- starter 4 habits
-- many habits
-- drag/reorder
-- open swipe row
-- 375pt iPhone
-- header expanded
-- header collapsed
-- repeated bottom overscroll
-
-The last habit and toolbar must remain reachable and the release must be smooth.
-
-==================================================== 6. DO NOT REGRESS
-====================================================
+================================================== 6. DO NOT REGRESS
+==================================================
 
 Preserve:
 
-- all production AsyncStorage data
-- all key names
-- goal/habit CRUD
-- history
-- rollover
-- reorder
-- swipe behavior
-- exact counter behavior
-- themes/custom themes
-- Random Art same-app/widget resolution
-- share cards
+- production storage keys
+- existing-user migration behavior
+- fresh-user Random Art
 - widgets
-- bundle/package IDs
+- widget sync
+- theme persistence
+- custom themes
+- goals/habits/history
+- drag/reorder
+- swipe
+- share
+- rollover
+- haptics
 - reduced motion
 - accessibility
+- bundle/package IDs
 
-Do not touch native widget files for this pass.
+No native changes should be necessary.
 
-==================================================== 7. VERIFICATION
-====================================================
+================================================== 7. VERIFY
+==================================================
 
 Run:
 npm run verify:storage
 
-Run Babel/static parse checks on touched JS.
+Run Babel/static parse on touched JS.
 
-Explicitly audit these launch cases:
+Audit:
 
-A. totally fresh install
-ONE welcome -> Random Art -> guided onboarding
+A. **DEV** true:
+long-press [AT] opens QA menu
 
-B. old Yearly Tracker user
-existing theme remains untouched
-rebrand popup -> style-choice popup
-KEEP means no theme write
+B. **DEV** false by code inspection:
+no trigger
+no rendered QA UI
+QA mutation functions no-op
 
-C. existing user chooses TRY RANDOM ART
-random-art persists and existing widget sync path follows it
+C. old-user QA state:
+rebrand -> theme choice
 
-D. user who already saw revamp intro but has no new style-choice flag
-receives ONLY the style-choice prompt, not the old first-run welcome
+D. earlier-revamp QA state:
+theme choice only
 
-E. onboarding completed
-does not appear again
+E. KEEP CURRENT:
+rt_hue_v1 unchanged
 
-F. onboarding skipped
-does not appear again
+F. TRY RANDOM ART:
+normal random-art persistence path
 
-G. Habits bottom overscroll
-matches Goals behavior
+G. Step 1:
+real today habit mark can be cycled . + × . while popup remains open
+
+H. other controls remain blocked during onboarding
+
+I. annotation cards remain onscreen on short viewport
+
+J. welcome remains usable on short viewport
+
+K. Replay Guide works without creating repeated automatic onboarding
 
 Make focused commits.
-Do not merge main.
+Stay on feature/revamp.
 Do not run EAS.
 
 Report:
 
-- welcome flows removed/consolidated
-- fresh-vs-existing detection logic
-- Random Art default logic
-- exact existing-user theme-choice behavior
-- new additive storage keys
-- onboarding structure
-- Habits scroll root cause/fix
-- storage verification results
-- commit(s)
+- interactive Step 1 implementation
+- measured-card positioning changes
+- short-screen welcome handling
+- exact **DEV** QA guards
+- QA state simulation behavior
+- Replay Guide placement
+- verification
+- commit hashes
 
-Stop when ready for physical-device Metro QA.
+Stop ready for Metro physical-device QA.
