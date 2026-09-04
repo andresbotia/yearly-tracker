@@ -1,5 +1,6 @@
 import React, {
   forwardRef,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -17,10 +18,10 @@ import {
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  Easing,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
   withSequence,
   withTiming,
 } from "react-native-reanimated";
@@ -37,6 +38,9 @@ import AnimatedAsciiBar from "../motion/AnimatedAsciiBar";
 import AnimatedNumber from "../motion/AnimatedNumber";
 
 const ACCESSORY_ID = "atelier-counter-done";
+const SLOT = 46;
+const HINT_MS = 520;
+let reelHintSeen = false;
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -46,6 +50,35 @@ function parseDraft(raw, target, fallback) {
   const n = Number(String(raw || "").trim());
   if (!Number.isFinite(n)) return fallback;
   return clamp(Math.floor(n), 0, target);
+}
+
+function ReelTick({ n, active, padded, ink, muted, fontsLoaded, floatValue }) {
+  const style = useAnimatedStyle(() => {
+    const d = n - floatValue.value;
+    const abs = Math.abs(d);
+    return {
+      transform: [
+        { translateX: d * SLOT },
+        { scale: 1 + Math.max(0, 0.1 - abs * 0.1) },
+      ],
+      opacity: Math.max(0.18, 1 - abs * 0.34),
+    };
+  });
+
+  return (
+    <Animated.Text
+      style={[
+        styles.neighbor,
+        style,
+        {
+          color: active ? ink : muted,
+          fontFamily: fontFamily("data", fontsLoaded),
+        },
+      ]}
+    >
+      {padded(n)}
+    </Animated.Text>
+  );
 }
 
 const AtelierCounter = forwardRef(function AtelierCounter(
@@ -61,6 +94,7 @@ const AtelierCounter = forwardRef(function AtelierCounter(
   const valueRef = useRef(0);
   const targetRef = useRef(0);
   const onChangeRef = useRef(onChange);
+  const draggingRef = useRef(false);
   const safeTarget = Math.max(0, Math.floor(Number(target) || 0));
   const safeValue = clamp(Math.floor(Number(value) || 0), 0, safeTarget);
   editingRef.current = editing;
@@ -71,7 +105,26 @@ const AtelierCounter = forwardRef(function AtelierCounter(
   const pxPerUnit = Math.max(6, scrubPixelsPerUnit(safeTarget) * 0.85);
   const ink = theme?.text || "#1c1916";
   const muted = theme?.mutedText || "#6b645c";
+
+  const floatValue = useSharedValue(safeValue);
+  const startValue = useSharedValue(safeValue);
+  const lastInt = useSharedValue(safeValue);
+  const dragging = useSharedValue(0);
   const hint = useSharedValue(0);
+  const pxPerUnitSV = useSharedValue(pxPerUnit);
+  const targetSV = useSharedValue(safeTarget);
+
+  useEffect(() => {
+    pxPerUnitSV.value = pxPerUnit;
+    targetSV.value = safeTarget;
+  }, [pxPerUnit, safeTarget, pxPerUnitSV, targetSV]);
+
+  useEffect(() => {
+    if (draggingRef.current) return;
+    floatValue.value = safeValue;
+    lastInt.value = safeValue;
+    startValue.value = safeValue;
+  }, [safeValue, floatValue, lastInt, startValue]);
 
   const neighbors = useMemo(() => {
     const out = [];
@@ -83,13 +136,29 @@ const AtelierCounter = forwardRef(function AtelierCounter(
     return out;
   }, [safeValue, safeTarget]);
 
-  function commit(next) {
-    const n = clamp(Math.floor(next), 0, safeTarget);
-    onChange?.(n);
+  function commitLive(next) {
+    const n = clamp(Math.floor(next), 0, targetRef.current);
+    if (n === valueRef.current) return;
+    hapticTick();
+    onChangeRef.current?.(n);
+  }
+
+  function setDragging(on) {
+    draggingRef.current = !!on;
+  }
+
+  function finishScrub(next) {
+    draggingRef.current = false;
+    const n = clamp(Math.floor(next), 0, targetRef.current);
+    if (n !== valueRef.current) {
+      hapticTick();
+      onChangeRef.current?.(n);
+    }
     return n;
   }
 
   function step(dir) {
+    if (editingRef.current) return;
     const next = clamp(safeValue + dir, 0, safeTarget);
     if (next === safeValue) return;
     hapticTick();
@@ -97,36 +166,10 @@ const AtelierCounter = forwardRef(function AtelierCounter(
   }
 
   const hold = useHoldRepeat(step);
-  const startRef = useRef(safeValue);
-
-  function captureStart() {
-    startRef.current = safeValue;
-  }
-
-  function applyScrub(translationX) {
-    const next = clamp(
-      Math.round(startRef.current + translationX / pxPerUnit),
-      0,
-      safeTarget,
-    );
-    if (next !== safeValue) {
-      hapticTick();
-      onChange?.(next);
-    }
-  }
-
-  const pan = Gesture.Pan()
-    .activeOffsetX(6)
-    .failOffsetY([-24, 24])
-    .onBegin(() => {
-      runOnJS(captureStart)();
-    })
-    .onUpdate((e) => {
-      runOnJS(applyScrub)(e.translationX);
-    });
 
   function openEntry() {
-    const start = String(safeValue);
+    if (draggingRef.current) return;
+    const start = String(valueRef.current);
     draftRef.current = start;
     setDraft(start);
     setEditing(true);
@@ -154,22 +197,102 @@ const AtelierCounter = forwardRef(function AtelierCounter(
     },
   }));
 
-  React.useEffect(() => {
-    if (reduced) return;
-    hint.value = withRepeat(
-      withSequence(
-        withTiming(6, { duration: 700 }),
-        withTiming(-6, { duration: 700 }),
-        withTiming(0, { duration: 500 }),
-      ),
-      1,
-      false,
+  useEffect(() => {
+    if (reduced || reelHintSeen) return;
+    reelHintSeen = true;
+    hint.value = withSequence(
+      withTiming(7, {
+        duration: HINT_MS,
+        easing: Easing.inOut(Easing.quad),
+      }),
+      withTiming(-7, {
+        duration: HINT_MS,
+        easing: Easing.inOut(Easing.quad),
+      }),
+      withTiming(0, {
+        duration: 380,
+        easing: Easing.out(Easing.cubic),
+      }),
     );
   }, [hint, reduced]);
 
+  const pan = Gesture.Pan()
+    .enabled(!editing && safeTarget > 0)
+    .activeOffsetX([-4, 4])
+    .failOffsetY([-22, 22])
+    .maxPointers(1)
+    .onBegin(() => {
+      "worklet";
+      startValue.value = floatValue.value;
+      lastInt.value = Math.round(floatValue.value);
+      hint.value = 0;
+    })
+    .onStart(() => {
+      "worklet";
+      dragging.value = 1;
+      runOnJS(setDragging)(true);
+    })
+    .onUpdate((e) => {
+      "worklet";
+      const next = Math.max(
+        0,
+        Math.min(
+          targetSV.value,
+          startValue.value + e.translationX / pxPerUnitSV.value,
+        ),
+      );
+      floatValue.value = next;
+      const rounded = Math.round(next);
+      if (rounded !== lastInt.value) {
+        lastInt.value = rounded;
+        runOnJS(commitLive)(rounded);
+      }
+    })
+    .onEnd((e) => {
+      "worklet";
+      const projected =
+        startValue.value +
+        (e.translationX + e.velocityX * 0.14) / pxPerUnitSV.value;
+      const snapped = Math.max(
+        0,
+        Math.min(targetSV.value, Math.round(projected)),
+      );
+      floatValue.value = withTiming(snapped, {
+        duration: reduced ? 80 : 180,
+        easing: Easing.out(Easing.cubic),
+      });
+      dragging.value = 0;
+      lastInt.value = snapped;
+      runOnJS(finishScrub)(snapped);
+    })
+    .onFinalize(() => {
+      "worklet";
+      dragging.value = 0;
+      runOnJS(setDragging)(false);
+    });
+
+  const tap = Gesture.Tap()
+    .enabled(!editing)
+    .maxDuration(280)
+    .maxDistance(10)
+    .requireExternalGestureToFail(pan)
+    .onEnd(() => {
+      "worklet";
+      runOnJS(openEntry)();
+    });
+
   const hintStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: reduced ? 0 : hint.value }],
+    transform: [
+      { translateX: reduced || dragging.value ? 0 : hint.value },
+    ],
   }));
+
+  const heroPulse = useAnimatedStyle(() => {
+    const active = dragging.value;
+    return {
+      transform: [{ scale: active ? 1.04 : 1 }],
+    };
+  });
 
   const padded = (n) => padCount(n, safeTarget);
 
@@ -199,54 +322,59 @@ const AtelierCounter = forwardRef(function AtelierCounter(
 
       <GestureDetector gesture={pan}>
         <Animated.View
+          collapsable={false}
           style={[
             styles.scrub,
             hintStyle,
             { borderColor: theme?.border || "#d8d0c4" },
           ]}
         >
-          <Pressable
-            onPress={openEntry}
-            accessibilityRole="button"
-            accessibilityLabel="Enter exact progress"
-            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-          >
-            {editing ? (
-              <TextInput
-                value={draft}
-                onChangeText={(t) => {
-                  draftRef.current = t;
-                  setDraft(t);
-                }}
-                onBlur={submitEntry}
-                onSubmitEditing={submitEntry}
-                keyboardType={Platform.OS === "ios" ? "number-pad" : "numeric"}
-                inputAccessoryViewID={
-                  Platform.OS === "ios" ? ACCESSORY_ID : undefined
-                }
-                autoFocus
-                maxLength={8}
-                selectTextOnFocus
-                style={[
-                  styles.hero,
-                  styles.input,
-                  {
-                    color: ink,
-                    borderColor: ink,
-                    fontFamily: fontFamily("display", fontsLoaded),
-                  },
-                ]}
-              />
-            ) : (
-              <AnimatedNumber
-                value={safeValue}
-                theme={theme}
-                role="display"
-                format={padded}
-                style={styles.hero}
-              />
-            )}
-          </Pressable>
+          <GestureDetector gesture={tap}>
+            <Animated.View
+              collapsable={false}
+              style={[styles.heroHit, heroPulse]}
+            >
+              {editing ? (
+                <TextInput
+                  value={draft}
+                  onChangeText={(t) => {
+                    draftRef.current = t;
+                    setDraft(t);
+                  }}
+                  onBlur={submitEntry}
+                  onSubmitEditing={submitEntry}
+                  keyboardType={Platform.OS === "ios" ? "number-pad" : "numeric"}
+                  inputAccessoryViewID={
+                    Platform.OS === "ios" ? ACCESSORY_ID : undefined
+                  }
+                  autoFocus
+                  maxLength={8}
+                  selectTextOnFocus
+                  style={[
+                    styles.hero,
+                    styles.input,
+                    {
+                      color: ink,
+                      borderColor: ink,
+                      fontFamily: fontFamily("display", fontsLoaded),
+                    },
+                  ]}
+                />
+              ) : (
+                <Text
+                  style={[
+                    styles.hero,
+                    {
+                      color: ink,
+                      fontFamily: fontFamily("display", fontsLoaded),
+                    },
+                  ]}
+                >
+                  {padded(safeValue)}
+                </Text>
+              )}
+            </Animated.View>
+          </GestureDetector>
 
           <View style={[styles.rule, { backgroundColor: theme?.border || "#d8d0c4" }]} />
 
@@ -259,24 +387,20 @@ const AtelierCounter = forwardRef(function AtelierCounter(
             >
               ‹
             </Text>
-            {neighbors.map((n) => {
-              const active = n === safeValue;
-              return (
-                <Text
+            <View style={styles.track}>
+              {neighbors.map((n) => (
+                <ReelTick
                   key={n}
-                  style={[
-                    styles.neighbor,
-                    {
-                      color: active ? ink : muted,
-                      opacity: active ? 1 : 0.5,
-                      fontFamily: fontFamily("data", fontsLoaded),
-                    },
-                  ]}
-                >
-                  {padded(n)}
-                </Text>
-              );
-            })}
+                  n={n}
+                  active={n === safeValue}
+                  padded={padded}
+                  ink={ink}
+                  muted={muted}
+                  fontsLoaded={fontsLoaded}
+                  floatValue={floatValue}
+                />
+              ))}
+            </View>
             <Text
               style={[
                 styles.cueMark,
@@ -380,9 +504,16 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: SPACE.sm,
   },
+  heroHit: {
+    minHeight: 52,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   cueMark: {
     fontSize: TYPE_SIZE.body,
     opacity: 0.45,
+    width: 16,
+    textAlign: "center",
   },
   hero: {
     fontSize: 40,
@@ -395,6 +526,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingVertical: SPACE.xs,
     textAlign: "center",
+    minWidth: 120,
   },
   rule: {
     height: StyleSheet.hairlineWidth,
@@ -407,13 +539,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: SPACE.md,
-    minHeight: 44,
+    minHeight: 48,
+  },
+  track: {
+    flex: 1,
+    height: 48,
+    overflow: "hidden",
+    justifyContent: "center",
+    alignItems: "center",
   },
   neighbor: {
+    position: "absolute",
     fontSize: TYPE_SIZE.body,
     letterSpacing: TYPE_TRACK.data,
-    minWidth: 40,
+    minWidth: 44,
     textAlign: "center",
   },
   stepRow: {
