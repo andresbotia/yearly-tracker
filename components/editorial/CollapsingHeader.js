@@ -1,6 +1,6 @@
 // Scroll-responsive identity. Uses Reanimated scroll values — no per-frame setState.
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -20,11 +20,26 @@ export const HEADER_COLLAPSE = 40;
 // relayout on every overscroll frame.
 export const HEADER_ANIM_RANGE = 200;
 
-export function CollapsingKicker({ theme, year, fontsLoaded }) {
+export function CollapsingKicker({ theme, year, fontsLoaded, onMarkLongPress }) {
   const loaded = useFontsLoaded() || !!fontsLoaded;
+  const mark = <BrandMark size={24} />;
+  const markNode =
+    __DEV__ && onMarkLongPress ? (
+      <Pressable
+        onLongPress={onMarkLongPress}
+        delayLongPress={450}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Developer first-run states"
+      >
+        {mark}
+      </Pressable>
+    ) : (
+      mark
+    );
   return (
     <View style={styles.kickerRow}>
-      <BrandMark size={24} />
+      {markNode}
       <MetadataLabel theme={theme} fontsLoaded={loaded}>
         {`/  ${year}`}
       </MetadataLabel>
