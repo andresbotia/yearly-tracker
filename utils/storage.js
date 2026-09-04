@@ -14,6 +14,8 @@
 // yt_habits_welcome_seen_v1   Habits intro seen               "1"       (App.js)
 // yt_revamp_intro_seen_v1     Revamp visual intro seen        "1"       (additive)
 // yt_random_art_last_v1       Last Random Art pick            string id (additive)
+// yt_revamp_theme_choice_seen_v1  Existing-user style choice  "1"       (additive)
+// yt_onboarding_seen_v1       New-user catalogue onboarding   "1"       (additive)
 //
 // Goal: { id, title, type: "count"|"boolean", target, progress, createdAt }
 // Habit: { id, title, checks: { "YYYY-MM-DD": 0|1|2 } }  // 0 empty, 1 good, 2 bad
@@ -45,6 +47,12 @@ const KEYS = {
 
   // Last Random Art pick. Presentation only; absence is not corrupt data.
   randomArtLast: "yt_random_art_last_v1",
+
+  // Existing-user Random Art / keep-theme prompt. Presentation only.
+  revampThemeChoiceSeen: "yt_revamp_theme_choice_seen_v1",
+
+  // New-user contextual onboarding. Presentation only.
+  onboardingSeen: "yt_onboarding_seen_v1",
 };
 
 export const STORAGE_KEYS = KEYS;
@@ -139,6 +147,32 @@ export async function saveRandomArtLast(id) {
   try {
     await AsyncStorage.setItem(KEYS.randomArtLast, String(id));
   } catch {}
+}
+
+export async function loadRevampThemeChoiceSeen() {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.revampThemeChoiceSeen);
+    return raw === "1";
+  } catch {
+    return true; // fail safe: don't block the user with a modal
+  }
+}
+
+export async function setRevampThemeChoiceSeen() {
+  await AsyncStorage.setItem(KEYS.revampThemeChoiceSeen, "1");
+}
+
+export async function loadOnboardingSeen() {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.onboardingSeen);
+    return raw === "1";
+  } catch {
+    return true; // fail safe: don't block the user with a tour
+  }
+}
+
+export async function setOnboardingSeen() {
+  await AsyncStorage.setItem(KEYS.onboardingSeen, "1");
 }
 
 // -----------------------------
