@@ -17,6 +17,7 @@ export function artworkMetadata(id) {
   return {
     id: item.id,
     title: item.title,
+    displayTitle: item.displayTitle || item.title,
     artist: item.artist,
     year: item.year,
     museum: item.museum,

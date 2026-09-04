@@ -1101,5 +1101,451 @@
     "urls": [
       "https://openaccess-cdn.clevelandart.org/1958.32/1958.32_web.jpg"
     ]
+  },
+  {
+    "id": "red-fuji",
+    "title": "South Wind, Clear Sky (Red Fuji)",
+    "displayTitle": "Red Fuji",
+    "artist": "Katsushika Hokusai",
+    "year": "ca. 1830–32",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "36490",
+    "accessionNumber": "JP9",
+    "source": "https://www.metmuseum.org/art/collection/search/36490",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "note": "Quiet atmospheric Fuji from Thirty-six Views. Canonical series title retained in metadata.",
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP141062.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP141062.jpg"
+    ]
+  },
+  {
+    "id": "kajikazawa",
+    "title": "Kajikazawa in Kai Province",
+    "displayTitle": "Kajikazawa",
+    "artist": "Katsushika Hokusai",
+    "year": "ca. 1830–32",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "56727",
+    "accessionNumber": "JP2581",
+    "source": "https://www.metmuseum.org/art/collection/search/56727",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP140973.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP140973.jpg"
+    ]
+  },
+  {
+    "id": "mishima-pass",
+    "title": "Mishima Pass in Kai Province",
+    "displayTitle": "Mishima Pass",
+    "artist": "Katsushika Hokusai",
+    "year": "ca. 1830–32",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "56786",
+    "accessionNumber": "JP2556",
+    "source": "https://www.metmuseum.org/art/collection/search/56786",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP141043.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP141043.jpg"
+    ]
+  },
+  {
+    "id": "shower-below-summit",
+    "title": "Shower Below the Summit",
+    "displayTitle": "Shower Below the Summit",
+    "artist": "Katsushika Hokusai",
+    "year": "c. 1830/33",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "87008",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/87008",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/bbb6d024-f931-2e2f-eb95-750991834b1c/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "kinryuzan-asakusa",
+    "title": "The Kinryusan Temple at Asakusa",
+    "displayTitle": "Kinryusan Temple",
+    "artist": "Utagawa Hiroshige",
+    "year": "1856",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "53680",
+    "accessionNumber": "JP1025",
+    "source": "https://www.metmuseum.org/art/collection/search/53680",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP122116.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP122116.jpg"
+    ]
+  },
+  {
+    "id": "twilight-moon-ryogoku",
+    "title": "Twilight Moon at Ryōgoku Bridge",
+    "displayTitle": "Twilight Moon, Ryōgoku",
+    "artist": "Utagawa Hiroshige",
+    "year": "c. 1830s",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "45294",
+    "accessionNumber": "JP1312",
+    "source": "https://www.metmuseum.org/art/collection/search/45294",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP123224.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP123224.jpg"
+    ]
+  },
+  {
+    "id": "evening-snow-uchikawa",
+    "title": "Evening Snow at Uchikawa",
+    "displayTitle": "Evening Snow, Uchikawa",
+    "artist": "Utagawa Hiroshige",
+    "year": "ca. 1836",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "56890",
+    "accessionNumber": "JP2467",
+    "source": "https://www.metmuseum.org/art/collection/search/56890",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP120449.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP120449.jpg"
+    ]
+  },
+  {
+    "id": "autumn-moon-tama",
+    "title": "Autumn Moon on the Tama River",
+    "displayTitle": "Autumn Moon, Tama",
+    "artist": "Utagawa Hiroshige",
+    "year": "ca. 1838",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "56519",
+    "accessionNumber": "JP1887",
+    "source": "https://www.metmuseum.org/art/collection/search/56519",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP123257.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP123257.jpg"
+    ]
+  },
+  {
+    "id": "mishima-morning-mist",
+    "title": "Mishima: Morning Mist",
+    "displayTitle": "Mishima, Morning Mist",
+    "artist": "Utagawa Hiroshige",
+    "year": "c. 1833/34",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "10926",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/10926",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/c047003a-949c-a581-7c5a-2c415e8cac75/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "night-rain-karasaki",
+    "title": "Night Rain at Karasaki",
+    "displayTitle": "Night Rain, Karasaki",
+    "artist": "Utagawa Hiroshige",
+    "year": "c. 1835",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "152490",
+    "accessionNumber": "1985.312",
+    "source": "https://clevelandart.org/art/1985.312",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1985.312/1985.312_web.jpg"
+    ]
+  },
+  {
+    "id": "venice-salute",
+    "title": "Venice, from the Porch of Madonna della Salute",
+    "displayTitle": "Venice, Madonna della Salute",
+    "artist": "Joseph Mallord William Turner",
+    "year": "ca. 1835",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437853",
+    "accessionNumber": "99.31",
+    "source": "https://www.metmuseum.org/art/collection/search/437853",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP169568.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP169568.jpg"
+    ]
+  },
+  {
+    "id": "saltash-ferry",
+    "title": "Saltash with the Water Ferry, Cornwall",
+    "displayTitle": "Saltash Ferry",
+    "artist": "Joseph Mallord William Turner",
+    "year": "1811",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437852",
+    "accessionNumber": "89.15.9",
+    "source": "https://www.metmuseum.org/art/collection/search/437852",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP169566.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP169566.jpg"
+    ]
+  },
+  {
+    "id": "mortlake-terrace",
+    "title": "Mortlake Terrace",
+    "artist": "Joseph Mallord William Turner",
+    "year": "1827",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "116",
+    "accessionNumber": "1937.1.109",
+    "source": "https://www.nga.gov/artworks/116-mortlake-terrace",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/d90b641f-b6fe-4fc4-a520-69accf46513b/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/1/1/6/116-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "approach-to-venice",
+    "title": "Approach to Venice",
+    "artist": "Joseph Mallord William Turner",
+    "year": "1844",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "117",
+    "accessionNumber": "1937.1.110",
+    "source": "https://www.nga.gov/artworks/117-approach-venice",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/4f117b4f-4efe-4b2e-88e7-a01975003d95/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/1/1/7/117-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "keelmen-moonlight",
+    "title": "Keelmen Heaving in Coals by Moonlight",
+    "displayTitle": "Keelmen by Moonlight",
+    "artist": "Joseph Mallord William Turner",
+    "year": "1835",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "1225",
+    "accessionNumber": "1942.9.86",
+    "source": "https://www.nga.gov/artworks/1225-keelmen-heaving-coals-moonlight",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/c1e33e8d-ffe4-4d20-a267-87ffcf94f7ce/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/1/2/2/5/1225-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-ferryman",
+    "title": "The Ferryman",
+    "artist": "Camille Corot",
+    "year": "ca. 1865",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "435969",
+    "accessionNumber": "14.40.811",
+    "source": "https://www.metmuseum.org/art/collection/search/435969",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-24153-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-24153-001.jpg"
+    ]
+  },
+  {
+    "id": "fontainebleau-oaks",
+    "title": "Fontainebleau: Oak Trees at Bas-Bréau",
+    "displayTitle": "Fontainebleau Oaks",
+    "artist": "Camille Corot",
+    "year": "1832 or 1833",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "435970",
+    "accessionNumber": "1979.404",
+    "source": "https://www.metmuseum.org/art/collection/search/435970",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DT2009.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DT2009.jpg"
+    ]
+  },
+  {
+    "id": "ville-davray",
+    "title": "Ville-d'Avray",
+    "artist": "Camille Corot",
+    "year": "1870",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "435988",
+    "accessionNumber": "87.15.141",
+    "source": "https://www.metmuseum.org/art/collection/search/435988",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-19283-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-19283-001.jpg"
+    ]
+  },
+  {
+    "id": "pond-ville-davray",
+    "title": "Pond at Ville-d'Avray",
+    "artist": "Camille Corot",
+    "year": "late 1860s",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "124078",
+    "accessionNumber": "1944.80",
+    "source": "https://clevelandart.org/art/1944.80",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1944.80/1944.80_web.jpg"
+    ]
+  },
+  {
+    "id": "italian-landscape-corot",
+    "title": "Italian Landscape",
+    "artist": "Camille Corot",
+    "year": "ca. 1825–28",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "435973",
+    "accessionNumber": "50.71.2",
+    "source": "https://www.metmuseum.org/art/collection/search/435973",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP332568.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP332568.jpg"
+    ]
+  },
+  {
+    "id": "sunset-oise",
+    "title": "Sunset on the River Oise",
+    "displayTitle": "Sunset, River Oise",
+    "artist": "Charles François Daubigny",
+    "year": "1866",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "140338",
+    "accessionNumber": "1964.289",
+    "source": "https://clevelandart.org/art/1964.289",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1964.289/1964.289_web.jpg"
+    ]
+  },
+  {
+    "id": "southampton-water",
+    "title": "Nocturne: Blue and Gold—Southampton Water",
+    "displayTitle": "Southampton Water",
+    "artist": "James McNeill Whistler",
+    "year": "1872",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "56905",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/56905",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/50034c7f-ce51-00f1-430e-a6f7efc233fc/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "cremorne-gardens",
+    "title": "Cremorne Gardens, No. 2",
+    "displayTitle": "Cremorne Gardens",
+    "artist": "James McNeill Whistler",
+    "year": "ca. 1870–80",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "13223",
+    "accessionNumber": "12.32",
+    "source": "https://www.metmuseum.org/art/collection/search/13223",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ad/original/DT2780.jpg",
+      "https://images.metmuseum.org/CRDImages/ad/web-large/DT2780.jpg"
+    ]
+  },
+  {
+    "id": "moonlight-wood-island",
+    "title": "Moonlight, Wood Island Light",
+    "displayTitle": "Wood Island Light",
+    "artist": "Winslow Homer",
+    "year": "1894",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "11127",
+    "accessionNumber": "11.116.2",
+    "source": "https://www.metmuseum.org/art/collection/search/11127",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ad/original/DP232469.jpg",
+      "https://images.metmuseum.org/CRDImages/ad/web-large/DP232469.jpg"
+    ]
+  },
+  {
+    "id": "flower-clouds",
+    "title": "Flower Clouds",
+    "artist": "Odilon Redon",
+    "year": "c. 1903",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "76395",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/76395",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/fb2077d9-82cc-ca7e-f450-5471d7f78c9a/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "vase-flowers-pink",
+    "title": "Vase of Flowers (Pink Background)",
+    "displayTitle": "Vase of Flowers",
+    "artist": "Odilon Redon",
+    "year": "ca. 1906",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437382",
+    "accessionNumber": "59.16.3",
+    "source": "https://www.metmuseum.org/art/collection/search/437382",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DT2159.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DT2159.jpg"
+    ]
+  },
+  {
+    "id": "bouquet-chinese-vase",
+    "title": "Bouquet in a Chinese Vase",
+    "displayTitle": "Bouquet, Chinese Vase",
+    "artist": "Odilon Redon",
+    "year": "ca. 1912–14",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437378",
+    "accessionNumber": "64.266",
+    "source": "https://www.metmuseum.org/art/collection/search/437378",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP240599.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP240599.jpg"
+    ]
   }
 ]

@@ -37,6 +37,11 @@ const NAMED_PALETTE = {
   "pontoise-hill": ["#6b7058", "#545745"],
   "sainte-victoire-viaduct": ["#4a6a5e", "#385248"],
   "girl-in-boat": ["#4e6e62", "#3c554b"],
+  "red-fuji": ["#8a4a38", "#6f3a2c"],
+  "keelmen-moonlight": ["#3a4a5a", "#2c3846"],
+  "southampton-water": ["#3a4854", "#2c3842"],
+  "moonlight-wood-island": ["#2f3e4a", "#243038"],
+  "flower-clouds": ["#6a4a62", "#52384c"],
 };
 
 const ARTIST_PALETTE = {
@@ -52,6 +57,16 @@ const ARTIST_PALETTE = {
   "Armand Guillaumin": ["#3e6a4a", "#2f5239"],
   "John Singer Sargent": ["#6d7a38", "#55602c"],
   "Johan Barthold Jongkind": ["#5d6f7a", "#485863"],
+  "Katsushika Hokusai": ["#3a5a6a", "#2c4654"],
+  "Utagawa Hiroshige": ["#4a5c68", "#384650"],
+  "Joseph Mallord William Turner": ["#8a6a3a", "#6c522c"],
+  "Camille Corot": ["#6a6e58", "#525544"],
+  "Jean Baptiste Camille Corot": ["#6a6e58", "#525544"],
+  "Jean-Baptiste-Camille Corot": ["#6a6e58", "#525544"],
+  "Charles François Daubigny": ["#5c6a4a", "#465238"],
+  "James McNeill Whistler": ["#4a5560", "#38424c"],
+  "Odilon Redon": ["#6a4a58", "#523844"],
+  "Winslow Homer": ["#3e5a68", "#2f4652"],
 };
 
 function paletteFor(item) {
@@ -71,7 +86,7 @@ function artThemeFromCatalog(item) {
   const [primary, primaryPressed] = paletteFor(item);
   return {
     id: item.id,
-    name: shortName(item.title),
+    name: shortName(item.displayTitle || item.title),
     kind: "art",
     palette: {
       ...PAPER,
@@ -101,6 +116,14 @@ export function artistGroupLabel(artist) {
   if (/sargent/i.test(artist)) return "Sargent";
   if (/guillaumin/i.test(artist)) return "Guillaumin";
   if (/jongkind/i.test(artist)) return "Jongkind";
+  if (/hokusai/i.test(artist)) return "Hokusai";
+  if (/hiroshige/i.test(artist)) return "Hiroshige";
+  if (/turner/i.test(artist)) return "Turner";
+  if (/corot/i.test(artist)) return "Corot";
+  if (/daubigny/i.test(artist)) return "Daubigny";
+  if (/whistler/i.test(artist)) return "Whistler";
+  if (/redon/i.test(artist)) return "Redon";
+  if (/homer/i.test(artist)) return "Homer";
   const parts = String(artist || "").split(" ").filter(Boolean);
   return parts[parts.length - 1] || "Other";
 }
