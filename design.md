@@ -87,11 +87,14 @@ The painting must remain clearly recognizable.
 
 ## Atelier collection
 
-Curated impressionist / post-impressionist plates (~70 bundled works).
-Gallery groups by artist:
+Curated Open Access plates (~99 bundled works). Impressionist and
+post-impressionist landscapes remain the core; the collection also includes
+Edo Japanese prints, Turner, Barbizon, Whistler nocturnes, Redon florals,
+and American landscape. Gallery groups by artist:
 
 Van Gogh · Monet · Sisley · Pissarro · Cézanne · Morisot · Hassam ·
-Caillebotte · Boudin · Sargent · and related landscape painters · Paper ·
+Caillebotte · Boudin · Sargent · Hokusai · Hiroshige · Turner · Corot ·
+Whistler · Redon · Homer · and related landscape painters · Paper ·
 Classic · Custom
 
 Locked core ids (do not replace): `cypresses`, `wheat-field-cypresses`,
@@ -145,11 +148,15 @@ Animate transform and opacity only. Reanimated / UI thread. No JS frame loops, b
 - Success: milestone complete, count goal reaches 100%
 
 ### Atelier Counter
-Count-goal instrument: padded current value, neighbor strip, horizontal scrub across the whole number zone, ± tap, long-press repeat, tap-to-enter exact number. Virtualize neighbors (five values). Do not render thousands of numbers. Persist only on Apply.
+Count-goal instrument: padded current value, neighbor strip, horizontal scrub
+across the whole reel (not only the center number), ± tap, long-press repeat
+on ± only, tap-to-enter exact number. No long-press is required to scrub.
+Virtualize neighbors (five values). Do not render thousands of numbers.
+Persist only on Apply.
 
-Cue: “Drag the reel · tap the number to type.” One-shot hint motion on open.
-Typed drafts commit on blur, iOS Done accessory, and Apply (`flush()`). Zero
-must not block saving a typed value such as 55.
+Cue: “Drag the reel · tap the number to type.” One-shot hint motion on first
+open. Typed drafts commit on blur, iOS Done accessory, and Apply (`flush()`).
+Zero must not block saving a typed value such as 55.
 
 ### Milestone
 `○ Incomplete` / `● Complete`. Archival mark, not a segmented control.
@@ -249,10 +256,13 @@ Fresh installs:
 Stamp-grid / catalog wall, not a long list.
 
 - Random Art tile at the top
-- Artist chips to filter the collection
+- Artist chips to filter the collection; the rail scrolls fully, including the last chip
 - Compact plates (3 columns on 375pt, 4 on wider)
-- Captions wrap (two lines)
+- Tile width = (content width − gap × (columns − 1)) / columns
+- Equal columns, equal gaps, equal left/right edges — no phantom gutter
+- Captions wrap (two lines); long works may use a shorter display title
 - Museum Paper, Classic, and Custom remain as index rows below the wall
+- Virtualize the stamp grid; do not mount every full-size plate at once
 
 Selected mark is a small ink square on the plate. Titles wrap. Do not ellipsize
 artwork titles on the credit line.

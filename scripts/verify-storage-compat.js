@@ -177,10 +177,50 @@ function main() {
   if (!counterSrc.includes("flush") || !counterSrc.includes("InputAccessoryView")) {
     fail("AtelierCounter exact-entry flush or iOS Done accessory missing");
   }
+  if (counterSrc.includes("activateAfterLongPress")) {
+    fail("AtelierCounter reel must not require a long-press to scrub");
+  }
+  if (!counterSrc.includes("activeOffsetX") || !counterSrc.includes("failOffsetY")) {
+    fail("AtelierCounter pan must activate on small horizontal movement");
+  }
+  if (!counterSrc.includes("delayLongPress")) {
+    fail("AtelierCounter +/- long-press repeat missing");
+  }
+  const gallerySrc = read(path.join(ROOT, "components", "theme", "ThemeGallery.js"));
+  if (!gallerySrc.includes("FlatList") || !gallerySrc.includes("gridW")) {
+    fail("ThemeGallery must virtualize and size tiles from content width");
+  }
+  if (!gallerySrc.includes("paddingRight") || !gallerySrc.includes("flexShrink: 0")) {
+    fail("ThemeGallery artist rail must scroll last chips fully into view");
+  }
   const sheetPath = path.join(ROOT, "components", "atelier", "AtelierSheet.js");
   if (!fs.existsSync(sheetPath)) fail("missing AtelierSheet");
-  if (catalog.length < 60) {
-    fail(`expected expanded catalog (~68+), got ${catalog.length}`);
+  if (catalog.length < 90) {
+    fail(`expected curated catalog (~99), got ${catalog.length}`);
+  }
+  if (catalog.length > 110) {
+    fail(`catalog exceeded quality ceiling (~99), got ${catalog.length}`);
+  }
+  const ALLOWED_SOURCE = [
+    "metmuseum.org",
+    "nga.gov",
+    "artic.edu",
+    "clevelandart.org",
+  ];
+  const seenCatalogIds = new Set();
+  for (const item of catalog) {
+    if (seenCatalogIds.has(item.id)) fail(`duplicate catalog id ${item.id}`);
+    seenCatalogIds.add(item.id);
+    if (item.id === "random-art" || item.id === "museum-paper") {
+      fail(`catalog must not include stored mode/paper id ${item.id}`);
+    }
+    if (!item.isPublicDomain) fail(`catalog item ${item.id} is not marked public domain`);
+    if (!item.museumObjectId) fail(`catalog item ${item.id} missing museumObjectId`);
+    if (!item.source) fail(`catalog item ${item.id} missing source URL`);
+    const src = String(item.source);
+    if (!ALLOWED_SOURCE.some((host) => src.includes(host))) {
+      fail(`catalog item ${item.id} source is not an allowed museum host: ${src}`);
+    }
   }
   const tokensSrc = read(path.join(ROOT, "utils", "tokens.js"));
   if (!tokensSrc.includes("ambient:") || !tokensSrc.includes("completion:")) {

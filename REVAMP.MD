@@ -1,669 +1,629 @@
-# ATELIER SPATIAL MOTION + YEAR ARCHIVE PHASE
-
-The counter/haptic/micro-motion foundation is implemented.
-
-The next goal is to make Atelier Tracker feel like one continuous physical
-editorial object rather than a set of separate screens and dialogs.
-
-Creative direction:
-
-SHARED OBJECTS
-×
-PHYSICAL PAPER
-×
-ARCHIVAL NAVIGATION
-×
-RESTRAINED CINEMATIC MOTION
+# ATELIER COLLECTION 99 + REEL INTERACTION REFINEMENT
 
 Continue on `feature/revamp`.
 
-Do not merge into `main`.
+Before changing code:
 
-All production data/business-logic requirements remain unchanged.
+1. Read `AGENTS.md`
+2. Read `REVAMP.MD`
+3. Read `design.md`
+4. Inspect current implementation and recent commits
+5. Stay on `feature/revamp`
+6. Do not modify or merge into `main`
 
----
+This is a focused refinement of:
 
-# 1. PRIMARY MOTION PRINCIPLE
+- Atelier Counter reel interaction
+- gallery spacing/responsiveness
+- art collection curation
 
-Prefer motion that explains:
-
-"this object became that object"
-
-over arbitrary enter/exit animations.
-
-Examples:
-
-theme thumbnail
-→ full-screen artwork
-
-Progress button
-→ progress drawer
-
-Add Goal control
-→ goal creation sheet
-
-Goal row
-→ collapses after delete
-
-Habits tab underline
-→ moves to Goals
-
-Use spatial continuity.
-
-Do not make every object bounce.
+All existing production compatibility rules remain in force.
 
 ---
 
-# 2. THEME SELECTION TRANSITION
+# 1. FIX THE ATELIER COUNTER REEL GESTURE
 
-The new 72-art stamp-grid gallery is now a major Atelier experience.
+The current progress reel concept is correct, but the physical interaction is not.
 
-Selecting artwork should feel special.
+Current problem:
 
-Current conceptual behavior:
+The user appears to need to press/hold deliberately before the number begins to scrub.
 
-tap artwork
-→ theme swaps
-
-Improve this into an Atelier transition.
-
-Desired feeling:
-
-the user takes a work from the collection
-and places it onto their personal workspace.
-
-## Possible sequence
-
-1. user taps a stamp/artwork
-2. selected stamp receives a subtle selection response
-3. gallery begins dismissing
-4. new painting expands/fades toward full-canvas presence
-5. old backdrop dissolves away
-6. paper veil resolves
-7. UI returns above the selected painting
-
-Do not require a fragile true shared-element library if the current stack does
-not support it cleanly.
-
-A convincing visual approximation using:
-
-- position
-- scale
-- opacity
-
-is acceptable.
-
-Performance and reliability matter more than technical novelty.
-
----
-
-# 3. RANDOM ART REVEAL
-
-Random Art should make opening Atelier feel slightly different each time.
-
-When Random Art resolves a new session painting:
-
-avoid an abrupt image swap.
-
-Suggested entry:
-
-Museum Paper / neutral veil
-→ artwork slowly resolves underneath
-→ interface appears clearly above it
-
-Approximately 400–700ms after JS is ready.
-
-Do not slow app startup waiting for this.
-
-Do not turn this into a long intro animation.
-
----
-
-# 4. THEME CROSSFADE
-
-Any normal fixed-theme change should crossfade cleanly.
-
-Old artwork:
-fade out
-
-New artwork:
-fade in
-
-Paper veil:
-remain stable enough that text does not flash or lose contrast
-
-ASCII:
-transition subtly after/with artwork
-
-Palette-dependent UI accents:
-transition where practical
-
-Avoid flashing solid backgrounds between artwork images.
-
-Classic/custom themes should transition gracefully too.
-
----
-
-# 5. HABITS / GOALS TAB MOTION
-
-Refine the primary navigation.
-
-Current underline should become a moving indicator.
-
-Tap HABITS / GOALS:
-
-- indicator glides to the selected label
-- outgoing content shifts/fades slightly
-- incoming content enters from a small opposing offset
-- total interaction should remain fast
-
-Suggested:
-~180–240ms
-
-Do not use full-screen carousel motion.
-
-This is navigation, not a slideshow.
-
-Swipe navigation may be considered only if it does not conflict with habit/counter
-gestures.
-
----
-
-# 6. ACTION → DRAWER CONTINUITY
-
-Refine:
-
-PROGRESS
-→ Atelier progress drawer
-
-ADD GOAL
-→ Add Goal sheet
-
-ADD HABIT
-→ Add Habit sheet
-
-The pressed action should feel visually related to the surface it opens.
-
-A perfect shared-element morph is not required.
-
-Possible approach:
-
-1. action wash fills slightly
-2. surrounding content subtly de-emphasizes
-3. bottom sheet rises immediately
-4. matching accent/keyline continues into the sheet
-
-The purpose is continuity.
-
-Do not create slow theatrical modal transitions.
-
----
-
-# 7. NEW GOAL / HABIT INSERTION
-
-After successfully adding a goal or habit:
-
-do not simply reload the list.
-
-Animate the new record into its correct position.
+The reel should instead feel like a physical horizontal instrument.
 
 Desired behavior:
 
-- sheet closes
-- new row appears with slight translate/fade
-- existing rows move naturally
-- numbering/indexing resolves smoothly
+TOUCH
+→ DRAG IMMEDIATELY
+→ VALUES MOVE
 
-Keep existing data ordering logic.
-
-Do not create duplicate temporary objects.
+There should be no perceived long-press requirement before scrubbing.
 
 ---
 
-# 8. DELETE / UNDO MOTION
+# 2. THE ENTIRE REEL IS DRAGGABLE
 
-Deletion should communicate removal clearly.
+Do not make only the center number draggable.
 
-Suggested sequence:
+The ENTIRE counter/reel container should be a horizontal gesture surface.
 
-1. destructive action confirmation
-2. item briefly enters danger-ink state
-3. opacity reduces
-4. row height collapses
-5. surrounding rows close the space
-6. existing Undo recovery remains available
+Conceptually this whole region:
 
-If Undo is used:
+001 002 [003] 004 005
 
-- row should reappear smoothly
-- restore correct position
-- do not duplicate
+should accept dragging.
 
-Do NOT make items fly dramatically off-screen.
+Also include the visual space immediately above/below the numbers as part of the hit area where practical.
+
+The user should be able to put their finger almost anywhere on the instrument and scrub.
+
+Use a generous gesture target.
 
 ---
 
-# 9. REORDER MOTION
+# 3. HORIZONTAL PAN SHOULD ACTIVATE QUICKLY
 
-Existing drag/reorder behavior remains.
+Use a pan gesture that activates after a small natural movement threshold.
 
-Improve tactile presentation.
+Do NOT require long press.
 
-While held:
+Suggested philosophy:
 
-- slight scale ~1.01–1.015
-- stronger editorial surface wash
-- selection haptic once
-- neighboring rows smoothly make room
-- perhaps faint index/drag marker
+- very small horizontal movement begins scrubbing
+- horizontal intent wins when abs(dx) clearly exceeds abs(dy)
+- vertical movement should still allow the containing drawer/scroll behavior where appropriate
+- do not make the user fight gesture recognition
 
-On release:
+A threshold in the general range of a few points is appropriate.
 
-- row settles into position
-- numbering updates smoothly
+Tune on device rather than blindly using one number.
 
-Avoid large floating shadows.
+If gesture-handler/Reanimated is used:
 
----
-
-# 10. COLLAPSING ATELIER HEADER
-
-The full Atelier header is beautiful but consumes significant vertical space.
-
-Create a restrained scroll-responsive header.
-
-## Expanded state
-
-[AT] ATELIER TRACKER / 2026
-
-Atelier Tracker
-
-WHEAT FIELD WITH CYPRESSES
-VINCENT VAN GOGH · 1889 · THE MET
-
-## Collapsed state
-
-[AT] ATELIER TRACKER 2026
-
-As the user scrolls:
-
-- large serif title fades/translates away
-- artwork metadata reduces/fades
-- compact header becomes sticky
-- backdrop remains visible
-- content gains usable screen space
-
-Do NOT make it feel like a standard opaque navigation bar.
-
-Keep it light and editorial.
-
-### Performance
-
-Avoid per-frame JS state updates from scroll.
-
-Prefer native/Reanimated scroll values.
+- keep the gesture work on the UI thread
+- avoid per-frame React setState
 
 ---
 
-# 11. HISTORY MONTH NAVIGATION
+# 4. SEPARATE PAN FROM LONG-PRESS REPEAT
 
-Improve Habit History navigation.
+Long press remains useful for repeated + / − controls.
 
-The existing long archive can remain available, but introduce a stronger month
-navigation treatment if it improves usability.
+It should NOT gate reel scrubbing.
 
-Concept:
+Interaction model:
 
-JAN FEB MAR APR MAY JUN JUL AUG SEP
-───
+DRAG REEL
+→ immediate continuous scrub
 
-Horizontal scrub/tap navigation:
+TAP − / +
+→ one increment
 
-- selected month is emphasized
-- haptic tick at month changes
-- month content transitions smoothly
+HOLD − / +
+→ repeating increment
 
-Do not remove history data.
+TAP CENTER NUMBER
+→ exact numeric entry
 
-Do not compromise access to older months.
-
----
-
-# 12. NEW FEATURE — YEAR ARCHIVE
-
-Add a new Year / 365 archival view.
-
-This should become a signature Atelier feature.
-
-It should visualize the user's year as a personal archive rather than another
-generic analytics dashboard.
-
-Possible label:
-
-YEAR ARCHIVE
-
-or
-
-2026 / ARCHIVE
+These are separate interaction paths.
 
 ---
 
-# 13. YEAR ARCHIVE DATA
+# 5. REEL SHOULD FEEL PHYSICAL
 
-Use existing habit data.
+While scrubbing:
 
-Do NOT introduce a second tracking database.
+- values translate continuously
+- centered value grows / darkens slightly
+- neighboring values fade toward the edges
+- crossing integer boundaries gives a light throttled haptic tick
+- release snaps cleanly to the nearest value
+- fast flick may travel farther, but remain predictable
 
-Represent each calendar day from Jan 1 → Dec 31.
+Do not make it feel like dragging static labels.
 
-Possible visual encoding:
-
-`.` = no meaningful completion / empty
-
-`+` = positive activity
-
-`×` = negative / intentionally marked bad
-
-For days with multiple habits, derive a visual density/summary using existing
-checks.
-
-The exact aggregate formula should be simple, deterministic, and documented.
-
-Do not rewrite existing habit history.
-
----
-
-# 14. YEAR ARCHIVE VISUAL
+The reel should visually move under the finger.
 
 Think:
 
-museum accession sheet
+MECHANICAL INDEX
 ×
-ASCII calendar
+FILM COUNTER
 ×
-365-day contribution map
+PRECISION SLIDER
 
-But NOT GitHub clone styling.
-
-Potential layout:
-
-JAN .++.+...++++....
-FEB ++++..×.+.......
-MAR ...+++++++......
-...
-
-or a carefully spaced 365-cell grid.
-
-Must work on 375pt width.
-
-Possible behavior:
-
-- month separators
-- tiny mono date labels
-- artwork visible beneath
-- paper surfaces only where necessary
+Do not directly copy external references.
 
 ---
 
-# 15. YEAR ARCHIVE ENTRY MOTION
+# 6. REEL DISCOVERABILITY
 
-When entering the Year Archive:
+The user should understand the reel can move without reading instructions.
 
-cells may populate/reveal progressively.
+Improve visual affordance.
 
-Keep it restrained.
+Possible treatment:
 
-Example:
-Jan → current month reveal over ~400–700ms.
+‹ 001 002 [003] 004 005 ›
 
-Do not individually animate hundreds of views with expensive JS timers.
+or edge fading / partial neighboring values.
 
-Use a performant reveal/mask/opacity technique.
+The first time the drawer opens, an extremely subtle one-shot motion hint may move the rail a few pixels left/right and settle.
 
-Reduced motion:
-show immediately.
+Do not repeatedly animate the hint.
 
----
-
-# 16. DAY DETAIL
-
-Tapping a date may reveal a small Atelier ledger detail:
-
-03 SEPTEMBER 2026
-
-WORKOUT +
-CARDIO ×
-DRINK WATER +
-READ .
-
-This should consume existing habit checks.
-
-Do not create new daily-note schemas in this phase.
+Existing cue copy such as "DRAG TO REEL" may remain if it helps, but the control should be understandable from its visual behavior alone.
 
 ---
 
-# 17. YEAR ARCHIVE NAVIGATION PLACEMENT
+# 7. EXACT ENTRY REMAINS
 
-Integrate this without cluttering the primary Habits / Goals tabs.
+Do not remove direct numeric entry.
 
-Possible access points:
+Tapping the large current number should continue opening exact entry.
 
-- Habit History
-- a small Archive action
-- existing ledger/history navigation
+Ensure the earlier 0 → 55 bug stays fixed.
 
-Use judgment based on current app structure.
+Apply must commit the currently typed draft even if:
 
-Do NOT add a third huge primary tab unless it genuinely improves hierarchy.
+- keyboard is still open
+- field has not blurred
+- starting progress was 0
 
----
-
-# 18. SHARE AS PRINT
-
-Rework the final share-generation experience to feel like producing an archival
-print.
-
-Do not alter actual image capture/share contracts.
-
-Flow:
-
-Choose share format
-→ Generate
-→ card reveals vertically like a print emerging
-→ user previews result
-→ native Share
-
-Possible microcopy:
-
-[AT] / PRINT
-
-or
-
-PREPARING PRINT
-
-Do not artificially delay sharing for long animation.
-
-The reveal should occur while/after the real card becomes available.
+Do not regress this while rewriting the reel gesture.
 
 ---
 
-# 19. SHARE CARD MOTION DOES NOT ENTER OUTPUT
+# 8. ART COLLECTION TARGET: 99 TOTAL
 
-The animation is UI only.
+The current collection has 72 plates.
 
-The exported image itself remains:
+Curate the collection toward a FINAL TARGET OF APPROXIMATELY 99 ART THEMES.
 
-- static
-- correctly sized
-- deterministic
-- existing capture-compatible
+Do not simply append exactly 27 arbitrary paintings.
 
-Do not accidentally capture transitional animation frames.
+This is now a curatorial pass.
 
----
+If several current works feel redundant, weak as mobile backdrops, or nearly identical, they may be replaced.
 
-# 20. COMPLETION ACCESSION LANGUAGE
+Target:
 
-Continue evolving the `[AT] / GOAL COMPLETE` concept.
+~99 total excellent plates
 
-A brief completion mark may include the current goal index:
+rather than:
 
-[AT] / 04 / COMPLETE
+72 current + 27 mediocre additions
 
-or similarly restrained accession-style notation.
+Preserve IDs already used by existing users/dev storage whenever possible.
 
-Do NOT permanently clutter completed goal rows.
-
-Do not generate a new persistent accession identifier.
-
-This is presentation.
+Never silently delete an existing persisted theme ID without a fallback/alias strategy.
 
 ---
 
-# 21. BUTTON MICROINTERACTION CONSISTENCY
+# 9. EXPAND ACROSS ART HISTORY
 
-Audit buttons/controls across the app.
+The collection is currently concentrated heavily around Impressionism and
+Post-Impressionism.
 
-Make sure:
+Broaden Atelier into a more interesting private museum.
 
-- same press timing
-- same scale philosophy
-- same paper/ink response
-- same haptic reasoning
+The new works should come from different periods and visual traditions while
+still fitting the Atelier interface.
 
-Particularly:
+Core principle:
 
-- gallery stamps
-- theme artist chips
-- toolbar actions
-- sheet actions
-- Share
-- Back
-- Apply
-- Save
-- Cancel
+DIFFERENT ERA
+SAME ATMOSPHERE
 
-Avoid each component inventing its own spring.
+Works still need to function behind typography.
 
 ---
 
-# 22. LIVING CANVAS AUDIT
+# 10. NEW CURATORIAL GROUPS
 
-The Living Canvas is already implemented.
+Explore high-quality Open Access works from these directions.
 
-Do not make it stronger during this phase.
+## EDO JAPANESE LANDSCAPE
 
-Audit whether:
+Priority artists:
 
-- gallery transition
-- collapsing header
-- tab motion
-- sheet motion
+- Katsushika Hokusai
+- Utagawa Hiroshige
 
-combined with ambient artwork movement becomes visually excessive.
+Look for:
 
-If necessary, temporarily pause Living Canvas during:
+- mountains
+- rivers
+- snow
+- mist
+- sea
+- bridges
+- restrained architectural landscapes
 
-- active drawer/sheet interactions
-- large theme transitions
+Japanese prints are especially interesting for Atelier because:
 
-Resume after transition.
+- flat compositions work well behind UI
+- large quiet regions help readability
+- strong linework complements ASCII / mono typography
+- they broaden the collection historically and culturally
 
----
+Do not overfill with only Great Wave-style high-drama compositions.
 
-# 23. REDUCED MOTION
-
-Everything in this phase must obey the existing reduced-motion system.
-
-Reduced motion alternatives:
-
-Theme selection:
-simple crossfade
-
-Tabs:
-instant indicator + light fade
-
-Sheets:
-minimal translate/fade
-
-Row insert/delete:
-simple opacity
-
-Header:
-immediate/low-motion state change
-
-Year Archive:
-no progressive reveal
-
-All functionality remains identical.
+Prefer quiet atmospheric prints too.
 
 ---
 
-# 24. PERFORMANCE
+## ROMANTIC / EARLY 19TH-CENTURY LANDSCAPE
 
-This phase must not compromise physical-device performance.
+Priority:
 
-iPhone 7 remains a baseline.
+- J. M. W. Turner
+- similar Open Access landscape painters
 
-Be especially careful with:
+Look for:
 
-- 72 artwork assets
-- gallery scrolling
-- artwork crossfade
-- Living Canvas
-- scroll-responsive header
-- Year Archive
-- row animations
+- mist
+- water
+- sunrise/sunset
+- broad skies
+- atmospheric color fields
+
+Prefer Turners with enough quiet space for interface text.
+
+Avoid extremely stormy/busy works if they fight the UI.
+
+---
+
+## BARBIZON / PRE-IMPRESSIONIST LANDSCAPE
+
+Priority:
+
+- Jean-Baptiste-Camille Corot
+- related landscape painters
+
+This group should add:
+
+- silver-gray skies
+- olive greens
+- calm rivers
+- soft pastoral environments
+
+These may become some of the strongest practical backgrounds because of their
+restrained palettes.
+
+---
+
+## TONALISM / NOCTURNE
+
+Priority:
+
+- James McNeill Whistler
+
+Consider atmospheric Nocturnes where the museum media is confirmed public
+domain/Open Access.
+
+These can provide:
+
+- deep slate
+- fog
+- gray-blue
+- sepia
+- quieter dark themes
+
+Do not make the whole library light/pastel.
+
+---
+
+## SYMBOLIST / FLORAL
+
+Priority:
+
+- Odilon Redon
+
+Use selectively.
+
+Floral works can introduce:
+
+- unusual color
+- dreamlike atmosphere
+- stronger accent palettes
+
+Only include pieces that remain usable beneath text.
+
+---
+
+## AMERICAN LANDSCAPE / LIGHT
+
+Consider carefully curated works from:
+
+- Winslow Homer
+- Childe Hassam
+- John Singer Sargent landscapes/gardens
+- other museum Open Access landscape artists
+
+Some of these are already represented.
+
+Avoid adding near-duplicates just to increase artist counts.
+
+---
+
+# 11. POSSIBLE COLLECTION BALANCE
+
+Do not rigidly enforce counts, but aim for a healthy library.
+
+Conceptual balance could be approximately:
+
+- Impressionism / Post-Impressionism: ~45–50
+- Edo Japanese prints: ~10–15
+- Romantic / atmospheric landscape: ~8–10
+- Barbizon / pre-Impressionist: ~8–10
+- Tonalist / Nocturne: ~5–8
+- Symbolist / floral / unusual quiet works: ~5–8
+- other carefully curated Open Access landscapes: remaining slots
+
+The final library should feel broad but coherent.
+
+---
+
+# 12. COPYRIGHT / OPEN ACCESS REQUIREMENT
+
+This rule is absolute.
+
+Do NOT include an image simply because:
+
+"the artist died a long time ago."
+
+The reproduction/media itself must be suitable for bundling.
+
+For every candidate verify the authoritative museum page/API explicitly provides:
+
+- Public Domain / CC0 / Open Access status
+  AND
+- downloadable media appropriate for reuse
+
+Preferred authoritative sources remain:
+
+- The Metropolitan Museum of Art
+- National Gallery of Art
+- Art Institute of Chicago
+- Cleveland Museum of Art
+- Rijksmuseum if its API/object media provides appropriate open reuse
+- similarly reputable museum Open Access programs
+
+Do NOT source shipped assets from:
+
+- Pinterest
+- WikiArt
+- blogs
+- wallpaper websites
+- Google image results
+- random CDNs
+
+Search/previews may help discovery only.
+
+The final bundled image must come from the authoritative Open Access source.
+
+---
+
+# 13. RIGHTS EDGE CASE
+
+Some museum records may label the underlying artwork Public Domain while still
+restricting the displayed digital media.
+
+If the actual image cannot be downloaded/reused under the museum's Open Access
+terms:
+
+DO NOT BUNDLE IT.
+
+Find another authoritative version or choose another work.
+
+Record:
+
+- title
+- artist
+- date
+- museum
+- object id
+- source
+- rights
+- isPublicDomain
+
+for every included plate.
+
+---
+
+# 14. ART QUALITY CONTROL
+
+Before finalizing ~99 works, inspect each derivative as a phone backdrop.
+
+Reject/reconsider works that:
+
+- become muddy under the paper veil
+- have important content constantly hidden by the UI
+- become illegible when `cover` cropped vertically
+- are nearly indistinguishable from another theme
+- are excessively busy
+- are too dark for the current type system
+- add little curatorial value
+
+Quality beats hitting exactly 99.
+
+99 is the ceiling/target, not a requirement to keep weak works.
+
+---
+
+# 15. BUNDLE SIZE
+
+The 72-work collection already adds meaningful asset size.
+
+Before and after expansion, report:
+
+- total JPEG count
+- total JPEG bytes
+- approximate increase from this pass
+- largest individual derivatives
+
+Optimize intelligently.
+
+Do not ship museum-master images.
+
+Do not destroy visual quality to hit an arbitrary tiny size.
+
+If 99 optimized images produce an unreasonable app-size increase, report the
+tradeoff clearly rather than silently reducing quality.
+
+---
+
+# 16. GALLERY GRID SPACING
+
+The current stamp-grid has a layout issue:
+
+Each row has three images, but the third tile leaves an awkward empty area /
+the spacing does not visually fill the available width evenly.
+
+Fix the grid geometry.
+
+For 375pt layout:
+
+- exactly 3 equal-width tile columns
+- exactly 2 equal inter-column gaps
+- equal left/right content margins
+- artwork image fills its tile width
+- label aligns with the artwork width
+- no phantom fourth-column space
+- no oversized trailing gutter
+
+Do not solve this with arbitrary per-device pixel values.
+
+Calculate tile width from:
+
+available content width
+− total intended gaps
+
+divided by number of columns.
+
+Conceptually:
+
+tileWidth =
+(containerWidth - gap \* (columns - 1)) / columns
+
+Use consistent gap tokens.
+
+---
+
+# 17. RESPONSIVE GALLERY COLUMNS
+
+Keep the grid responsive.
+
+At narrow mobile widths:
+3 columns
+
+At wider phone/tablet widths:
+4 or another appropriate count
+
+But every configuration must distribute columns evenly across available width.
+
+Avoid `space-around` behavior that creates different edge gaps from internal
+gaps.
+
+Prefer explicit column width + consistent `gap`, or equivalent stable layout.
+
+---
+
+# 18. GALLERY LABELS
+
+Titles below stamps should remain legible.
+
+Allow:
+
+- 2 lines where needed
 
 Avoid:
 
-- large JS scroll handlers
-- simultaneous high-resolution images staying mounted unnecessarily
-- hundreds of independently animated components
-- repeated layout measurements
-- runtime image effects
+- ugly `...` truncation where reasonable
+
+Very long works may use a deliberate shorter display title while retaining the
+full canonical title in metadata/detail view.
+
+Do not let one tall title destroy row rhythm.
 
 ---
 
-# 25. DO NOT IMPLEMENT BRAND-BLOCKED ITEMS YET
+# 19. ARTIST FILTER STRIP
 
-The following remain in the Brand Asset Backlog:
+The current artist chip strip also needs polish.
 
-- final app icon
+In the physical-device gallery, artist names can become partially cut off at
+the right edge.
+
+Make the artist/filter rail clearly horizontally scrollable.
+
+Requirements:
+
+- full chip text remains available
+- comfortable left/right padding
+- selected state remains obvious
+- last chip can scroll completely into view
+- do not leave a permanently clipped half-chip as if the layout broke
+
+A tiny intentional partial-next-chip affordance is acceptable only if it looks
+deliberate.
+
+---
+
+# 20. RANDOM ART
+
+Random Art should automatically include the final approved ~99 art themes.
+
+Do not include:
+
+- Museum Paper
+- Classic
+- Custom
+
+unless intentionally changed later.
+
+Preserve:
+
+- current session behavior
+- skip-last-pick behavior
+- widget consistency
+
+---
+
+# 21. THEME TRANSITION PERFORMANCE
+
+A 99-work library should NOT mean 99 full-resolution images mounted at once.
+
+The gallery should only mount/render what it needs.
+
+Continue using efficient list/grid virtualization.
+
+Theme selection crossfade should still keep at most the necessary outgoing +
+incoming canvas images mounted.
+
+Do not preload all full-size images into memory.
+
+---
+
+# 22. DO NOT TOUCH BLOCKED BRAND ASSETS
+
+Claude Design backlog remains blocked:
+
 - final `[AT]` SVG
-- final wordmark
-- production splash artwork
-- splash → exact-logo shared transition
-- store marketing assets
+- app icon
+- wordmark
+- production splash
+- exact splash → header logo transition
+- App Store marketing assets
 
-Do not improvise final assets.
-
-Continue using the text `[AT]` placeholder where needed.
-
----
-
-# 26. DATA SAFETY
-
-Do not change:
-
-- AsyncStorage schemas
-- storage keys
-- goal data
-- habit semantics
-- yearly history
-- rollover
-- custom themes
-- Random Art persistence
-- bundle identifiers
-- widget contracts except backward-compatible additions already approved
-
-Year Archive derives from existing habit checks.
-
-Do not create duplicate history storage.
+Do not improvise those assets.
 
 ---
 
-# 27. VERIFICATION
+# 23. VERIFICATION
+
+Before completion:
 
 Run:
 
@@ -673,45 +633,56 @@ Run:
 
 Verify:
 
-- Habits/Goals switching
-- theme crossfade
-- Random Art startup
-- gallery selection
-- drawer actions
-- add insertion
-- delete + Undo
-- drag reorder
-- history
-- Year Archive calculations
-- share capture
-- reduced motion
-- widget payload remains valid
-- classic/custom themes still work
+COUNTER:
 
-Do not claim physical-device testing unless performed.
+- touching anywhere on reel starts drag naturally
+- no long-hold required
+- vertical drawer interaction still usable
+- small target feels precise
+- large target remains usable
+- - / − tap works
+- - / − long press works
+- exact entry still works
+- 0 → 55 → Apply persists
+- haptic does not spam
 
----
+GALLERY:
 
-# 28. FINAL REPORT
+- 3-column spacing is mathematically even on 375pt
+- wider layouts remain even
+- artist filter strip scrolls fully
+- title labels behave consistently
+- gallery remains smooth with ~99 works
+- Random Art includes new works
+
+ART:
+
+- every bundled image has authoritative Open Access provenance
+- every derivative exists
+- no duplicate IDs
+- no broken requires
+- no restricted reproduction accidentally bundled
+
+STORAGE:
+
+- all existing theme IDs still resolve
+- existing user selection remains safe
+- random-art remains safe
+- custom themes remain safe
 
 Report:
 
-1. motion/navigation changes
-2. gallery theme transition
-3. tab transition
-4. drawer/action continuity
-5. insert/delete/reorder animation
-6. collapsing header
-7. Year Archive implementation
-8. History navigation updates
-9. share-as-print behavior
-10. reduced-motion handling
-11. performance considerations
-12. storage verification
-13. build/test results
-14. commits
-15. remaining device tests
-16. items still waiting on Claude Design
+1. counter gesture changes
+2. gallery layout changes
+3. final number of art themes
+4. works/artists/eras added
+5. works removed/replaced and why
+6. authoritative museum sources
+7. rights validation
+8. asset-size impact
+9. build/storage verification
+10. commits
+11. remaining physical-device testing
 
 Stay on `feature/revamp`.
 
