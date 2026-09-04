@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "splash": {
-      "image": "./assets/icon.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#F6F3EC"
     },
@@ -24,8 +24,8 @@
       "package": "com.andresbotia.yearlytracker",
       "versionCode": 18,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#F6F3EC"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1C1916"
       }
     },
     "web": {
