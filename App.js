@@ -69,6 +69,11 @@ import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "./utils/tokens
 import { ReducedMotionProvider } from "./utils/motion";
 import AtelierDrawer from "./components/atelier/AtelierDrawer";
 import AtelierCounter from "./components/atelier/AtelierCounter";
+import AtelierSheet, {
+  AtelierActions,
+  AtelierToggle,
+  AtelierField,
+} from "./components/atelier/AtelierSheet";
 import MilestoneMark from "./components/atelier/MilestoneMark";
 import CompletionMark from "./components/atelier/CompletionMark";
 import {
@@ -85,7 +90,13 @@ import {
   saveCustomThemes,
   loadRevampIntroSeen,
   setRevampIntroSeen,
+  loadRandomArtLast,
+  saveRandomArtLast,
 } from "./utils/storage";
+import {
+  RANDOM_ART_ID,
+  pickRandomArtId,
+} from "./themes/artThemes";
 
 import Constants from "expo-constants";
 import {
@@ -432,6 +443,8 @@ export default function App() {
   // - legacy hue number/string
   // - "custom:<id>"
   const [themeChoice, setThemeChoice] = useState("bright-blue");
+  const [sessionArtId, setSessionArtId] = useState(null);
+  const counterRef = useRef(null);
 
   const pickerShared = useSharedValue("#ffffff");
 
@@ -587,9 +600,13 @@ export default function App() {
   const [habitEditHabit, setHabitEditHabit] = useState(null);
   const [habitEditTitle, setHabitEditTitle] = useState("");
 
+  const resolvedThemeId =
+    themeChoice === RANDOM_ART_ID
+      ? sessionArtId || "cypresses"
+      : themeChoice;
   const theme = useMemo(
-    () => makeTheme(themeChoice, customThemes),
-    [themeChoice, customThemes],
+    () => makeTheme(resolvedThemeId, customThemes),
+    [resolvedThemeId, customThemes],
   );
   const todayDate = useMemo(() => new Date(todayTick), [todayTick]);
   const { width: windowWidth } = useWindowDimensions();
@@ -766,7 +783,11 @@ export default function App() {
 
     return {
       yearlyProgress: yearlyProgress01,
-      theme: String(theme?.hue ?? themeChoice ?? ""),
+      theme: String(theme?.hue ?? resolvedThemeId ?? ""),
+      themeKind: String(theme?.kind || ""),
+      themePrimary: String(theme?.primary || ""),
+      themeBg: String(theme?.bg || ""),
+      themeText: String(theme?.text || ""),
       goals: (nextGoals || []).map((g) => ({
         id: String(g.id),
         title: String(g.title || ""),
@@ -1166,6 +1187,7 @@ export default function App() {
           storedYear,
           storedCustomThemes,
           introSeen,
+          lastRandomArt,
         ] = await Promise.all([
           loadGoalsWithMeta(),
           loadHue(),
@@ -1175,6 +1197,7 @@ export default function App() {
           loadCurrentYear(),
           loadCustomThemes(),
           loadRevampIntroSeen(),
+          loadRandomArtLast(),
         ]);
 
         if (!mounted) return;
@@ -1195,7 +1218,12 @@ export default function App() {
           setGoals(finalGoals);
         }
 
-        if (typeof storedHue === "number" || typeof storedHue === "string") {
+        if (storedHue === RANDOM_ART_ID) {
+          const picked = pickRandomArtId(lastRandomArt);
+          setThemeChoice(RANDOM_ART_ID);
+          setSessionArtId(picked);
+          await saveRandomArtLast(picked);
+        } else if (typeof storedHue === "number" || typeof storedHue === "string") {
           setThemeChoice(storedHue);
         }
 
@@ -1481,7 +1509,8 @@ export default function App() {
     if (completeFlash) return;
 
     const t = editGoal.target || 0;
-    const n = Number(editValue);
+    const flushed = counterRef.current?.flush?.();
+    const n = Number.isFinite(flushed) ? flushed : Number(editValue);
     if (!Number.isFinite(n)) return;
 
     const nextProgress = clamp(Math.floor(n), 0, t);
@@ -1594,8 +1623,17 @@ export default function App() {
   }
 
   async function handlePickTheme(nextTheme) {
-    setThemeChoice(nextTheme);
-    await saveHue(nextTheme);
+    if (nextTheme === RANDOM_ART_ID) {
+      const picked = pickRandomArtId(sessionArtId);
+      setThemeChoice(RANDOM_ART_ID);
+      setSessionArtId(picked);
+      await saveHue(RANDOM_ART_ID);
+      await saveRandomArtLast(picked);
+    } else {
+      setThemeChoice(nextTheme);
+      setSessionArtId(null);
+      await saveHue(nextTheme);
+    }
     await hapticSuccess();
   }
 
@@ -2531,77 +2569,30 @@ export default function App() {
           onRequestClose={closeHabitEdit}
         >
           <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
+            <AtelierSheet
+              theme={theme}
+              kicker="[AT]  /  HABIT"
+              title="Edit Habit"
             >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Edit Habit
-              </Text>
-
               <Text style={[styles.label, { color: theme.mutedText }]}>
                 Habit name
               </Text>
-              <TextInput
+              <AtelierField
+                theme={theme}
                 value={habitEditTitle}
                 onChangeText={setHabitEditTitle}
                 placeholder="e.g., Workout"
-                placeholderTextColor={theme.mutedText}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: theme.border,
-                    color: theme.text,
-                    backgroundColor: theme.bg,
-                  },
-                ]}
                 autoCorrect={false}
                 autoCapitalize="words"
                 maxLength={24}
               />
-
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={closeHabitEdit}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed ? theme.border : theme.bg,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Cancel
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={saveHabitEdit}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Save
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
+              <AtelierActions
+                theme={theme}
+                onCancel={closeHabitEdit}
+                onConfirm={saveHabitEdit}
+                confirmDisabled={!habitEditTitle.trim()}
+              />
+            </AtelierSheet>
           </View>
         </Modal>
         {/* Add Habit */}
@@ -2612,77 +2603,30 @@ export default function App() {
           onRequestClose={() => setHabitAddOpen(false)}
         >
           <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
+            <AtelierSheet
+              theme={theme}
+              kicker="[AT]  /  HABIT"
+              title="Add Habit"
             >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Add Habit
-              </Text>
-
               <Text style={[styles.label, { color: theme.mutedText }]}>
                 Habit name
               </Text>
-              <TextInput
+              <AtelierField
+                theme={theme}
                 value={habitTitle}
                 onChangeText={setHabitTitle}
                 placeholder="e.g., Workout"
-                placeholderTextColor={theme.mutedText}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: theme.border,
-                    color: theme.text,
-                    backgroundColor: theme.bg,
-                  },
-                ]}
                 autoCorrect={false}
                 autoCapitalize="words"
                 maxLength={24}
               />
-
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={() => setHabitAddOpen(false)}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed ? theme.border : theme.bg,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Cancel
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={addHabit}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Save
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
+              <AtelierActions
+                theme={theme}
+                onCancel={() => setHabitAddOpen(false)}
+                onConfirm={addHabit}
+                confirmDisabled={!habitTitle.trim()}
+              />
+            </AtelierSheet>
           </View>
         </Modal>
         {/* Edit Goal Details */}
@@ -2693,32 +2637,19 @@ export default function App() {
           onRequestClose={closeGoalDetails}
         >
           <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
+            <AtelierSheet
+              theme={theme}
+              kicker="[AT]  /  GOAL"
+              title="Edit Goal"
             >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Edit Goal
-              </Text>
-
               <Text style={[styles.label, { color: theme.mutedText }]}>
                 Title
               </Text>
-              <TextInput
+              <AtelierField
+                theme={theme}
                 value={goalDetailsTitle}
                 onChangeText={setGoalDetailsTitle}
                 placeholder="e.g., Read 30 books"
-                placeholderTextColor={theme.mutedText}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: theme.border,
-                    color: theme.text,
-                    backgroundColor: theme.bg,
-                  },
-                ]}
                 autoCorrect={false}
                 autoCapitalize="sentences"
                 maxLength={60}
@@ -2727,137 +2658,41 @@ export default function App() {
               <Text style={[styles.label, { color: theme.mutedText }]}>
                 Type
               </Text>
-              <View style={[styles.typeRow, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={() => setGoalDetailsType("count")}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    {
-                      backgroundColor:
-                        goalDetailsType === "count" ? theme.primary : theme.bg,
-                      borderColor:
-                        goalDetailsType === "count"
-                          ? theme.primary
-                          : theme.border,
-                      opacity: pressed ? 0.9 : 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.pillText,
-                      {
-                        color:
-                          goalDetailsType === "count"
-                            ? theme.primaryTextOn
-                            : theme.text,
-                      },
-                    ]}
-                  >
-                    Count
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setGoalDetailsType("boolean")}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor:
-                        goalDetailsType === "boolean"
-                          ? theme.primary
-                          : theme.bg,
-                      borderColor:
-                        goalDetailsType === "boolean"
-                          ? theme.primary
-                          : theme.border,
-                      opacity: pressed ? 0.9 : 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.pillText,
-                      {
-                        color:
-                          goalDetailsType === "boolean"
-                            ? theme.primaryTextOn
-                            : theme.text,
-                      },
-                    ]}
-                  >
-                    Milestone
-                  </Text>
-                </Pressable>
-              </View>
+              <AtelierToggle
+                theme={theme}
+                value={goalDetailsType}
+                onChange={setGoalDetailsType}
+                options={[
+                  { value: "count", label: "Count" },
+                  { value: "boolean", label: "Milestone" },
+                ]}
+              />
 
               {goalDetailsType === "count" && (
                 <>
                   <Text style={[styles.label, { color: theme.mutedText }]}>
                     Goal
                   </Text>
-                  <TextInput
+                  <AtelierField
+                    theme={theme}
                     value={goalDetailsTargetText}
                     onChangeText={setGoalDetailsTargetText}
                     keyboardType={
                       Platform.OS === "ios" ? "number-pad" : "numeric"
                     }
                     placeholder="e.g., 30"
-                    placeholderTextColor={theme.mutedText}
-                    style={[
-                      styles.input,
-                      {
-                        borderColor: theme.border,
-                        color: theme.text,
-                        backgroundColor: theme.bg,
-                      },
-                    ]}
                     maxLength={6}
                   />
                 </>
               )}
 
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={closeGoalDetails}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed ? theme.border : theme.bg,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Cancel
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={saveGoalDetails}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Save
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
+              <AtelierActions
+                theme={theme}
+                onCancel={closeGoalDetails}
+                onConfirm={saveGoalDetails}
+                confirmDisabled={!goalDetailsTitle.trim()}
+              />
+            </AtelierSheet>
           </View>
         </Modal>
         {/* Add Goal */}
@@ -2868,16 +2703,11 @@ export default function App() {
           onRequestClose={() => setAddOpen(false)}
         >
           <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
+            <AtelierSheet
+              theme={theme}
+              kicker="[AT]  /  GOAL"
+              title="Add Goal"
             >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Add Goal
-              </Text>
-
               <Text style={[styles.label, { color: theme.mutedText }]}>
                 Templates
               </Text>
@@ -2902,13 +2732,19 @@ export default function App() {
                     style={({ pressed }) => [
                       styles.templateChip,
                       {
-                        borderColor: theme.border,
-                        backgroundColor: pressed ? theme.border : theme.bg,
+                        borderColor: theme.text,
+                        opacity: pressed ? 0.7 : 1,
                       },
                     ]}
                   >
                     <Text
-                      style={[styles.templateChipText, { color: theme.text }]}
+                      style={[
+                        styles.templateChipText,
+                        {
+                          color: theme.text,
+                          fontFamily: fontFamily("data", fontsLoaded),
+                        },
+                      ]}
                     >
                       {t.label}
                     </Text>
@@ -2919,19 +2755,11 @@ export default function App() {
               <Text style={[styles.label, { color: theme.mutedText }]}>
                 Title
               </Text>
-              <TextInput
+              <AtelierField
+                theme={theme}
                 value={title}
                 onChangeText={setTitle}
                 placeholder="e.g., Read 20 books"
-                placeholderTextColor={theme.mutedText}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: theme.border,
-                    color: theme.text,
-                    backgroundColor: theme.bg,
-                  },
-                ]}
                 autoCorrect={false}
                 autoCapitalize="sentences"
                 maxLength={60}
@@ -2940,127 +2768,41 @@ export default function App() {
               <Text style={[styles.label, { color: theme.mutedText }]}>
                 Type
               </Text>
-              <View style={[styles.typeRow, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={() => setType("count")}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    {
-                      backgroundColor:
-                        type === "count" ? theme.primary : theme.bg,
-                      borderColor:
-                        type === "count" ? theme.primary : theme.border,
-                      opacity: pressed ? 0.9 : 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.pillText,
-                      {
-                        color:
-                          type === "count" ? theme.primaryTextOn : theme.text,
-                      },
-                    ]}
-                  >
-                    Count
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setType("boolean")}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor:
-                        type === "boolean" ? theme.primary : theme.bg,
-                      borderColor:
-                        type === "boolean" ? theme.primary : theme.border,
-                      opacity: pressed ? 0.9 : 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.pillText,
-                      {
-                        color:
-                          type === "boolean" ? theme.primaryTextOn : theme.text,
-                      },
-                    ]}
-                  >
-                    Milestone
-                  </Text>
-                </Pressable>
-              </View>
+              <AtelierToggle
+                theme={theme}
+                value={type}
+                onChange={setType}
+                options={[
+                  { value: "count", label: "Count" },
+                  { value: "boolean", label: "Milestone" },
+                ]}
+              />
 
               {type === "count" && (
                 <>
                   <Text style={[styles.label, { color: theme.mutedText }]}>
                     Goal
                   </Text>
-                  <TextInput
+                  <AtelierField
+                    theme={theme}
                     value={targetText}
                     onChangeText={setTargetText}
                     keyboardType={
                       Platform.OS === "ios" ? "number-pad" : "numeric"
                     }
                     placeholder="e.g., 10"
-                    placeholderTextColor={theme.mutedText}
-                    style={[
-                      styles.input,
-                      {
-                        borderColor: theme.border,
-                        color: theme.text,
-                        backgroundColor: theme.bg,
-                      },
-                    ]}
                     maxLength={6}
                   />
                 </>
               )}
 
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={() => setAddOpen(false)}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed ? theme.border : theme.bg,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Cancel
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={handleAddGoal}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Save
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
+              <AtelierActions
+                theme={theme}
+                onCancel={() => setAddOpen(false)}
+                onConfirm={handleAddGoal}
+                confirmDisabled={!title.trim()}
+              />
+            </AtelierSheet>
           </View>
         </Modal>
         <ShareModal
@@ -3084,8 +2826,7 @@ export default function App() {
           shareSize={shareSize}
           shareCard={shareCard}
         />
-        {/* ✅ Theme modal */}
-        {/* ✅ Theme modal */}
+        {/* Theme modal */}
         <Modal
           visible={customizeOpen}
           animationType="fade"
@@ -3097,16 +2838,18 @@ export default function App() {
           }}
         >
           <View style={styles.modalBackdrop}>
-            {/* theme card */}
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
+            <AtelierSheet theme={theme} kicker="[AT]  /  COLLECTION">
               <View style={[styles.themeTopRow, ANDROID && styles.noGap]}>
-                <Text style={[styles.modalTitle, { color: theme.text }]}>
-                  Art gallery
+                <Text
+                  style={[
+                    styles.modalTitle,
+                    {
+                      color: theme.text,
+                      fontFamily: fontFamily("display", fontsLoaded),
+                    },
+                  ]}
+                >
+                  {themePage === "pick" ? "Art gallery" : "Custom theme"}
                 </Text>
 
                 {themePage === "pick" ? (
@@ -3163,29 +2906,11 @@ export default function App() {
                     onDeleteCustom={deleteCustomTheme}
                   />
 
-                  <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                    <Pressable
-                      onPress={() => setCustomizeOpen(false)}
-                      style={({ pressed }) => [
-                        styles.modalBtn,
-                        {
-                          backgroundColor: pressed
-                            ? theme.primaryPressed
-                            : theme.primary,
-                          borderColor: theme.primary,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.modalBtnText,
-                          { color: theme.primaryTextOn },
-                        ]}
-                      >
-                        Done
-                      </Text>
-                    </Pressable>
-                  </View>
+                  <AtelierActions
+                    theme={theme}
+                    confirmLabel="Done"
+                    onConfirm={() => setCustomizeOpen(false)}
+                  />
                 </>
               ) : (
                 <>
@@ -3202,19 +2927,11 @@ export default function App() {
                       <Text style={[styles.label, { color: theme.mutedText }]}>
                         Name
                       </Text>
-                      <TextInput
+                      <AtelierField
+                        theme={theme}
                         value={customName}
                         onChangeText={setCustomName}
                         placeholder="e.g., Ocean Breeze"
-                        placeholderTextColor={theme.mutedText}
-                        style={[
-                          styles.input,
-                          {
-                            borderColor: theme.border,
-                            color: theme.text,
-                            backgroundColor: theme.bg,
-                          },
-                        ]}
                         autoCorrect={false}
                         autoCapitalize="words"
                         maxLength={28}
@@ -3223,92 +2940,25 @@ export default function App() {
                       <Text style={[styles.label, { color: theme.mutedText }]}>
                         Mode
                       </Text>
-                      <View style={[styles.typeRow, ANDROID && styles.noGap]}>
-                        <Pressable
-                          onPress={async () => {
-                            await hapticLight();
-                            setCustomMode("light");
-                            const p = isHex6(ctPrimary)
-                              ? normalizeHex(ctPrimary)
-                              : "#2b6dff";
-                            const base = buildPaletteFromPrimary(p, "light");
-                            setCtPrimary(base.primary);
-                            setCtBg(base.bg);
-                            setCtText(base.text);
-                          }}
-                          style={({ pressed }) => [
-                            styles.pill,
-                            {
-                              backgroundColor:
-                                customMode === "light"
-                                  ? theme.primary
-                                  : theme.bg,
-                              borderColor:
-                                customMode === "light"
-                                  ? theme.primary
-                                  : theme.border,
-                              opacity: pressed ? 0.9 : 1,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.pillText,
-                              {
-                                color:
-                                  customMode === "light"
-                                    ? theme.primaryTextOn
-                                    : theme.text,
-                              },
-                            ]}
-                          >
-                            Light
-                          </Text>
-                        </Pressable>
-
-                        <Pressable
-                          onPress={async () => {
-                            await hapticLight();
-                            setCustomMode("dark");
-                            const p = isHex6(ctPrimary)
-                              ? normalizeHex(ctPrimary)
-                              : "#2b6dff";
-                            const base = buildPaletteFromPrimary(p, "dark");
-                            setCtPrimary(base.primary);
-                            setCtBg(base.bg);
-                            setCtText(base.text);
-                          }}
-                          style={({ pressed }) => [
-                            styles.pill,
-                            ANDROID && styles.ml10,
-                            {
-                              backgroundColor:
-                                customMode === "dark"
-                                  ? theme.primary
-                                  : theme.bg,
-                              borderColor:
-                                customMode === "dark"
-                                  ? theme.primary
-                                  : theme.border,
-                              opacity: pressed ? 0.9 : 1,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.pillText,
-                              {
-                                color:
-                                  customMode === "dark"
-                                    ? theme.primaryTextOn
-                                    : theme.text,
-                              },
-                            ]}
-                          >
-                            Dark
-                          </Text>
-                        </Pressable>
-                      </View>
+                      <AtelierToggle
+                        theme={theme}
+                        value={customMode}
+                        options={[
+                          { value: "light", label: "Light" },
+                          { value: "dark", label: "Dark" },
+                        ]}
+                        onChange={async (mode) => {
+                          await hapticLight();
+                          setCustomMode(mode);
+                          const p = isHex6(ctPrimary)
+                            ? normalizeHex(ctPrimary)
+                            : "#2b6dff";
+                          const base = buildPaletteFromPrimary(p, mode);
+                          setCtPrimary(base.primary);
+                          setCtBg(base.bg);
+                          setCtText(base.text);
+                        }}
+                      />
 
                       <View
                         style={[styles.previewRow, ANDROID && styles.noGap]}
@@ -3496,56 +3146,21 @@ export default function App() {
                     </ScrollView>
                   </View>
 
-                  <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                    <Pressable
-                      onPress={async () => {
-                        await hapticLight();
-                        setThemePage("pick");
-                        resetCreateFormToDefaults();
-                      }}
-                      style={({ pressed }) => [
-                        styles.modalBtn,
-                        {
-                          backgroundColor: pressed ? theme.border : theme.bg,
-                          borderColor: theme.border,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[styles.modalBtnText, { color: theme.text }]}
-                      >
-                        Cancel
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={createCustomThemeAndSelect}
-                      style={({ pressed }) => [
-                        styles.modalBtn,
-                        ANDROID && styles.ml10,
-                        {
-                          backgroundColor: pressed
-                            ? theme.primaryPressed
-                            : theme.primary,
-                          borderColor: theme.primary,
-                          opacity: sanitizeName(customName) ? 1 : 0.5,
-                        },
-                      ]}
-                      disabled={!sanitizeName(customName)}
-                    >
-                      <Text
-                        style={[
-                          styles.modalBtnText,
-                          { color: theme.primaryTextOn },
-                        ]}
-                      >
-                        Save Theme
-                      </Text>
-                    </Pressable>
-                  </View>
+                  <AtelierActions
+                    theme={theme}
+                    cancelLabel="Back"
+                    confirmLabel="Save theme"
+                    onCancel={async () => {
+                      await hapticLight();
+                      setThemePage("pick");
+                      resetCreateFormToDefaults();
+                    }}
+                    onConfirm={createCustomThemeAndSelect}
+                    confirmDisabled={!sanitizeName(customName)}
+                  />
                 </>
               )}
-            </View>
+            </AtelierSheet>
 
             {/* ✅ Picker overlay (no hex typing) */}
             {colorPickerOpen && (
@@ -3555,19 +3170,18 @@ export default function App() {
                   onPress={cancelColorPicker}
                 />
 
-                <View
-                  style={[
-                    styles.pickerSheet,
-                    { backgroundColor: theme.card, borderColor: theme.border },
-                  ]}
-                >
-                  <Text style={[styles.pickerTitle, { color: theme.text }]}>
-                    {colorPickerTarget === "primary"
-                      ? "Pick Primary"
+                <AtelierSheet
+                  theme={theme}
+                  kicker="[AT]  /  PALETTE"
+                  title={
+                    colorPickerTarget === "primary"
+                      ? "Pick primary"
                       : colorPickerTarget === "bg"
-                        ? "Pick Background"
-                        : "Pick Text"}
-                  </Text>
+                        ? "Pick background"
+                        : "Pick text"
+                  }
+                  style={styles.pickerSheet}
+                >
 
                   <Text style={[styles.pickerSub, { color: theme.mutedText }]}>
                     Drag to choose a color
@@ -3622,48 +3236,13 @@ export default function App() {
                     </ColorPicker>
                   </ScrollView>
 
-                  <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                    <Pressable
-                      onPress={cancelColorPicker}
-                      style={({ pressed }) => [
-                        styles.modalBtn,
-                        {
-                          backgroundColor: pressed ? theme.border : theme.bg,
-                          borderColor: theme.border,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[styles.modalBtnText, { color: theme.text }]}
-                      >
-                        Cancel
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={doneColorPicker}
-                      style={({ pressed }) => [
-                        styles.modalBtn,
-                        ANDROID && styles.ml10,
-                        {
-                          backgroundColor: pressed
-                            ? theme.primaryPressed
-                            : theme.primary,
-                          borderColor: theme.primary,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.modalBtnText,
-                          { color: theme.primaryTextOn },
-                        ]}
-                      >
-                        Done
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
+                  <AtelierActions
+                    theme={theme}
+                    confirmLabel="Done"
+                    onCancel={cancelColorPicker}
+                    onConfirm={doneColorPicker}
+                  />
+                </AtelierSheet>
               </View>
             )}
           </View>
@@ -3676,56 +3255,19 @@ export default function App() {
           kicker="[AT]  /  CURRENT PROGRESS"
           title={editGoal?.title}
           footer={
-            <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-              <Pressable
-                onPress={closeEdit}
-                style={({ pressed }) => [
-                  styles.modalBtn,
-                  {
-                    backgroundColor: pressed ? theme.border : theme.bg,
-                    borderColor: theme.border,
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Cancel"
-              >
-                <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                  Cancel
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={
-                  editGoal?.type === "count" ? saveEditCount : applyMilestone
-                }
-                style={({ pressed }) => [
-                  styles.modalBtn,
-                  ANDROID && styles.ml10,
-                  {
-                    backgroundColor: pressed
-                      ? theme.primaryPressed
-                      : theme.primary,
-                    borderColor: theme.primary,
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Apply progress"
-              >
-                <Text
-                  style={[
-                    styles.modalBtnText,
-                    { color: theme.primaryTextOn },
-                  ]}
-                >
-                  Apply
-                </Text>
-              </Pressable>
-            </View>
+            <AtelierActions
+              theme={theme}
+              confirmLabel="Apply"
+              onCancel={closeEdit}
+              onConfirm={
+                editGoal?.type === "count" ? saveEditCount : applyMilestone
+              }
+            />
           }
         >
           {!!editGoal && editGoal.type === "count" ? (
             <AtelierCounter
+              ref={counterRef}
               value={Number(editValue) || 0}
               target={editGoal.target || 0}
               theme={theme}
@@ -4037,11 +3579,14 @@ const styles = StyleSheet.create({
 
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(28,25,22,0.35)",
+    backgroundColor: "rgba(28,25,22,0.42)",
     padding: 16,
     justifyContent: "center",
   },
-  modalCard: { borderWidth: StyleSheet.hairlineWidth, padding: 16 },
+  modalCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: SPACE.lg,
+  },
   modalTitle: {
     fontSize: TYPE_SIZE.title,
     fontWeight: "700",
