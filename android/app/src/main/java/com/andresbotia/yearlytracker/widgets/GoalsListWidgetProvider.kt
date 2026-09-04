@@ -12,7 +12,6 @@ import android.widget.RemoteViews
 import com.andresbotia.yearlytracker.R
 import org.json.JSONArray
 import org.json.JSONObject
-import kotlin.math.roundToInt
 
 class GoalsListWidgetProvider : AppWidgetProvider() {
 
@@ -48,8 +47,6 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
       }
 
       val payloadObj = SharedWidgetStore.parsePayload(payloadJson)
-      val theme = payloadObj?.optString("theme", null)
-
       val goals: JSONArray = payloadObj?.optJSONArray("goals") ?: JSONArray()
 
       for (id in ids) {
@@ -62,15 +59,23 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
 
         val views = RemoteViews(context.packageName, layoutId)
 
-        // Background
-        views.safeSetInt(
-          R.id.root,
-          "setBackgroundColor",
-          SharedWidgetStore.themeBgColor(theme, payloadObj)
+        SharedWidgetStore.applySurface(views, context, payloadObj)
+        SharedWidgetStore.applyInk(
+          views,
+          payloadObj,
+          R.id.kicker,
+          R.id.title,
+          R.id.line1,
+          R.id.line2,
+          R.id.line3,
+          R.id.line4,
+          R.id.line5,
+          R.id.line6,
+          R.id.moreLine
         )
 
-        // Title: always default (do NOT override with debug text)
-        views.safeSetText(R.id.title, "Goals")
+        views.safeSetText(R.id.kicker, "[AT] / GOALS")
+        views.safeSetText(R.id.title, "GOALS")
 
         val visibleLines =
           if (layoutId == R.layout.widget_goals_list_large) LARGE_VISIBLE_LINES else SMALL_VISIBLE_LINES
@@ -123,7 +128,7 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
         val shouldShow = i <= showLines && (i - 1) < count
         if (shouldShow) {
           val g = goals.optJSONObject(i - 1)
-          views.safeSetText(lineId, formatGoalLine(g))
+          views.safeSetText(lineId, formatGoalLine(g, i))
           views.safeSetVisibility(lineId, View.VISIBLE)
         } else {
           views.safeSetVisibility(lineId, View.GONE)
@@ -152,12 +157,11 @@ class GoalsListWidgetProvider : AppWidgetProvider() {
       }
     }
 
-    private fun formatGoalLine(g: JSONObject?): String {
+    private fun formatGoalLine(g: JSONObject?, index: Int): String {
       if (g == null) return "—"
       val title = g.optString("title", "").ifBlank { "—" }
-      val pct01 = g.optDouble("percent", 0.0)
-      val pct = (SharedWidgetStore.clamp01(pct01) * 100.0).roundToInt()
-      return "$title • $pct%"
+      val pct = SharedWidgetStore.pctLabel(g.optDouble("percent", 0.0))
+      return String.format("%02d  %s  %s", index, title, pct)
     }
 
     // ---- RemoteViews safe helpers (prevents crash if an ID is missing in some layout) ----

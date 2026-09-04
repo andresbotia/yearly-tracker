@@ -1,48 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/root"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:orientation="vertical"
-  android:padding="12dp"
-  android:background="@drawable/widget_bg">
+  android:background="#F6F3EC">
 
-  <TextView
-    android:id="@+id/title"
+  <ImageView
+    android:id="@+id/artwork"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Goal Highlight"
-    android:textStyle="bold"
-    android:textSize="14sp"
-    android:textColor="@android:color/white"/>
+    android:layout_height="match_parent"
+    android:scaleType="centerCrop"
+    android:contentDescription="@null"
+    android:visibility="gone" />
 
-  <TextView
-    android:id="@+id/goalTitle"
+  <View
+    android:id="@+id/veil"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Goal title"
-    android:textSize="14sp"
-    android:textStyle="bold"
-    android:layout_marginTop="8dp"
-    android:maxLines="2"
-    android:ellipsize="end"
-    android:textColor="@android:color/white"/>
+    android:layout_height="match_parent"
+    android:background="#96F6F3EC"
+    android:visibility="gone" />
 
-  <TextView
-    android:id="@+id/pct"
+  <LinearLayout
+    android:id="@+id/content"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="--%"
-    android:textStyle="bold"
-    android:textSize="26sp"
-    android:textColor="@android:color/white"
-    android:layout_marginTop="8dp"/>
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
 
-  <ProgressBar
-    android:id="@+id/progress"
-    style="?android:attr/progressBarStyleHorizontal"
-    android:layout_width="match_parent"
-    android:layout_height="10dp"
-    android:layout_marginTop="10dp"
-    android:max="100"/>
-</LinearLayout>
+    <TextView
+      android:id="@+id/kicker"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="[AT] / GOAL"
+      android:textAllCaps="true"
+      android:fontFamily="monospace"
+      android:textSize="10sp"
+      android:letterSpacing="0.08"
+      android:textColor="#9B1C1916" />
+
+    <TextView
+      android:id="@+id/goalTitle"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="8dp"
+      android:text="Goal title"
+      android:fontFamily="serif"
+      android:textStyle="bold"
+      android:textSize="15sp"
+      android:maxLines="2"
+      android:textColor="#1C1916" />
+
+    <TextView
+      android:id="@+id/pct"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="8dp"
+      android:text="00%"
+      android:fontFamily="serif"
+      android:textStyle="bold"
+      android:textSize="26sp"
+      android:textColor="#1C1916" />
+
+    <TextView
+      android:id="@+id/bar"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="8dp"
+      android:text="+..................."
+      android:fontFamily="monospace"
+      android:textSize="11sp"
+      android:maxLines="1"
+      android:textColor="#1C1916" />
+  </LinearLayout>
+</FrameLayout>

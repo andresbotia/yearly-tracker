@@ -3,6 +3,7 @@ package com.andresbotia.yearlytracker.widgets
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
@@ -70,6 +71,28 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
       )
     } catch (e: Exception) {
       Log.e(tag, "pushGoalHighlightWidgetPayload failed", e)
+    }
+  }
+
+  @ReactMethod
+  fun setWidgetArtwork(sourceUri: String, artworkId: String, promise: Promise) {
+    try {
+      SharedWidgetStore.writeArtwork(reactContext, sourceUri, artworkId)
+      promise.resolve(true)
+    } catch (e: Exception) {
+      Log.e(tag, "setWidgetArtwork failed", e)
+      promise.resolve(false)
+    }
+  }
+
+  @ReactMethod
+  fun clearWidgetArtwork(promise: Promise) {
+    try {
+      SharedWidgetStore.clearArtwork(reactContext)
+      promise.resolve(true)
+    } catch (e: Exception) {
+      Log.e(tag, "clearWidgetArtwork failed", e)
+      promise.resolve(false)
     }
   }
 

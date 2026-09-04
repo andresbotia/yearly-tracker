@@ -2,9 +2,8 @@
   <string name="app_name">Atelier Tracker</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
-  <string name="widget_yearly_progress_label">Yearly Progress</string>
-<string name="widget_habits_label">Habits</string>
-<string name="widget_goal_highlight_label">Goal Highlight</string>
-<string name="widget_goals_list_label">Goals List</string>
-
+  <string name="widget_yearly_progress_label">Atelier Progress</string>
+  <string name="widget_habits_label">Atelier Habits</string>
+  <string name="widget_goal_highlight_label">Goal Highlight</string>
+  <string name="widget_goals_list_label">Atelier Goals</string>
 </resources>

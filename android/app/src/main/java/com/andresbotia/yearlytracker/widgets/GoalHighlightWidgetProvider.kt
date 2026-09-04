@@ -70,24 +70,29 @@ class GoalHighlightWidgetProvider : AppWidgetProvider() {
       }
 
       val payloadObj = SharedWidgetStore.parsePayload(payloadJson)
-      val theme = payloadObj?.optString("theme", null)
       val goals = payloadObj?.optJSONArray("goals")
       val top = pickHighlight(goals)
 
       for (id in ids) {
         val views = RemoteViews(context.packageName, R.layout.widget_goal_highlight)
-        views.setInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme, payloadObj))
+        SharedWidgetStore.applySurface(views, context, payloadObj)
+        SharedWidgetStore.applyInk(views, payloadObj, R.id.kicker, R.id.goalTitle, R.id.pct)
+        try {
+          views.setTextColor(R.id.bar, SharedWidgetStore.accentColor(payloadObj))
+        } catch (_: Exception) {
+        }
 
+        views.setTextViewText(R.id.kicker, "[AT] / GOAL")
         if (top == null) {
           views.setTextViewText(R.id.goalTitle, "No goals yet")
-          views.setTextViewText(R.id.pct, "--%")
-          views.setProgressBar(R.id.progress, 100, 0, false)
+          views.setTextViewText(R.id.pct, "00%")
+          views.setTextViewText(R.id.bar, SharedWidgetStore.asciiBar(0.0, 22))
         } else {
           val title = top.optString("title", "")
-          val pct = SharedWidgetStore.pctInt01(top.optDouble("percent", 0.0))
+          val pct01 = top.optDouble("percent", 0.0)
           views.setTextViewText(R.id.goalTitle, title)
-          views.setTextViewText(R.id.pct, "${pct}%")
-          views.setProgressBar(R.id.progress, 100, pct, false)
+          views.setTextViewText(R.id.pct, SharedWidgetStore.pctLabel(pct01))
+          views.setTextViewText(R.id.bar, SharedWidgetStore.asciiBar(pct01, 22))
         }
 
         val refreshIntent = Intent(context, GoalHighlightWidgetProvider::class.java).apply {

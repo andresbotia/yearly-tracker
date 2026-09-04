@@ -1,51 +1,84 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/root"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:orientation="vertical"
-  android:padding="12dp">
+  android:background="#F6F3EC">
 
-  <TextView
-    android:id="@+id/title"
+  <ImageView
+    android:id="@+id/artwork"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Goals"
-    android:textStyle="bold"
-    android:textSize="14sp"
-    android:maxLines="1"
-    android:textColor="@android:color/white"
-    android:ellipsize="end" />
+    android:layout_height="match_parent"
+    android:scaleType="centerCrop"
+    android:contentDescription="@null"
+    android:visibility="gone" />
 
-  <TextView android:id="@+id/line1" android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:layout_marginTop="10dp" android:text="-" android:textSize="13sp" android:textColor="@android:color/white"
-    android:maxLines="1" android:ellipsize="end" />
-  <TextView android:id="@+id/line2" android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:layout_marginTop="6dp" android:text="-" android:textSize="13sp" android:textColor="@android:color/white"
-    android:maxLines="1" android:ellipsize="end" />
-  <TextView android:id="@+id/line3" android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:layout_marginTop="6dp" android:text="-" android:textSize="13sp" android:textColor="@android:color/white"
-    android:maxLines="1" android:ellipsize="end" />
-  <TextView android:id="@+id/line4" android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:layout_marginTop="6dp" android:text="-" android:textSize="13sp" android:textColor="@android:color/white"
-    android:maxLines="1" android:ellipsize="end" />
-  <TextView android:id="@+id/line5" android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:layout_marginTop="6dp" android:text="-" android:textSize="13sp" android:textColor="@android:color/white"
-    android:maxLines="1" android:ellipsize="end" />
-  <TextView android:id="@+id/line6" android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:layout_marginTop="6dp" android:text="-" android:textSize="13sp" android:textColor="@android:color/white"
-    android:maxLines="1" android:ellipsize="end" />
-
-  <TextView
-    android:id="@+id/moreLine"
+  <View
+    android:id="@+id/veil"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="6dp"
-    android:text="... +0 more"
-    android:textSize="12sp"
-    android:textColor="@android:color/white"
-    android:alpha="0.8"
-    android:maxLines="1"
-    android:ellipsize="end" />
+    android:layout_height="match_parent"
+    android:background="#96F6F3EC"
+    android:visibility="gone" />
 
-</LinearLayout>
+  <LinearLayout
+    android:id="@+id/content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+      android:id="@+id/kicker"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="[AT] / GOALS"
+      android:textAllCaps="true"
+      android:fontFamily="monospace"
+      android:textSize="10sp"
+      android:letterSpacing="0.08"
+      android:textColor="#9B1C1916" />
+
+    <TextView
+      android:id="@+id/title"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="4dp"
+      android:text="GOALS"
+      android:textAllCaps="true"
+      android:fontFamily="monospace"
+      android:textSize="10sp"
+      android:letterSpacing="0.08"
+      android:textColor="#1C1916" />
+
+    <TextView android:id="@+id/line1" android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:layout_marginTop="8dp" android:text="-" android:textSize="13sp" android:fontFamily="monospace"
+      android:textColor="#1C1916" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/line2" android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:layout_marginTop="5dp" android:text="-" android:textSize="13sp" android:fontFamily="monospace"
+      android:textColor="#1C1916" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/line3" android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:layout_marginTop="5dp" android:text="-" android:textSize="13sp" android:fontFamily="monospace"
+      android:textColor="#1C1916" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/line4" android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:layout_marginTop="5dp" android:text="-" android:textSize="13sp" android:fontFamily="monospace"
+      android:textColor="#1C1916" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/line5" android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:layout_marginTop="5dp" android:text="-" android:textSize="13sp" android:fontFamily="monospace"
+      android:textColor="#1C1916" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/line6" android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:layout_marginTop="5dp" android:text="-" android:textSize="13sp" android:fontFamily="monospace"
+      android:textColor="#1C1916" android:maxLines="1" android:ellipsize="end" />
+
+    <TextView
+      android:id="@+id/moreLine"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="6dp"
+      android:text=""
+      android:textSize="12sp"
+      android:fontFamily="monospace"
+      android:textColor="#9B1C1916"
+      android:maxLines="1"
+      android:ellipsize="end" />
+  </LinearLayout>
+</FrameLayout>
