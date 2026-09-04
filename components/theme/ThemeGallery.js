@@ -9,6 +9,7 @@ import {
   Image,
   StyleSheet,
   ScrollView,
+  FlatList,
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,7 +30,7 @@ function groupLabel(artist) {
   return artistGroupLabel(artist);
 }
 
-function Stamp({ image, selected, onPress, label, theme, wide }) {
+function Stamp({ image, selected, onPress, label, theme }) {
   return (
     <PressableInk
       onPress={onPress}
@@ -39,7 +40,6 @@ function Stamp({ image, selected, onPress, label, theme, wide }) {
       accessibilityLabel={label}
       style={[
         styles.stamp,
-        wide && styles.stampWide,
         {
           borderColor: selected ? theme.text : theme.border,
         },
@@ -74,6 +74,7 @@ export default function ThemeGallery({
   const fontsLoaded = useFontsLoaded();
   const { width } = useWindowDimensions();
   const [filter, setFilter] = useState("all");
+  const [gridW, setGridW] = useState(0);
   const paperTheme = ART_THEMES.find((t) => t.id === "museum-paper");
   const artWorks = ART_THEMES.filter((t) => t.artwork);
   const groups = ART_THEME_GROUPS.filter((g) =>
@@ -86,14 +87,22 @@ export default function ThemeGallery({
 
   const gap = SPACE.xs;
   const cols = width < 400 ? 3 : 4;
-  const stampW = Math.max(72, Math.floor((Math.min(width, 420) - 48 - gap * (cols - 1)) / cols));
+  const stampW =
+    gridW > 0 ? (gridW - gap * (cols - 1)) / cols : Math.max(72, (width - 80) / cols);
 
-  return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-    >
+  const rows = useMemo(() => {
+    const out = [];
+    for (let i = 0; i < visible.length; i += cols) {
+      out.push(visible.slice(i, i + cols));
+    }
+    return out;
+  }, [visible, cols]);
+
+  const caption = (t) => t.name || t.artwork?.title || t.id;
+  const fullTitle = (t) => t.artwork?.title || t.name || t.id;
+
+  const header = (
+    <View>
       <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
         [AT]  Atelier collection
       </MetadataLabel>
@@ -149,6 +158,7 @@ export default function ThemeGallery({
 
       <ScrollView
         horizontal
+        nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chips}
       >
@@ -169,6 +179,7 @@ export default function ThemeGallery({
                 ]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
+                accessibilityLabel={chip.label}
               >
                 <Text
                   style={[
@@ -186,33 +197,11 @@ export default function ThemeGallery({
           },
         )}
       </ScrollView>
+    </View>
+  );
 
-      <View style={[styles.grid, { gap }]}>
-        {visible.map((t) => (
-          <View key={t.id} style={{ width: stampW }}>
-            <Stamp
-              image={ART_IMAGES[t.id]}
-              selected={t.id === themeChoice}
-              onPress={() => onPick(t.id)}
-              label={t.artwork?.title || t.name}
-              theme={theme}
-            />
-            <Text
-              style={[
-                styles.stampCaption,
-                {
-                  color: theme.mutedText,
-                  fontFamily: fontFamily("data", fontsLoaded),
-                },
-              ]}
-              numberOfLines={2}
-            >
-              {t.artwork?.title || t.name}
-            </Text>
-          </View>
-        ))}
-      </View>
-
+  const footer = (
+    <View>
       <SectionRule theme={theme} />
 
       {paperTheme ? (
@@ -335,7 +324,60 @@ export default function ThemeGallery({
           </Pressable>
         ))
       )}
-    </ScrollView>
+    </View>
+  );
+
+  return (
+    <FlatList
+      style={styles.scroll}
+      data={rows}
+      key={String(cols)}
+      keyExtractor={(row) => row.map((t) => t.id).join("|")}
+      ListHeaderComponent={header}
+      ListFooterComponent={footer}
+      showsVerticalScrollIndicator={false}
+      windowSize={7}
+      initialNumToRender={6}
+      maxToRenderPerBatch={6}
+      removeClippedSubviews
+      onLayout={(e) => {
+        const next = Math.round(e.nativeEvent.layout.width);
+        if (next > 0 && next !== gridW) setGridW(next);
+      }}
+      contentContainerStyle={styles.scrollContent}
+      renderItem={({ item: row }) => (
+        <View style={[styles.gridRow, { gap }]}>
+          {row.map((t) => (
+            <View key={t.id} style={{ width: stampW }}>
+              <Stamp
+                image={ART_IMAGES[t.id]}
+                selected={t.id === themeChoice}
+                onPress={() => onPick(t.id)}
+                label={fullTitle(t)}
+                theme={theme}
+              />
+              <Text
+                style={[
+                  styles.stampCaption,
+                  {
+                    color: theme.mutedText,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+                numberOfLines={2}
+              >
+                {caption(t)}
+              </Text>
+            </View>
+          ))}
+          {row.length < cols
+            ? Array.from({ length: cols - row.length }).map((_, i) => (
+                <View key={`pad-${i}`} style={{ width: stampW }} />
+              ))
+            : null}
+        </View>
+      )}
+    />
   );
 }
 
@@ -373,8 +415,11 @@ const styles = StyleSheet.create({
   chips: {
     gap: SPACE.xs,
     paddingBottom: SPACE.sm,
+    paddingRight: SPACE.lg,
+    alignItems: "center",
   },
   chip: {
+    flexShrink: 0,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: SPACE.sm,
     paddingVertical: SPACE.xs,
@@ -386,9 +431,9 @@ const styles = StyleSheet.create({
     letterSpacing: TYPE_TRACK.kicker,
     textTransform: "uppercase",
   },
-  grid: {
+  gridRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    alignItems: "flex-start",
   },
   stamp: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -410,9 +455,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: SPACE.sm,
   },
-  stampWide: {
-    aspectRatio: 4 / 3,
-  },
   stampImage: {
     width: "100%",
     height: "100%",
@@ -428,6 +470,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: SPACE.sm,
     fontSize: 9,
+    lineHeight: 12,
+    minHeight: 24,
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
