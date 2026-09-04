@@ -53,19 +53,20 @@ export default function ArtworkCredit({
 
 const styles = StyleSheet.create({
   wrap: {
-    marginTop: SPACE["2xs"],
     gap: SPACE["3xs"],
   },
   title: {
-    fontSize: TYPE_SIZE.kicker,
+    fontSize: TYPE_SIZE.body,
     fontWeight: "700",
     letterSpacing: TYPE_TRACK.kicker,
     fontStyle: "normal",
+    lineHeight: 20,
   },
   meta: {
     fontSize: TYPE_SIZE.kicker,
     fontWeight: "600",
     letterSpacing: TYPE_TRACK.data,
     textTransform: "uppercase",
+    lineHeight: 15,
   },
 });

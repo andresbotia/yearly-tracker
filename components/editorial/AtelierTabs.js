@@ -93,7 +93,7 @@ export default function AtelierTabs({ theme, active, onChange }) {
 
 const styles = StyleSheet.create({
   row: {
-    marginTop: SPACE.sm,
+    marginTop: SPACE.xs,
     flexDirection: "row",
     gap: SPACE.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,

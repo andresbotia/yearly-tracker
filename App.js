@@ -37,6 +37,11 @@ import {
   pushWidgetPayloadAndroid,
   setDebugWidgetTextAndroid,
 } from "./native/widgetBridge.android";
+import {
+  prepareWidgetArtwork,
+  widgetArtworkIdFromTheme,
+  WIDGET_ARTWORK_FILENAME,
+} from "./native/widgetArtwork";
 
 import { useFonts } from "expo-font";
 import { Fraunces_700Bold } from "@expo-google-fonts/fraunces";
@@ -793,6 +798,8 @@ export default function App() {
   function buildWidgetPayload(nextGoals, nextHabits) {
     const yp = yearlyPercentFromGoals(nextGoals);
     const yearlyProgress01 = clamp(yp / 100, 0, 1);
+    const artId = widgetArtworkIdFromTheme(theme);
+    const hasArtwork = artId.length > 0;
 
     return {
       yearlyProgress: yearlyProgress01,
@@ -801,6 +808,10 @@ export default function App() {
       themePrimary: String(theme?.primary || ""),
       themeBg: String(theme?.bg || ""),
       themeText: String(theme?.text || ""),
+      year,
+      artworkId: artId,
+      hasArtwork,
+      widgetArtworkFilename: hasArtwork ? WIDGET_ARTWORK_FILENAME : "",
       goals: (nextGoals || []).map((g) => ({
         id: String(g.id),
         title: String(g.title || ""),
@@ -814,8 +825,11 @@ export default function App() {
     };
   }
 
-  function pushWidgets(nextGoals, nextHabits) {
+  async function pushWidgets(nextGoals, nextHabits) {
     try {
+      const artId = widgetArtworkIdFromTheme(theme);
+      await prepareWidgetArtwork(artId || null);
+
       const basePayload = buildWidgetPayload(nextGoals, nextHabits);
 
       // iOS: keep exact shape you already use
@@ -838,11 +852,6 @@ export default function App() {
           ...basePayload,
           widgetType: "goal_highlight",
         });
-
-        // console.log(
-        //   "ANDROID WIDGET PAYLOAD (base)",
-        //   JSON.stringify(basePayload),
-        // );
       }
     } catch (e) {
       console.log("Widget sync failed:", e);
@@ -1280,7 +1289,7 @@ export default function App() {
   useEffect(() => {
     if (!ready) return;
     pushWidgets(goals, habits);
-  }, [ready, goals, habits, themeChoice]);
+  }, [ready, goals, habits, themeChoice, sessionArtId, customThemes]);
 
   useEffect(() => {
     return () => {
@@ -1306,7 +1315,7 @@ export default function App() {
     });
 
     return () => sub.remove?.();
-  }, [ready, goals, habits, themeChoice]);
+  }, [ready, goals, habits, themeChoice, sessionArtId, customThemes]);
 
   useEffect(() => {
     if (!ready) return;
@@ -1849,26 +1858,24 @@ export default function App() {
     <View style={styles.stickyChrome}>
       <CollapsingKicker theme={theme} year={year} fontsLoaded={fontsLoaded} />
       {activeTab === "habits" || activeTab === "goals" ? (
-        <AtelierTabs theme={theme} active={activeTab} onChange={selectTab} />
+        <>
+          <CollapsingIdentity
+            theme={theme}
+            scrollY={headerScrollY}
+            artwork={theme?.artwork}
+            fontsLoaded={fontsLoaded}
+          />
+          <AtelierTabs theme={theme} active={activeTab} onChange={selectTab} />
+        </>
       ) : null}
     </View>
   );
 
   const topHeader = (
     <View style={styles.header}>
-      <EditorialSurface theme={theme} style={styles.identitySurface}>
-        <CollapsingIdentity
-          theme={theme}
-          scrollY={headerScrollY}
-          artwork={theme?.artwork}
-          fontsLoaded={fontsLoaded}
-          visible={activeTab === "habits" || activeTab === "goals"}
-        />
-      </EditorialSurface>
-
       {activeTab === "goals" ? (
         <>
-          <View style={{ marginTop: SPACE.md }}>
+          <View>
             <MetadataLabel theme={theme}>
               {`YEARLY  /  ${year}  DAY ${dayOfYear(todayDate)}`}
             </MetadataLabel>
@@ -1936,7 +1943,7 @@ export default function App() {
         </>
       ) : activeTab === "habits" ? (
         <>
-          <View style={{ marginTop: SPACE.md }}>
+          <View>
             <MetadataLabel theme={theme}>
               {`LEDGER  /  ${monthName(new Date(todayTick)).toUpperCase()}  DAY ${dayOfYear(todayDate)}`}
             </MetadataLabel>
@@ -3308,7 +3315,6 @@ const styles = StyleSheet.create({
   },
   tabPane: { flex: 1 },
   header: { paddingTop: SPACE.xs, paddingBottom: SPACE.sm },
-  identitySurface: { marginBottom: SPACE.xs },
   appTitle: {
     fontSize: TYPE_SIZE.display,
     fontWeight: "700",
