@@ -1,7 +1,7 @@
 // components/share/ShareModal.js
 // Same options, capture, and native share. Visual language only.
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Modal,
   View,
@@ -11,25 +11,34 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import ViewShot from "react-native-view-shot";
-import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
+import { useReducedMotion } from "../../utils/motion";
 import AtelierSheet, { AtelierActions } from "../atelier/AtelierSheet";
+import PressableInk from "../motion/PressableInk";
 
 const ANDROID = Platform.OS === "android";
 
 function OptionTile({ option, selected, theme, onPress, fontsLoaded }) {
   return (
-    <Pressable
+    <PressableInk
       onPress={onPress}
-      style={({ pressed }) => [
+      haptic="tick"
+      style={[
         styles.optionTile,
         {
           backgroundColor: selected ? theme.text : "transparent",
           borderColor: selected ? theme.text : theme.border,
-          opacity: pressed ? 0.7 : 1,
         },
       ]}
+      innerStyle={styles.optionInner}
     >
       <Text
         style={[
@@ -55,7 +64,65 @@ function OptionTile({ option, selected, theme, onPress, fontsLoaded }) {
           {option.description}
         </Text>
       )}
-    </Pressable>
+    </PressableInk>
+  );
+}
+
+function PrintReveal({ visible, theme, fontsLoaded }) {
+  const reduced = useReducedMotion();
+  const progress = useSharedValue(visible ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withTiming(visible ? 1 : 0, {
+      duration: reduced ? MOTION.reduced : MOTION.print,
+      easing: reduced ? Easing.linear : Easing.out(Easing.cubic),
+    });
+  }, [visible, reduced, progress]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [
+      { translateY: reduced ? 0 : (1 - progress.value) * 36 },
+    ],
+  }));
+
+  if (!visible && progress.value === 0) return null;
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.printReveal,
+        {
+          borderColor: theme.text,
+          backgroundColor: theme.card || "#fbf8f1",
+        },
+        style,
+      ]}
+    >
+      <Text
+        style={[
+          styles.printKicker,
+          {
+            color: theme.mutedText,
+            fontFamily: fontFamily("data", fontsLoaded),
+          },
+        ]}
+      >
+        [AT]  /  PRINT
+      </Text>
+      <Text
+        style={[
+          styles.printTitle,
+          {
+            color: theme.text,
+            fontFamily: fontFamily("display", fontsLoaded),
+          },
+        ]}
+      >
+        Preparing print
+      </Text>
+    </Animated.View>
   );
 }
 
@@ -274,6 +341,11 @@ export default function ShareModal({
             onConfirm={onShare}
             confirmDisabled={shareBusy || shareDisabled}
           />
+          <PrintReveal
+            visible={shareBusy}
+            theme={theme}
+            fontsLoaded={fontsLoaded}
+          />
         </AtelierSheet>
 
         <ViewShot
@@ -341,6 +413,29 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   optionDesc: { fontSize: TYPE_SIZE.kicker, fontWeight: "400" },
+  optionInner: {
+    width: "100%",
+    alignItems: "flex-start",
+  },
+  printReveal: {
+    marginTop: SPACE.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: SPACE.md,
+    paddingHorizontal: SPACE.sm,
+    minHeight: 72,
+    justifyContent: "center",
+  },
+  printKicker: {
+    fontSize: TYPE_SIZE.kicker,
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
+  printTitle: {
+    marginTop: SPACE["2xs"],
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+  },
   pickSection: { marginTop: SPACE.md },
   pickLabel: {
     fontSize: TYPE_SIZE.kicker,

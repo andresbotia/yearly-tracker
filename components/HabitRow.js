@@ -13,6 +13,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily, LEGIBILITY } from "../utils/tokens";
+import { hexToRgba } from "../utils/color";
 import { habitStateChar, habitStateLabel } from "../utils/habitAscii";
 import { useFontsLoaded } from "../utils/fonts";
 
@@ -37,25 +38,6 @@ function streakFromChecks(checks) {
     else break;
   }
   return streak;
-}
-
-function hexToRgba(hex, alpha = 1) {
-  if (!hex || typeof hex !== "string") return `rgba(0,0,0,${alpha})`;
-  const clean = hex.replace("#", "").trim();
-  const full =
-    clean.length === 3
-      ? clean
-          .split("")
-          .map((c) => c + c)
-          .join("")
-      : clean;
-
-  const r = parseInt(full.slice(0, 2), 16);
-  const g = parseInt(full.slice(2, 4), 16);
-  const b = parseInt(full.slice(4, 6), 16);
-
-  if ([r, g, b].some((v) => Number.isNaN(v))) return `rgba(0,0,0,${alpha})`;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function HabitCell({ value, size, theme, onPress, fontsLoaded, label }) {
@@ -169,6 +151,7 @@ export default function HabitRow({
   labelGap = 10,
   onSwipeOpen,
   onSwipeClose,
+  removing = false,
 }) {
   const swipeRef = useRef(null);
   const fontsLoaded = useFontsLoaded();
@@ -242,12 +225,18 @@ export default function HabitRow({
         style={[
           styles.row,
           {
-            borderBottomColor: theme.border,
-            backgroundColor:
-              theme?.kind === "art" && theme?.artwork
-                ? LEGIBILITY.wash
-                : "transparent",
-            opacity: dragging ? 0.72 : 1,
+            backgroundColor: dragging
+              ? hexToRgba(theme.text, 0.06)
+              : removing
+                ? hexToRgba(theme.danger || "#9b2c2c", 0.08)
+                : theme?.kind === "art" && theme?.artwork
+                  ? LEGIBILITY.wash
+                  : "transparent",
+            borderBottomColor: removing
+              ? theme.danger || "#9b2c2c"
+              : theme.border,
+            opacity: removing ? 0.55 : dragging ? 0.92 : 1,
+            transform: [{ scale: dragging ? MOTION.dragScale : 1 }],
           },
         ]}
       >

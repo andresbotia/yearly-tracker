@@ -1,7 +1,8 @@
 import React from "react";
-import { Pressable, Text, StyleSheet, Platform } from "react-native";
+import { Text, StyleSheet, Platform } from "react-native";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
+import PressableInk from "../motion/PressableInk";
 
 export default function EditorialButton({
   label,
@@ -17,12 +18,13 @@ export default function EditorialButton({
   const isGhost = variant === "ghost";
 
   return (
-    <Pressable
+    <PressableInk
       onPress={onPress}
       disabled={disabled}
+      haptic="select"
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || label}
-      style={({ pressed }) => [
+      style={[
         styles.btn,
         isGhost && styles.ghost,
         {
@@ -36,10 +38,10 @@ export default function EditorialButton({
             : isPrimary
               ? theme.primary
               : theme.text,
-          opacity: disabled ? 0.45 : pressed ? 0.65 : 1,
         },
         style,
       ]}
+      innerStyle={styles.inner}
     >
       <Text
         style={[
@@ -52,7 +54,7 @@ export default function EditorialButton({
       >
         {label}
       </Text>
-    </Pressable>
+    </PressableInk>
   );
 }
 
@@ -67,6 +69,12 @@ const styles = StyleSheet.create({
     ...Platform.select({
       android: { elevation: 0 },
     }),
+  },
+  inner: {
+    minHeight: 44,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
   ghost: {
     minHeight: 36,

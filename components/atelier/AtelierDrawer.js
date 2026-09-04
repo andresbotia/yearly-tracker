@@ -53,7 +53,7 @@ export default function AtelierDrawer({
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [
       {
-        translateY: reduced ? 0 : (1 - progress.value) * 28,
+        translateY: reduced ? 0 : (1 - progress.value) * 22,
       },
     ],
     opacity: progress.value,
@@ -90,6 +90,14 @@ export default function AtelierDrawer({
             sheetStyle,
           ]}
         >
+          <View
+            pointerEvents="none"
+            style={[styles.topRule, { backgroundColor: theme?.primary || ink }]}
+          />
+          <View
+            pointerEvents="none"
+            style={[styles.tint, { backgroundColor: theme?.primary || ink }]}
+          />
           <SafeAreaView>
             <View style={[styles.handle, { backgroundColor: theme?.border }]} />
             {!!kicker && (
@@ -130,6 +138,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACE.md,
     paddingTop: SPACE.sm,
     paddingBottom: SPACE.lg,
+    overflow: "hidden",
+  },
+  topRule: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    zIndex: 2,
+  },
+  tint: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.05,
   },
   handle: {
     alignSelf: "center",

@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
+import PressableInk from "../motion/PressableInk";
 import {
   ART_THEMES,
   ART_THEME_GROUPS,
@@ -30,19 +31,20 @@ function groupLabel(artist) {
 
 function Stamp({ image, selected, onPress, label, theme, wide }) {
   return (
-    <Pressable
+    <PressableInk
       onPress={onPress}
+      haptic="select"
       accessibilityRole="button"
       accessibilityState={{ selected }}
       accessibilityLabel={label}
-      style={({ pressed }) => [
+      style={[
         styles.stamp,
         wide && styles.stampWide,
         {
           borderColor: selected ? theme.text : theme.border,
-          opacity: pressed ? 0.8 : 1,
         },
       ]}
+      innerStyle={styles.stampInner}
     >
       {image ? (
         <Image source={image} style={styles.stampImage} resizeMode="cover" />
@@ -57,7 +59,7 @@ function Stamp({ image, selected, onPress, label, theme, wide }) {
       {selected ? (
         <View style={[styles.stampMark, { backgroundColor: theme.text }]} />
       ) : null}
-    </Pressable>
+    </PressableInk>
   );
 }
 
@@ -107,16 +109,16 @@ export default function ThemeGallery({
         {artWorks.length} public-domain plates, bundled. No network calls.
       </Text>
 
-      <Pressable
+      <PressableInk
         onPress={() => onPick(RANDOM_ART_ID)}
-        style={({ pressed }) => [
+        style={[
           styles.randomRow,
           {
             borderColor:
               themeChoice === RANDOM_ART_ID ? theme.text : theme.border,
-            opacity: pressed ? 0.75 : 1,
           },
         ]}
+        innerStyle={styles.randomInner}
         accessibilityRole="button"
         accessibilityState={{ selected: themeChoice === RANDOM_ART_ID }}
         accessibilityLabel="Random art"
@@ -143,7 +145,7 @@ export default function ThemeGallery({
         >
           A new plate each launch
         </Text>
-      </Pressable>
+      </PressableInk>
 
       <ScrollView
         horizontal
@@ -154,9 +156,10 @@ export default function ThemeGallery({
           (chip) => {
             const on = filter === chip.key;
             return (
-              <Pressable
+              <PressableInk
                 key={chip.key}
                 onPress={() => setFilter(chip.key)}
+                haptic="tick"
                 style={[
                   styles.chip,
                   {
@@ -178,7 +181,7 @@ export default function ThemeGallery({
                 >
                   {chip.label}
                 </Text>
-              </Pressable>
+              </PressableInk>
             );
           },
         )}
@@ -213,15 +216,15 @@ export default function ThemeGallery({
       <SectionRule theme={theme} />
 
       {paperTheme ? (
-        <Pressable
+        <PressableInk
           onPress={() => onPick(paperTheme.id)}
-          style={({ pressed }) => [
+          style={[
             styles.listRow,
             {
               borderBottomColor: theme.border,
-              opacity: pressed ? 0.7 : 1,
             },
           ]}
+          innerStyle={styles.listInner}
         >
           <Text
             style={[
@@ -237,23 +240,23 @@ export default function ThemeGallery({
           {themeChoice === paperTheme.id ? (
             <Text style={{ color: theme.text }}>●</Text>
           ) : null}
-        </Pressable>
+        </PressableInk>
       ) : null}
 
       <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
         Classic
       </MetadataLabel>
       {(classicThemes || []).map((t) => (
-        <Pressable
+        <PressableInk
           key={t.id}
           onPress={() => onPick(t.id)}
-          style={({ pressed }) => [
+          style={[
             styles.listRow,
             {
               borderBottomColor: theme.border,
-              opacity: pressed ? 0.7 : 1,
             },
           ]}
+          innerStyle={styles.listInner}
         >
           <Text
             style={[
@@ -269,7 +272,7 @@ export default function ThemeGallery({
           {t.id === themeChoice ? (
             <Text style={{ color: theme.text }}>●</Text>
           ) : null}
-        </Pressable>
+        </PressableInk>
       ))}
 
       <SectionRule theme={theme} />
@@ -391,6 +394,21 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
     aspectRatio: 3 / 4,
+  },
+  stampInner: {
+    width: "100%",
+    height: "100%",
+  },
+  randomInner: {
+    width: "100%",
+    alignItems: "flex-start",
+  },
+  listInner: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: SPACE.sm,
   },
   stampWide: {
     aspectRatio: 4 / 3,

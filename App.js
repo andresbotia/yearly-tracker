@@ -26,6 +26,7 @@ import ColorPicker, {
 } from "reanimated-color-picker";
 
 import Reanimated, {
+  FadeIn,
   useSharedValue,
   useAnimatedStyle,
 } from "react-native-reanimated";
@@ -47,7 +48,7 @@ import GoalItem from "./components/GoalItem";
 import HabitRow from "./components/HabitRow";
 import HabitHistory from "./components/HabitHistory";
 import ArtBackdrop from "./components/art/ArtBackdrop";
-import ArtworkCredit from "./components/art/ArtworkCredit";
+
 import RevampIntroModal from "./components/art/RevampIntroModal";
 import EditorialProgress from "./components/editorial/EditorialProgress";
 import MetadataLabel from "./components/editorial/MetadataLabel";
@@ -57,6 +58,17 @@ import EditorialToolbar from "./components/editorial/EditorialToolbar";
 import EditorialSurface from "./components/editorial/EditorialSurface";
 import EditorialEmpty from "./components/editorial/EditorialEmpty";
 import ThemeGallery from "./components/theme/ThemeGallery";
+import YearArchive from "./components/YearArchive";
+import AtelierTabs from "./components/editorial/AtelierTabs";
+import {
+  CollapsingKicker,
+  CollapsingIdentity,
+} from "./components/editorial/CollapsingHeader";
+import {
+  listEntering,
+  listExiting,
+  listLayout,
+} from "./components/motion/AnimatedListItem";
 import {
   THEMES,
   makeTheme,
@@ -66,7 +78,7 @@ import {
 } from "./utils/theme";
 import { FontsProvider } from "./utils/fonts";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "./utils/tokens";
-import { ReducedMotionProvider } from "./utils/motion";
+import { useReducedMotion } from "./utils/motion";
 import AtelierDrawer from "./components/atelier/AtelierDrawer";
 import AtelierCounter from "./components/atelier/AtelierCounter";
 import AtelierSheet, {
@@ -94,6 +106,7 @@ import {
   saveRandomArtLast,
 } from "./utils/storage";
 import {
+  ART_THEMES,
   RANDOM_ART_ID,
   pickRandomArtId,
 } from "./themes/artThemes";
@@ -444,6 +457,13 @@ export default function App() {
   // - "custom:<id>"
   const [themeChoice, setThemeChoice] = useState("bright-blue");
   const [sessionArtId, setSessionArtId] = useState(null);
+  const [artReveal, setArtReveal] = useState(false);
+  const [themeExpand, setThemeExpand] = useState(false);
+  const [removingGoalId, setRemovingGoalId] = useState(null);
+  const [removingHabitId, setRemovingHabitId] = useState(null);
+  const headerScrollY = useSharedValue(0);
+  const tabDir = useRef(0);
+  const reducedMotion = useReducedMotion();
   const counterRef = useRef(null);
 
   const pickerShared = useSharedValue("#ffffff");
@@ -1222,6 +1242,7 @@ export default function App() {
           const picked = pickRandomArtId(lastRandomArt);
           setThemeChoice(RANDOM_ART_ID);
           setSessionArtId(picked);
+          setArtReveal(true);
           await saveRandomArtLast(picked);
         } else if (typeof storedHue === "number" || typeof storedHue === "string") {
           setThemeChoice(storedHue);
@@ -1457,12 +1478,17 @@ export default function App() {
 
   async function handleDeleteGoal(id) {
     await hapticLight();
+    setRemovingGoalId(id);
+    if (!reducedMotion) {
+      await new Promise((r) => setTimeout(r, 110));
+    }
 
     const idx = goals.findIndex((g) => g.id === id);
     const item = goals.find((g) => g.id === id);
     const next = goals.filter((g) => g.id !== id);
 
     await persistGoals(next);
+    setRemovingGoalId(null);
 
     if (item) showUndo("goal", item, idx);
   }
@@ -1622,19 +1648,33 @@ export default function App() {
     await hapticSuccess();
   }
 
+  function clearThemeMotion() {
+    setTimeout(() => {
+      setArtReveal(false);
+      setThemeExpand(false);
+    }, MOTION.reveal);
+  }
+
   async function handlePickTheme(nextTheme) {
+    const artPick = ART_THEMES.some((t) => t.id === nextTheme && t.artwork);
     if (nextTheme === RANDOM_ART_ID) {
       const picked = pickRandomArtId(sessionArtId);
       setThemeChoice(RANDOM_ART_ID);
       setSessionArtId(picked);
+      setArtReveal(true);
+      setThemeExpand(false);
       await saveHue(RANDOM_ART_ID);
       await saveRandomArtLast(picked);
     } else {
       setThemeChoice(nextTheme);
       setSessionArtId(null);
+      setArtReveal(false);
+      setThemeExpand(artPick);
       await saveHue(nextTheme);
     }
     await hapticSuccess();
+    setCustomizeOpen(false);
+    clearThemeMotion();
   }
 
   async function addHabit() {
@@ -1682,12 +1722,17 @@ export default function App() {
 
   async function deleteHabit(habitId) {
     await hapticLight();
+    setRemovingHabitId(habitId);
+    if (!reducedMotion) {
+      await new Promise((r) => setTimeout(r, 110));
+    }
 
     const idx = habits.findIndex((h) => h.id === habitId);
     const item = habits.find((h) => h.id === habitId);
     const next = habits.filter((h) => h.id !== habitId);
 
     await saveHabits(next);
+    setRemovingHabitId(null);
 
     if (item) showUndo("habit", item, idx);
   }
@@ -1786,92 +1831,56 @@ export default function App() {
     setThemePage("pick");
   };
 
+  function selectTab(next) {
+    const order = { habits: 0, goals: 1, history: 2, archive: 3 };
+    tabDir.current = (order[next] ?? 0) >= (order[activeTab] ?? 0) ? 1 : -1;
+    closeOpenHabitSwipe();
+    headerScrollY.value = 0;
+    setActiveTab(next);
+  }
+
+  function onListScrollOffset(offset) {
+    headerScrollY.value = offset;
+  }
+
+  const canvasPaused =
+    customizeOpen ||
+    editOpen ||
+    addOpen ||
+    habitAddOpen ||
+    shareOpen ||
+    goalDetailsOpen ||
+    habitEditOpen ||
+    artReveal ||
+    themeExpand;
+
+  const tabEntering = reducedMotion
+    ? FadeIn.duration(MOTION.reduced)
+    : FadeIn.duration(MOTION.tab).withInitialValues({
+        opacity: 0,
+        transform: [{ translateX: tabDir.current * 14 }],
+      });
+
+  const stickyChrome = (
+    <View style={styles.stickyChrome}>
+      <CollapsingKicker theme={theme} year={year} fontsLoaded={fontsLoaded} />
+      {activeTab === "habits" || activeTab === "goals" ? (
+        <AtelierTabs theme={theme} active={activeTab} onChange={selectTab} />
+      ) : null}
+    </View>
+  );
+
   const topHeader = (
     <View style={styles.header}>
       <EditorialSurface theme={theme} style={styles.identitySurface}>
-        <MetadataLabel theme={theme}>
-          {`[AT]  ATELIER TRACKER  /  ${year}`}
-        </MetadataLabel>
-        {activeTab !== "history" ? (
-          <Text
-            style={[
-              styles.appTitle,
-              {
-                color: theme.text,
-                fontFamily: fontFamily("display", fontsLoaded),
-              },
-            ]}
-          >
-            Atelier Tracker
-          </Text>
-        ) : null}
-
-        {theme?.artwork ? (
-          <ArtworkCredit
-            artwork={theme.artwork}
-            theme={theme}
-            fontsLoaded={fontsLoaded}
-          />
-        ) : null}
+        <CollapsingIdentity
+          theme={theme}
+          scrollY={headerScrollY}
+          artwork={theme?.artwork}
+          fontsLoaded={fontsLoaded}
+          visible={activeTab === "habits" || activeTab === "goals"}
+        />
       </EditorialSurface>
-
-      {activeTab !== "history" && (
-        <View style={styles.tabRow}>
-          <Pressable
-            onPress={() => {
-              closeOpenHabitSwipe();
-              setActiveTab("habits");
-            }}
-            style={[
-              styles.tabItem,
-              activeTab === "habits" && {
-                borderBottomColor: theme.text,
-              },
-            ]}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === "habits" }}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                {
-                  color: activeTab === "habits" ? theme.text : theme.mutedText,
-                  fontFamily: fontFamily("data", fontsLoaded),
-                },
-              ]}
-            >
-              Habits
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => {
-              closeOpenHabitSwipe();
-              setActiveTab("goals");
-            }}
-            style={[
-              styles.tabItem,
-              activeTab === "goals" && {
-                borderBottomColor: theme.text,
-              },
-            ]}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === "goals" }}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                {
-                  color: activeTab === "goals" ? theme.text : theme.mutedText,
-                  fontFamily: fontFamily("data", fontsLoaded),
-                },
-              ]}
-            >
-              Goals
-            </Text>
-          </Pressable>
-        </View>
-      )}
 
       {activeTab === "goals" ? (
         <>
@@ -1953,7 +1962,7 @@ export default function App() {
           <Pressable
             onPress={() => {
               setHistoryYear(todayDate.getFullYear());
-              setActiveTab("history");
+              selectTab("history");
             }}
             style={({ pressed }) => [
               styles.monthHit,
@@ -2056,12 +2065,16 @@ export default function App() {
 
   if (!ready) {
     return (
-      <ReducedMotionProvider>
       <FontsProvider loaded={fontsLoaded}>
         <GestureHandlerRootView
           style={[styles.safe, { backgroundColor: theme.bg }]}
         >
-          <ArtBackdrop theme={theme} fontsLoaded={fontsLoaded} />
+          <ArtBackdrop
+            theme={theme}
+            fontsLoaded={fontsLoaded}
+            paused
+            reveal={artReveal}
+          />
           <SafeAreaView style={[styles.safe, styles.transparent]}>
             <View style={styles.loadingWrap}>
               <MetadataLabel theme={theme}>[AT] Atelier Tracker</MetadataLabel>
@@ -2080,7 +2093,6 @@ export default function App() {
           </SafeAreaView>
         </GestureHandlerRootView>
       </FontsProvider>
-      </ReducedMotionProvider>
     );
   }
 
@@ -2096,13 +2108,24 @@ export default function App() {
   const createPreview = currentCreatePaletteDraft();
 
   return (
-    <ReducedMotionProvider>
     <FontsProvider loaded={fontsLoaded}>
     <GestureHandlerRootView
       style={[styles.safe, { backgroundColor: theme.bg }]}
     >
-      <ArtBackdrop theme={theme} fontsLoaded={fontsLoaded} />
+      <ArtBackdrop
+        theme={theme}
+        fontsLoaded={fontsLoaded}
+        paused={canvasPaused}
+        reveal={artReveal}
+        expand={themeExpand}
+      />
       <SafeAreaView style={[styles.safe, styles.transparent]}>
+        {stickyChrome}
+        <Reanimated.View
+          key={activeTab}
+          style={styles.tabPane}
+          entering={tabEntering}
+        >
         {activeTab === "goals" ? (
           <DraggableFlatList
             activationDistance={12}
@@ -2112,6 +2135,11 @@ export default function App() {
             containerStyle={styles.transparentList}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
+            onScrollOffsetChange={onListScrollOffset}
+            itemEnteringAnimation={listEntering(reducedMotion)}
+            itemExitingAnimation={listExiting(reducedMotion)}
+            itemLayoutAnimation={listLayout(reducedMotion)}
+            enableLayoutAnimationExperimental
             onDragBegin={() => {
               if (!goalDragging) {
                 setGoalDragging(true);
@@ -2139,6 +2167,7 @@ export default function App() {
                 onDelete={handleDeleteGoal}
                 onDrag={drag}
                 dragging={isActive}
+                removing={removingGoalId === item.id}
               />
             )}
             ListEmptyComponent={
@@ -2155,13 +2184,26 @@ export default function App() {
             style={styles.transparentList}
             contentContainerStyle={styles.listContent}
           >
-            {topHeader}
             <HabitHistory
               theme={theme}
               habits={habits}
               historyYear={historyYear}
-              onBack={() => setActiveTab("habits")}
+              onBack={() => selectTab("habits")}
+              onOpenArchive={() => selectTab("archive")}
               todayDate={todayDate}
+            />
+          </ScrollView>
+        ) : activeTab === "archive" ? (
+          <ScrollView
+            style={styles.transparentList}
+            contentContainerStyle={styles.listContent}
+          >
+            <YearArchive
+              theme={theme}
+              habits={habits}
+              year={historyYear}
+              todayDate={todayDate}
+              onBack={() => selectTab("history")}
             />
           </ScrollView>
         ) : (
@@ -2173,6 +2215,11 @@ export default function App() {
             containerStyle={styles.transparentList}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
+            onScrollOffsetChange={onListScrollOffset}
+            itemEnteringAnimation={listEntering(reducedMotion)}
+            itemExitingAnimation={listExiting(reducedMotion)}
+            itemLayoutAnimation={listLayout(reducedMotion)}
+            enableLayoutAnimationExperimental
             onDragBegin={() => {
               closeOpenHabitSwipe();
               if (!habitDragging) {
@@ -2194,6 +2241,7 @@ export default function App() {
                 onEdit={openHabitEdit}
                 onDrag={drag}
                 dragging={isActive}
+                removing={removingHabitId === item.id}
                 labelWidth={habitLayout.labelWidth}
                 squareSize={habitLayout.squareSize}
                 labelGap={habitLayout.labelGap}
@@ -2223,6 +2271,7 @@ export default function App() {
             }
           />
         )}
+        </Reanimated.View>
         {!!undo && (
           <View
             style={[
@@ -2561,250 +2610,224 @@ export default function App() {
             </View>
           </View>
         </Modal>
-        {/* Edit Habit */}
-        <Modal
+        <AtelierDrawer
           visible={habitEditOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={closeHabitEdit}
-        >
-          <View style={styles.modalBackdrop}>
-            <AtelierSheet
+          onClose={closeHabitEdit}
+          theme={theme}
+          kicker="[AT]  /  HABIT"
+          title="Edit Habit"
+          footer={
+            <AtelierActions
               theme={theme}
-              kicker="[AT]  /  HABIT"
-              title="Edit Habit"
-            >
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Habit name
-              </Text>
-              <AtelierField
-                theme={theme}
-                value={habitEditTitle}
-                onChangeText={setHabitEditTitle}
-                placeholder="e.g., Workout"
-                autoCorrect={false}
-                autoCapitalize="words"
-                maxLength={24}
-              />
-              <AtelierActions
-                theme={theme}
-                onCancel={closeHabitEdit}
-                onConfirm={saveHabitEdit}
-                confirmDisabled={!habitEditTitle.trim()}
-              />
-            </AtelierSheet>
-          </View>
-        </Modal>
-        {/* Add Habit */}
-        <Modal
+              onCancel={closeHabitEdit}
+              onConfirm={saveHabitEdit}
+              confirmDisabled={!habitEditTitle.trim()}
+            />
+          }
+        >
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Habit name
+          </Text>
+          <AtelierField
+            theme={theme}
+            value={habitEditTitle}
+            onChangeText={setHabitEditTitle}
+            placeholder="e.g., Workout"
+            autoCorrect={false}
+            autoCapitalize="words"
+            maxLength={24}
+          />
+        </AtelierDrawer>
+        <AtelierDrawer
           visible={habitAddOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={() => setHabitAddOpen(false)}
-        >
-          <View style={styles.modalBackdrop}>
-            <AtelierSheet
+          onClose={() => setHabitAddOpen(false)}
+          theme={theme}
+          kicker="[AT]  /  HABIT"
+          title="Add Habit"
+          footer={
+            <AtelierActions
               theme={theme}
-              kicker="[AT]  /  HABIT"
-              title="Add Habit"
-            >
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Habit name
-              </Text>
-              <AtelierField
-                theme={theme}
-                value={habitTitle}
-                onChangeText={setHabitTitle}
-                placeholder="e.g., Workout"
-                autoCorrect={false}
-                autoCapitalize="words"
-                maxLength={24}
-              />
-              <AtelierActions
-                theme={theme}
-                onCancel={() => setHabitAddOpen(false)}
-                onConfirm={addHabit}
-                confirmDisabled={!habitTitle.trim()}
-              />
-            </AtelierSheet>
-          </View>
-        </Modal>
-        {/* Edit Goal Details */}
-        <Modal
+              onCancel={() => setHabitAddOpen(false)}
+              onConfirm={addHabit}
+              confirmDisabled={!habitTitle.trim()}
+            />
+          }
+        >
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Habit name
+          </Text>
+          <AtelierField
+            theme={theme}
+            value={habitTitle}
+            onChangeText={setHabitTitle}
+            placeholder="e.g., Workout"
+            autoCorrect={false}
+            autoCapitalize="words"
+            maxLength={24}
+          />
+        </AtelierDrawer>
+        <AtelierDrawer
           visible={goalDetailsOpen}
-          animationType="slide"
-          transparent
-          onRequestClose={closeGoalDetails}
-        >
-          <View style={styles.modalBackdrop}>
-            <AtelierSheet
+          onClose={closeGoalDetails}
+          theme={theme}
+          kicker="[AT]  /  GOAL"
+          title="Edit Goal"
+          footer={
+            <AtelierActions
               theme={theme}
-              kicker="[AT]  /  GOAL"
-              title="Edit Goal"
-            >
+              onCancel={closeGoalDetails}
+              onConfirm={saveGoalDetails}
+              confirmDisabled={!goalDetailsTitle.trim()}
+            />
+          }
+        >
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Title
+          </Text>
+          <AtelierField
+            theme={theme}
+            value={goalDetailsTitle}
+            onChangeText={setGoalDetailsTitle}
+            placeholder="e.g., Read 30 books"
+            autoCorrect={false}
+            autoCapitalize="sentences"
+            maxLength={60}
+          />
+
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Type
+          </Text>
+          <AtelierToggle
+            theme={theme}
+            value={goalDetailsType}
+            onChange={setGoalDetailsType}
+            options={[
+              { value: "count", label: "Count" },
+              { value: "boolean", label: "Milestone" },
+            ]}
+          />
+
+          {goalDetailsType === "count" && (
+            <>
               <Text style={[styles.label, { color: theme.mutedText }]}>
-                Title
+                Goal
               </Text>
               <AtelierField
                 theme={theme}
-                value={goalDetailsTitle}
-                onChangeText={setGoalDetailsTitle}
-                placeholder="e.g., Read 30 books"
-                autoCorrect={false}
-                autoCapitalize="sentences"
-                maxLength={60}
+                value={goalDetailsTargetText}
+                onChangeText={setGoalDetailsTargetText}
+                keyboardType={
+                  Platform.OS === "ios" ? "number-pad" : "numeric"
+                }
+                placeholder="e.g., 30"
+                maxLength={6}
               />
-
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Type
-              </Text>
-              <AtelierToggle
-                theme={theme}
-                value={goalDetailsType}
-                onChange={setGoalDetailsType}
-                options={[
-                  { value: "count", label: "Count" },
-                  { value: "boolean", label: "Milestone" },
-                ]}
-              />
-
-              {goalDetailsType === "count" && (
-                <>
-                  <Text style={[styles.label, { color: theme.mutedText }]}>
-                    Goal
-                  </Text>
-                  <AtelierField
-                    theme={theme}
-                    value={goalDetailsTargetText}
-                    onChangeText={setGoalDetailsTargetText}
-                    keyboardType={
-                      Platform.OS === "ios" ? "number-pad" : "numeric"
-                    }
-                    placeholder="e.g., 30"
-                    maxLength={6}
-                  />
-                </>
-              )}
-
-              <AtelierActions
-                theme={theme}
-                onCancel={closeGoalDetails}
-                onConfirm={saveGoalDetails}
-                confirmDisabled={!goalDetailsTitle.trim()}
-              />
-            </AtelierSheet>
-          </View>
-        </Modal>
-        {/* Add Goal */}
-        <Modal
+            </>
+          )}
+        </AtelierDrawer>
+        <AtelierDrawer
           visible={addOpen}
-          animationType="slide"
-          transparent
-          onRequestClose={() => setAddOpen(false)}
-        >
-          <View style={styles.modalBackdrop}>
-            <AtelierSheet
+          onClose={() => setAddOpen(false)}
+          theme={theme}
+          kicker="[AT]  /  GOAL"
+          title="Add Goal"
+          footer={
+            <AtelierActions
               theme={theme}
-              kicker="[AT]  /  GOAL"
-              title="Add Goal"
-            >
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Templates
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={{ marginTop: 8 }}
-                contentContainerStyle={[
-                  styles.templateRow,
-                  ANDROID && styles.noGap,
+              onCancel={() => setAddOpen(false)}
+              onConfirm={handleAddGoal}
+              confirmDisabled={!title.trim()}
+            />
+          }
+        >
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Templates
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 8 }}
+            contentContainerStyle={[
+              styles.templateRow,
+              ANDROID && styles.noGap,
+            ]}
+          >
+            {GOAL_TEMPLATES.map((t) => (
+              <Pressable
+                key={t.label}
+                onPress={async () => {
+                  await hapticLight();
+                  setTitle(t.title);
+                  setType(t.type);
+                  if (t.type === "count") setTargetText(t.target);
+                }}
+                style={({ pressed }) => [
+                  styles.templateChip,
+                  {
+                    borderColor: theme.text,
+                    opacity: pressed ? 0.7 : 1,
+                  },
                 ]}
               >
-                {GOAL_TEMPLATES.map((t) => (
-                  <Pressable
-                    key={t.label}
-                    onPress={async () => {
-                      await hapticLight();
-                      setTitle(t.title);
-                      setType(t.type);
-                      if (t.type === "count") setTargetText(t.target);
-                    }}
-                    style={({ pressed }) => [
-                      styles.templateChip,
-                      {
-                        borderColor: theme.text,
-                        opacity: pressed ? 0.7 : 1,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.templateChipText,
-                        {
-                          color: theme.text,
-                          fontFamily: fontFamily("data", fontsLoaded),
-                        },
-                      ]}
-                    >
-                      {t.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
+                <Text
+                  style={[
+                    styles.templateChipText,
+                    {
+                      color: theme.text,
+                      fontFamily: fontFamily("data", fontsLoaded),
+                    },
+                  ]}
+                >
+                  {t.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
 
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Title
+          </Text>
+          <AtelierField
+            theme={theme}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="e.g., Read 20 books"
+            autoCorrect={false}
+            autoCapitalize="sentences"
+            maxLength={60}
+          />
+
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Type
+          </Text>
+          <AtelierToggle
+            theme={theme}
+            value={type}
+            onChange={setType}
+            options={[
+              { value: "count", label: "Count" },
+              { value: "boolean", label: "Milestone" },
+            ]}
+          />
+
+          {type === "count" && (
+            <>
               <Text style={[styles.label, { color: theme.mutedText }]}>
-                Title
+                Goal
               </Text>
               <AtelierField
                 theme={theme}
-                value={title}
-                onChangeText={setTitle}
-                placeholder="e.g., Read 20 books"
-                autoCorrect={false}
-                autoCapitalize="sentences"
-                maxLength={60}
+                value={targetText}
+                onChangeText={setTargetText}
+                keyboardType={
+                  Platform.OS === "ios" ? "number-pad" : "numeric"
+                }
+                placeholder="e.g., 10"
+                maxLength={6}
               />
-
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Type
-              </Text>
-              <AtelierToggle
-                theme={theme}
-                value={type}
-                onChange={setType}
-                options={[
-                  { value: "count", label: "Count" },
-                  { value: "boolean", label: "Milestone" },
-                ]}
-              />
-
-              {type === "count" && (
-                <>
-                  <Text style={[styles.label, { color: theme.mutedText }]}>
-                    Goal
-                  </Text>
-                  <AtelierField
-                    theme={theme}
-                    value={targetText}
-                    onChangeText={setTargetText}
-                    keyboardType={
-                      Platform.OS === "ios" ? "number-pad" : "numeric"
-                    }
-                    placeholder="e.g., 10"
-                    maxLength={6}
-                  />
-                </>
-              )}
-
-              <AtelierActions
-                theme={theme}
-                onCancel={() => setAddOpen(false)}
-                onConfirm={handleAddGoal}
-                confirmDisabled={!title.trim()}
-              />
-            </AtelierSheet>
-          </View>
-        </Modal>
+            </>
+          )}
+        </AtelierDrawer>
         <ShareModal
           visible={shareOpen}
           theme={theme}
@@ -3281,12 +3304,19 @@ export default function App() {
               onChange={setEditDraftDone}
             />
           ) : null}
-          <CompletionMark visible={completeFlash} theme={theme} />
+          <CompletionMark
+            visible={completeFlash}
+            theme={theme}
+            index={
+              editGoal
+                ? goals.findIndex((g) => g.id === editGoal.id) + 1
+                : 0
+            }
+          />
         </AtelierDrawer>
       </SafeAreaView>
     </GestureHandlerRootView>
     </FontsProvider>
-    </ReducedMotionProvider>
   );
 }
 
@@ -3299,6 +3329,12 @@ const styles = StyleSheet.create({
     paddingBottom: SPACE["2xl"] + SPACE.lg,
   },
 
+  stickyChrome: {
+    paddingHorizontal: SPACE.md,
+    paddingTop: SPACE.xs,
+    zIndex: 2,
+  },
+  tabPane: { flex: 1 },
   header: { paddingTop: SPACE.xs, paddingBottom: SPACE.sm },
   identitySurface: { marginBottom: SPACE.xs },
   appTitle: {

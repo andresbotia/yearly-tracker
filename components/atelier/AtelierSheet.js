@@ -1,7 +1,6 @@
 import React from "react";
 import {
   View,
-  Pressable,
   Text,
   TextInput,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
 import MetadataLabel from "../editorial/MetadataLabel";
+import PressableInk from "../motion/PressableInk";
 
 export function AtelierActions({
   theme,
@@ -25,12 +25,10 @@ export function AtelierActions({
   return (
     <View style={styles.actions}>
       {onCancel ? (
-        <Pressable
+        <PressableInk
           onPress={onCancel}
-          style={({ pressed }) => [
-            styles.action,
-            { borderColor: ink, opacity: pressed ? 0.65 : 1 },
-          ]}
+          style={[styles.action, { borderColor: ink }]}
+          innerStyle={styles.actionInner}
           accessibilityRole="button"
           accessibilityLabel={cancelLabel}
         >
@@ -42,22 +40,21 @@ export function AtelierActions({
           >
             {cancelLabel}
           </Text>
-        </Pressable>
+        </PressableInk>
       ) : null}
-      <Pressable
+      <PressableInk
         onPress={onConfirm}
         disabled={confirmDisabled}
-        style={({ pressed }) => [
+        haptic="select"
+        style={[
           styles.action,
           styles.actionPrimary,
           {
-            backgroundColor: pressed
-              ? theme?.primaryPressed || ink
-              : theme?.primary || ink,
+            backgroundColor: theme?.primary || ink,
             borderColor: theme?.primary || ink,
-            opacity: confirmDisabled ? 0.4 : pressed ? 0.85 : 1,
           },
         ]}
+        innerStyle={styles.actionInner}
         accessibilityRole="button"
         accessibilityLabel={confirmLabel}
       >
@@ -72,7 +69,7 @@ export function AtelierActions({
         >
           {confirmLabel}
         </Text>
-      </Pressable>
+      </PressableInk>
     </View>
   );
 }
@@ -87,17 +84,18 @@ export function AtelierToggle({ theme, value, options, onChange }) {
       {(options || []).map((opt) => {
         const on = value === opt.value;
         return (
-          <Pressable
+          <PressableInk
             key={String(opt.value)}
             onPress={() => onChange?.(opt.value)}
-            style={({ pressed }) => [
+            haptic="tick"
+            style={[
               styles.toggle,
               {
                 borderColor: on ? ink : theme?.border || "#d8d0c4",
                 backgroundColor: on ? ink : "transparent",
-                opacity: pressed ? 0.75 : 1,
               },
             ]}
+            innerStyle={styles.actionInner}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
             accessibilityLabel={opt.label}
@@ -113,7 +111,7 @@ export function AtelierToggle({ theme, value, options, onChange }) {
             >
               {opt.label}
             </Text>
-          </Pressable>
+          </PressableInk>
         );
       })}
     </View>
@@ -234,6 +232,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: SPACE.sm,
+  },
+  actionInner: {
+    minHeight: 44,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
   actionPrimary: {},
   actionText: {

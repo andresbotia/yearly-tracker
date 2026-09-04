@@ -1,7 +1,8 @@
 import React from "react";
-import { View, Pressable, Text, StyleSheet, Platform } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
 import { useFontsLoaded } from "../../utils/fonts";
+import PressableInk from "../motion/PressableInk";
 
 export default function EditorialToolbar({ items = [], theme, style }) {
   const fontsLoaded = useFontsLoaded();
@@ -15,19 +16,20 @@ export default function EditorialToolbar({ items = [], theme, style }) {
       {items.map((item) => {
         const color = item.danger ? danger : ink;
         return (
-          <Pressable
+          <PressableInk
             key={item.label}
             onPress={item.onPress}
             disabled={item.disabled}
+            haptic="select"
             accessibilityRole="button"
             accessibilityLabel={item.accessibilityLabel || item.label}
-            style={({ pressed }) => [
+            style={[
               styles.cell,
               {
                 borderColor: color,
-                opacity: item.disabled ? 0.45 : pressed ? 0.65 : 1,
               },
             ]}
+            innerStyle={styles.cellInner}
           >
             <Text
               style={[
@@ -40,7 +42,7 @@ export default function EditorialToolbar({ items = [], theme, style }) {
             >
               {item.label}
             </Text>
-          </Pressable>
+          </PressableInk>
         );
       })}
     </View>
@@ -65,6 +67,12 @@ const styles = StyleSheet.create({
     ...Platform.select({
       android: { elevation: 0 },
     }),
+  },
+  cellInner: {
+    minHeight: 44,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
   label: {
     fontSize: TYPE_SIZE.kicker,

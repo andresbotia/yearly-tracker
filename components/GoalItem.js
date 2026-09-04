@@ -3,12 +3,13 @@
 
 import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../utils/tokens";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "../utils/tokens";
 import { useFontsLoaded } from "../utils/fonts";
 import EditorialSurface from "./editorial/EditorialSurface";
 import AnimatedAsciiBar from "./motion/AnimatedAsciiBar";
 import AnimatedNumber from "./motion/AnimatedNumber";
-import { hapticSelect } from "../utils/motion";
+import PressableInk from "./motion/PressableInk";
+import { hexToRgba } from "../utils/color";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -28,6 +29,7 @@ export default function GoalItem({
   onDelete,
   onDrag,
   dragging = false,
+  removing = false,
   index,
 }) {
   const fontsLoaded = useFontsLoaded();
@@ -58,8 +60,14 @@ export default function GoalItem({
       style={({ pressed }) => [
         styles.row,
         {
-          borderBottomColor: rule,
-          opacity: pressed || dragging ? 0.72 : 1,
+          borderBottomColor: removing ? theme.danger || "#9b2c2c" : rule,
+          backgroundColor: dragging
+            ? hexToRgba(theme.text, 0.06)
+            : removing
+              ? hexToRgba(theme.danger || "#9b2c2c", 0.08)
+              : "transparent",
+          opacity: removing ? 0.55 : pressed ? 0.8 : 1,
+          transform: [{ scale: dragging ? MOTION.dragScale : 1 }],
         },
       ]}
       accessibilityRole="button"
@@ -128,15 +136,11 @@ export default function GoalItem({
 
       <EditorialSurface theme={theme} padded={false} style={styles.actions}>
         <View style={styles.rail}>
-          <Pressable
-            onPress={async () => {
-              await hapticSelect();
-              onProgress?.(goal);
-            }}
-            style={({ pressed }) => [
-              styles.railPrimary,
-              { borderColor: ink, opacity: pressed ? 0.65 : 1 },
-            ]}
+          <PressableInk
+            onPress={() => onProgress?.(goal)}
+            haptic="none"
+            style={[styles.railPrimary, { borderColor: ink }]}
+            innerStyle={styles.railPrimaryInner}
             accessibilityRole="button"
             accessibilityLabel={`Update progress for ${goal.title}`}
           >
@@ -148,17 +152,12 @@ export default function GoalItem({
             >
               {isComplete ? "Adjust" : "Progress"}
             </Text>
-          </Pressable>
-          <Pressable
-            onPress={async () => {
-              await hapticSelect();
-              onEditDetails?.(goal);
-            }}
+          </PressableInk>
+          <PressableInk
+            onPress={() => onEditDetails?.(goal)}
+            haptic="none"
             hitSlop={6}
-            style={({ pressed }) => [
-              styles.railGhost,
-              { opacity: pressed ? 0.55 : 1 },
-            ]}
+            style={styles.railGhost}
             accessibilityRole="button"
             accessibilityLabel={`Edit goal details for ${goal.title}`}
           >
@@ -170,17 +169,12 @@ export default function GoalItem({
             >
               Edit
             </Text>
-          </Pressable>
-          <Pressable
-            onPress={async () => {
-              await hapticSelect();
-              onDelete?.(goal.id);
-            }}
+          </PressableInk>
+          <PressableInk
+            onPress={() => onDelete?.(goal.id)}
+            haptic="none"
             hitSlop={6}
-            style={({ pressed }) => [
-              styles.railGhost,
-              { opacity: pressed ? 0.55 : 1 },
-            ]}
+            style={styles.railGhost}
             accessibilityRole="button"
             accessibilityLabel={`Delete ${goal.title}`}
           >
@@ -195,7 +189,7 @@ export default function GoalItem({
             >
               Delete
             </Text>
-          </Pressable>
+          </PressableInk>
         </View>
       </EditorialSurface>
     </Pressable>
@@ -268,6 +262,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "center",
     paddingHorizontal: SPACE["2xs"],
+  },
+  railPrimaryInner: {
+    minHeight: 44,
+    width: "100%",
+    alignItems: "flex-start",
+    justifyContent: "center",
   },
   railPrimaryText: {
     fontSize: TYPE_SIZE.kicker,

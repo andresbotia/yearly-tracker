@@ -9,7 +9,7 @@ import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "../../utils/to
 import { useFontsLoaded } from "../../utils/fonts";
 import { useReducedMotion } from "../../utils/motion";
 
-export default function CompletionMark({ visible, theme }) {
+export default function CompletionMark({ visible, theme, index }) {
   const fontsLoaded = useFontsLoaded();
   const reduced = useReducedMotion();
   const opacity = useSharedValue(visible ? 1 : 0);
@@ -38,7 +38,9 @@ export default function CompletionMark({ visible, theme }) {
           },
         ]}
       >
-        [AT]  /  GOAL COMPLETE
+        {typeof index === "number" && index > 0
+          ? `[AT]  /  ${String(index).padStart(2, "0")}  /  COMPLETE`
+          : "[AT]  /  GOAL COMPLETE"}
       </Text>
     </Animated.View>
   );
