@@ -1,597 +1,718 @@
-# ATELIER POLISH PHASE — RANDOM THEMES, EXPANDED GALLERY, COUNTER FIXES, SHEET REWORK, WIDGET THEMING
+# ATELIER SPATIAL MOTION + YEAR ARCHIVE PHASE
+
+The counter/haptic/micro-motion foundation is implemented.
+
+The next goal is to make Atelier Tracker feel like one continuous physical
+editorial object rather than a set of separate screens and dialogs.
+
+Creative direction:
+
+SHARED OBJECTS
+×
+PHYSICAL PAPER
+×
+ARCHIVAL NAVIGATION
+×
+RESTRAINED CINEMATIC MOTION
 
 Continue on `feature/revamp`.
 
-Before changing code:
+Do not merge into `main`.
 
-1. Read `AGENTS.md`
-2. Read `REVAMP.MD`
-3. Read `design.md`
-4. Inspect current implementation and recent commits
-5. Stay on `feature/revamp`
-6. Do not modify or merge into `main`
-
-This is a continuation of the Atelier Tracker overhaul.
-Do not treat this as a separate project or rewrite.
-
-All existing production-safety rules still apply:
-
-- preserve AsyncStorage compatibility
-- preserve existing goal/habit/history logic
-- preserve widget contract compatibility where possible
-- preserve existing user data
-- keep all changes additive and upgrade-safe
+All production data/business-logic requirements remain unchanged.
 
 ---
 
-# 1. RANDOM ART MODE
+# 1. PRIMARY MOTION PRINCIPLE
 
-Add a new theme option that randomizes the artwork automatically when the app opens.
+Prefer motion that explains:
 
-## Goal
+"this object became that object"
 
-Allow users to choose a theme mode like:
+over arbitrary enter/exit animations.
 
-- specific artwork theme
-- Museum Paper
-- classic/custom theme
-- RANDOM ART
+Examples:
 
-When RANDOM ART is selected:
+theme thumbnail
+→ full-screen artwork
 
-- every app launch / cold open chooses a random bundled art theme
-- the artwork should come only from bundled art themes
-- selection should feel curated, not broken
-- all other theme behavior should still work
+Progress button
+→ progress drawer
 
-## Requirements
+Add Goal control
+→ goal creation sheet
 
-- implement random-art as a real theme option in the theme system
-- do not break old stored theme values
-- store this mode safely using the existing theme persistence approach
-- random choice should happen from valid bundled art themes only
-- exclude non-art themes such as Museum Paper, classic themes, and custom themes from the random pool unless explicitly intended
-- preserve user choice: if they choose a fixed art theme, it should stay fixed
-- theme resolution should remain safe if artwork is missing
+Goal row
+→ collapses after delete
 
-## Suggested behavior
+Habits tab underline
+→ moves to Goals
 
-If current theme is:
-`random-art`
+Use spatial continuity.
 
-then on app open:
-
-- choose one random art theme from the bundled collection
-- resolve all UI/background/widget theme behavior from that selected artwork for the current session
-
-Optionally:
-
-- remember the last random pick and avoid repeating it immediately on the very next launch if easy to implement
-
-Do not overcomplicate this if it risks breaking theme persistence.
+Do not make every object bounce.
 
 ---
 
-# 2. EXPAND THE ART COLLECTION BY ~50 MORE WORKS
+# 2. THEME SELECTION TRANSITION
 
-The current 18-work collection is strong.
-Now expand it significantly.
+The new 72-art stamp-grid gallery is now a major Atelier experience.
 
-Target:
+Selecting artwork should feel special.
 
-- add approximately 50 MORE public-domain / Open Access works
-- these should be selectable in the app
-- keep the collection cohesive and on-brand
+Current conceptual behavior:
 
-This means the app should move from a small set to a substantial Atelier art library.
+tap artwork
+→ theme swaps
 
-## Curation rules
+Improve this into an Atelier transition.
 
-The new works should still fit the Atelier identity:
+Desired feeling:
 
-- atmospheric
-- painterly
-- elegant
-- readable behind editorial UI
-- mostly landscape / garden / river / floral / softly architectural
-- not visually chaotic
-- not portrait-dominant
-- not too dark or high-contrast
+the user takes a work from the collection
+and places it onto their personal workspace.
 
-## Preferred artists for expansion
+## Possible sequence
 
-Continue prioritizing:
+1. user taps a stamp/artwork
+2. selected stamp receives a subtle selection response
+3. gallery begins dismissing
+4. new painting expands/fades toward full-canvas presence
+5. old backdrop dissolves away
+6. paper veil resolves
+7. UI returns above the selected painting
 
-- Claude Monet
-- Vincent van Gogh
-- Alfred Sisley
-- Camille Pissarro
-- Paul Cézanne
-- Berthe Morisot
+Do not require a fragile true shared-element library if the current stack does
+not support it cleanly.
 
-Additional artists are welcome if they clearly fit the same museum/editorial atmosphere.
+A convincing visual approximation using:
 
-Possible expansion artists:
+- position
+- scale
+- opacity
 
-- Gustave Caillebotte
-- John Singer Sargent (carefully selected landscapes/gardens only)
-- Childe Hassam
-- Mary Cassatt only if a work truly fits the backdrop aesthetic
-- Pierre Bonnard only if the work remains readable and not too busy
+is acceptable.
 
-Do not include works merely because they are famous.
-The backdrop quality matters more than name recognition.
-
-## Sourcing rules
-
-Use ONLY authoritative museum Open Access / public-domain sources.
-No Pinterest.
-No random wallpaper sites.
-No unofficial reproductions.
-
-Maintain metadata for each work:
-
-- id
-- title
-- artist
-- year
-- museum
-- museumObjectId if available
-- source URL
-- rights
-- isPublicDomain
-
-Generate:
-
-- optimized mobile derivative
-- ASCII derivative
-- palette metadata
-
-No runtime museum API calls.
-
-## Performance / bundle-size responsibility
-
-Because 50 more works is substantial:
-
-- optimize all derivatives carefully
-- keep quality high enough for full-screen backdrops
-- be mindful of bundle size
-- report the approximate asset impact in the final summary
-
-If needed, preserve a compact derivative strategy, but do not silently skip the collection expansion.
+Performance and reliability matter more than technical novelty.
 
 ---
 
-# 3. REDESIGN THE THEME GALLERY
+# 3. RANDOM ART REVEAL
 
-The current theme picker is becoming too much of a long scroll list.
+Random Art should make opening Atelier feel slightly different each time.
 
-It now needs to feel like browsing a curated visual collection.
+When Random Art resolves a new session painting:
 
-## Inspiration direction
+avoid an abrupt image swap.
 
-Take inspiration from visually rich collection browsing / stamp-grid / gallery-wall interactions.
+Suggested entry:
 
-The result should feel more like:
+Museum Paper / neutral veil
+→ artwork slowly resolves underneath
+→ interface appears clearly above it
 
-- a curated exhibition browser
-- a catalog wall
-- a collectible print/stamp selection surface
+Approximately 400–700ms after JS is ready.
 
-and less like:
+Do not slow app startup waiting for this.
 
-- a plain long settings list
-
-Do not directly copy another design.
-Translate the feeling into Atelier Tracker.
-
-## Requirements
-
-Redesign the gallery so the artwork is easier and more enjoyable to browse.
-
-Possible ideas:
-
-- artist-grouped sections with a more visual layout
-- a grid / masonry / stamp-board feeling
-- compact plates that open larger detail
-- a featured section + grouped collections
-- a denser “collection browser” with better visual hierarchy
-- tabs or segmented artist group browsing if helpful
-
-The final experience must support:
-
-- art themes
-- Random Art option
-- Museum Paper
-- Classic themes
-- Custom themes
-
-All should remain accessible and understandable.
-
-## UX goals
-
-Users should be able to:
-
-- browse a lot of works without feeling overwhelmed
-- see artwork more quickly
-- understand which theme is active
-- switch between artists/collections more fluidly
-- still access custom/classic options
-
-Avoid:
-
-- endless giant cards
-- visually repetitive list rows
-- cluttered metadata overload
-- tiny unreadable thumbnails
+Do not turn this into a long intro animation.
 
 ---
 
-# 4. REWORK SHEETS / MODALS
+# 4. THEME CROSSFADE
 
-The current add/edit/share sheets work, but the button treatment and paper blocks still feel too generic.
+Any normal fixed-theme change should crossfade cleanly.
 
-Rework:
+Old artwork:
+fade out
 
-- Add Goal
-- Add Habit
-- Edit Habit
-- Edit Goal
-- Share
-- Theme / Custom Theme flows where relevant
+New artwork:
+fade in
 
-## Goal
+Paper veil:
+remain stable enough that text does not flash or lose contrast
 
-These interactions should feel integrated with the art aesthetic.
+ASCII:
+transition subtly after/with artwork
 
-The sheets should not feel like generic white popups dropped on top of a painting.
+Palette-dependent UI accents:
+transition where practical
 
-## Direction
+Avoid flashing solid backgrounds between artwork images.
 
-Blend the sheet language more thoughtfully with the artwork.
+Classic/custom themes should transition gracefully too.
 
-Possible techniques:
+---
 
-- museum-paper sheet with subtle tonal depth
-- faint art-aware tinting
-- subtle top hairline / framing
-- minimal translucent wash or softly integrated surface treatment
-- restrained layering so the art still belongs to the environment
+# 5. HABITS / GOALS TAB MOTION
 
-Do NOT use:
+Refine the primary navigation.
 
-- heavy blur
-- loud glassmorphism
-- thick rounded cards
-- generic iOS stock popup styling
-- overdesigned decorative frames
+Current underline should become a moving indicator.
 
-The result should feel:
+Tap HABITS / GOALS:
 
-- editorial
-- quiet
-- premium
-- integrated
-- tactile
+- indicator glides to the selected label
+- outgoing content shifts/fades slightly
+- incoming content enters from a small opposing offset
+- total interaction should remain fast
 
-## Button treatment
+Suggested:
+~180–240ms
 
-The current action buttons in these sheets still need refinement.
+Do not use full-screen carousel motion.
 
-Revisit:
+This is navigation, not a slideshow.
 
-- Save
-- Cancel
+Swipe navigation may be considered only if it does not conflict with habit/counter
+gestures.
+
+---
+
+# 6. ACTION → DRAWER CONTINUITY
+
+Refine:
+
+PROGRESS
+→ Atelier progress drawer
+
+ADD GOAL
+→ Add Goal sheet
+
+ADD HABIT
+→ Add Habit sheet
+
+The pressed action should feel visually related to the surface it opens.
+
+A perfect shared-element morph is not required.
+
+Possible approach:
+
+1. action wash fills slightly
+2. surrounding content subtly de-emphasizes
+3. bottom sheet rises immediately
+4. matching accent/keyline continues into the sheet
+
+The purpose is continuity.
+
+Do not create slow theatrical modal transitions.
+
+---
+
+# 7. NEW GOAL / HABIT INSERTION
+
+After successfully adding a goal or habit:
+
+do not simply reload the list.
+
+Animate the new record into its correct position.
+
+Desired behavior:
+
+- sheet closes
+- new row appears with slight translate/fade
+- existing rows move naturally
+- numbering/indexing resolves smoothly
+
+Keep existing data ordering logic.
+
+Do not create duplicate temporary objects.
+
+---
+
+# 8. DELETE / UNDO MOTION
+
+Deletion should communicate removal clearly.
+
+Suggested sequence:
+
+1. destructive action confirmation
+2. item briefly enters danger-ink state
+3. opacity reduces
+4. row height collapses
+5. surrounding rows close the space
+6. existing Undo recovery remains available
+
+If Undo is used:
+
+- row should reappear smoothly
+- restore correct position
+- do not duplicate
+
+Do NOT make items fly dramatically off-screen.
+
+---
+
+# 9. REORDER MOTION
+
+Existing drag/reorder behavior remains.
+
+Improve tactile presentation.
+
+While held:
+
+- slight scale ~1.01–1.015
+- stronger editorial surface wash
+- selection haptic once
+- neighboring rows smoothly make room
+- perhaps faint index/drag marker
+
+On release:
+
+- row settles into position
+- numbering updates smoothly
+
+Avoid large floating shadows.
+
+---
+
+# 10. COLLAPSING ATELIER HEADER
+
+The full Atelier header is beautiful but consumes significant vertical space.
+
+Create a restrained scroll-responsive header.
+
+## Expanded state
+
+[AT] ATELIER TRACKER / 2026
+
+Atelier Tracker
+
+WHEAT FIELD WITH CYPRESSES
+VINCENT VAN GOGH · 1889 · THE MET
+
+## Collapsed state
+
+[AT] ATELIER TRACKER 2026
+
+As the user scrolls:
+
+- large serif title fades/translates away
+- artwork metadata reduces/fades
+- compact header becomes sticky
+- backdrop remains visible
+- content gains usable screen space
+
+Do NOT make it feel like a standard opaque navigation bar.
+
+Keep it light and editorial.
+
+### Performance
+
+Avoid per-frame JS state updates from scroll.
+
+Prefer native/Reanimated scroll values.
+
+---
+
+# 11. HISTORY MONTH NAVIGATION
+
+Improve Habit History navigation.
+
+The existing long archive can remain available, but introduce a stronger month
+navigation treatment if it improves usability.
+
+Concept:
+
+JAN FEB MAR APR MAY JUN JUL AUG SEP
+───
+
+Horizontal scrub/tap navigation:
+
+- selected month is emphasized
+- haptic tick at month changes
+- month content transitions smoothly
+
+Do not remove history data.
+
+Do not compromise access to older months.
+
+---
+
+# 12. NEW FEATURE — YEAR ARCHIVE
+
+Add a new Year / 365 archival view.
+
+This should become a signature Atelier feature.
+
+It should visualize the user's year as a personal archive rather than another
+generic analytics dashboard.
+
+Possible label:
+
+YEAR ARCHIVE
+
+or
+
+2026 / ARCHIVE
+
+---
+
+# 13. YEAR ARCHIVE DATA
+
+Use existing habit data.
+
+Do NOT introduce a second tracking database.
+
+Represent each calendar day from Jan 1 → Dec 31.
+
+Possible visual encoding:
+
+`.` = no meaningful completion / empty
+
+`+` = positive activity
+
+`×` = negative / intentionally marked bad
+
+For days with multiple habits, derive a visual density/summary using existing
+checks.
+
+The exact aggregate formula should be simple, deterministic, and documented.
+
+Do not rewrite existing habit history.
+
+---
+
+# 14. YEAR ARCHIVE VISUAL
+
+Think:
+
+museum accession sheet
+×
+ASCII calendar
+×
+365-day contribution map
+
+But NOT GitHub clone styling.
+
+Potential layout:
+
+JAN .++.+...++++....
+FEB ++++..×.+.......
+MAR ...+++++++......
+...
+
+or a carefully spaced 365-cell grid.
+
+Must work on 375pt width.
+
+Possible behavior:
+
+- month separators
+- tiny mono date labels
+- artwork visible beneath
+- paper surfaces only where necessary
+
+---
+
+# 15. YEAR ARCHIVE ENTRY MOTION
+
+When entering the Year Archive:
+
+cells may populate/reveal progressively.
+
+Keep it restrained.
+
+Example:
+Jan → current month reveal over ~400–700ms.
+
+Do not individually animate hundreds of views with expensive JS timers.
+
+Use a performant reveal/mask/opacity technique.
+
+Reduced motion:
+show immediately.
+
+---
+
+# 16. DAY DETAIL
+
+Tapping a date may reveal a small Atelier ledger detail:
+
+03 SEPTEMBER 2026
+
+WORKOUT +
+CARDIO ×
+DRINK WATER +
+READ .
+
+This should consume existing habit checks.
+
+Do not create new daily-note schemas in this phase.
+
+---
+
+# 17. YEAR ARCHIVE NAVIGATION PLACEMENT
+
+Integrate this without cluttering the primary Habits / Goals tabs.
+
+Possible access points:
+
+- Habit History
+- a small Archive action
+- existing ledger/history navigation
+
+Use judgment based on current app structure.
+
+Do NOT add a third huge primary tab unless it genuinely improves hierarchy.
+
+---
+
+# 18. SHARE AS PRINT
+
+Rework the final share-generation experience to feel like producing an archival
+print.
+
+Do not alter actual image capture/share contracts.
+
+Flow:
+
+Choose share format
+→ Generate
+→ card reveals vertically like a print emerging
+→ user previews result
+→ native Share
+
+Possible microcopy:
+
+[AT] / PRINT
+
+or
+
+PREPARING PRINT
+
+Do not artificially delay sharing for long animation.
+
+The reveal should occur while/after the real card becomes available.
+
+---
+
+# 19. SHARE CARD MOTION DOES NOT ENTER OUTPUT
+
+The animation is UI only.
+
+The exported image itself remains:
+
+- static
+- correctly sized
+- deterministic
+- existing capture-compatible
+
+Do not accidentally capture transitional animation frames.
+
+---
+
+# 20. COMPLETION ACCESSION LANGUAGE
+
+Continue evolving the `[AT] / GOAL COMPLETE` concept.
+
+A brief completion mark may include the current goal index:
+
+[AT] / 04 / COMPLETE
+
+or similarly restrained accession-style notation.
+
+Do NOT permanently clutter completed goal rows.
+
+Do not generate a new persistent accession identifier.
+
+This is presentation.
+
+---
+
+# 21. BUTTON MICROINTERACTION CONSISTENCY
+
+Audit buttons/controls across the app.
+
+Make sure:
+
+- same press timing
+- same scale philosophy
+- same paper/ink response
+- same haptic reasoning
+
+Particularly:
+
+- gallery stamps
+- theme artist chips
+- toolbar actions
+- sheet actions
 - Share
 - Back
 - Apply
-- Template choices
-- Type toggles
+- Save
+- Cancel
 
-Improve hierarchy, spacing, and visual language so the controls fit Atelier better.
-
-Do not hurt accessibility or tap-target size.
+Avoid each component inventing its own spring.
 
 ---
 
-# 5. COUNTER SCRUB FIX + DISCOVERABILITY
+# 22. LIVING CANVAS AUDIT
 
-The Atelier Counter concept is good, but the current interaction is not working well enough.
+The Living Canvas is already implemented.
 
-Fix it.
+Do not make it stronger during this phase.
 
-## Problems to solve
+Audit whether:
 
-- the scrub/scroll area feels too small
-- it is not obvious enough that the user can scrub
-- the interaction is less reliable than intended
-- the animation/gesture handling needs refinement
+- gallery transition
+- collapsing header
+- tab motion
+- sheet motion
 
-## Requirements
+combined with ambient artwork movement becomes visually excessive.
 
-Make the counter easier to understand and easier to manipulate.
+If necessary, temporarily pause Living Canvas during:
 
-### Improve gesture area
+- active drawer/sheet interactions
+- large theme transitions
 
-- enlarge the interactive scrub region significantly
-- user should not need to hit a tiny exact strip
-- the whole number zone / rail should feel draggable
-
-### Improve discoverability
-
-Users should be able to tell that the counter is interactive.
-
-Consider:
-
-- more visual emphasis around the rail
-- slight cue text
-- subtle motion hint on first open
-- directional cues
-- a more obviously “scrollable” or “scrubbable” treatment
-
-Do this tastefully.
-Do not turn it into a tutorial-heavy control.
-
-### Improve motion quality
-
-The scrubbing should feel smoother and more reliable.
-
-Potential direction:
-
-- a more legible horizontal reel / slider / index track
-- stronger snap behavior
-- larger center emphasis
-- better relationship between drag distance and value change
-- more forgiving gesture recognition
-
-It should feel beautiful and satisfying.
-
-Do not directly copy external references.
-Use them only as inspiration.
+Resume after transition.
 
 ---
 
-# 6. COUNTER EXACT-ENTRY BUG FIX
+# 23. REDUCED MOTION
 
-There is a current bug:
+Everything in this phase must obey the existing reduced-motion system.
 
-If the counter is at 0 and the user types a value such as 55 and then taps Apply, the new value may not persist correctly.
+Reduced motion alternatives:
 
-This must be fixed.
+Theme selection:
+simple crossfade
 
-## Requirements
+Tabs:
+instant indicator + light fade
 
-- entering a valid number manually must always save correctly
-- the value should persist through the existing handlers
-- typed values must clamp to 0…target
-- if the value is valid, Apply must commit it
-- the current zero-state must not break manual entry
+Sheets:
+minimal translate/fade
 
-## Keyboard UX
+Row insert/delete:
+simple opacity
 
-The current keyboard flow also feels buggy.
+Header:
+immediate/low-motion state change
 
-The numeric entry should be improved so it is obvious how to finish input.
+Year Archive:
+no progressive reveal
 
-Potential improvements:
-
-- add an explicit keyboard accessory / Done control on iOS
-- commit typed draft cleanly on blur and/or Apply
-- ensure number-pad behavior does not trap the user
-- separate draft string state from committed numeric state properly
-
-Do not rely on the user pressing a return key that may not exist on the current keyboard.
-
-This exact-entry path must be reliable, especially for larger goals.
+All functionality remains identical.
 
 ---
 
-# 7. WIDGET THEME INTEGRATION
+# 24. PERFORMANCE
 
-Implement the selected app theme into the widgets.
+This phase must not compromise physical-device performance.
 
-This was already part of the broader vision and should now be completed.
+iPhone 7 remains a baseline.
 
-## For art themes
+Be especially careful with:
 
-If the user has selected an art theme:
+- 72 artwork assets
+- gallery scrolling
+- artwork crossfade
+- Living Canvas
+- scroll-responsive header
+- Year Archive
+- row animations
 
-- propagate that selection into widget rendering in a practical widget-safe way
-- use the selected artwork / palette appropriately
-- if full artwork usage is too heavy or constrained, use a widget-safe crop / derivative / themed background approach
-- keep widget readability high
+Avoid:
 
-## For Random Art
-
-If the user selected Random Art:
-
-- decide on a stable widget behavior
-- recommended: widget uses the currently resolved random artwork/palette for the current session update payload, not a separate random choice on every widget refresh
-- avoid jarring inconsistency
-
-## For custom themes
-
-If the user selected a custom theme:
-
-- use the custom primary/background palette in the widget background treatment
-- at minimum, apply the custom primary color meaningfully
-- keep text contrast and legibility safe
-
-## Safety
-
-Do NOT break:
-
-- widget payload contracts
-- existing widget functionality
-- existing update paths
-
-If payload changes are needed:
-
-- keep them additive / backward-compatible when possible
-- document them clearly
+- large JS scroll handlers
+- simultaneous high-resolution images staying mounted unnecessarily
+- hundreds of independently animated components
+- repeated layout measurements
+- runtime image effects
 
 ---
 
-# 8. CUSTOM THEMES
+# 25. DO NOT IMPLEMENT BRAND-BLOCKED ITEMS YET
 
-Do NOT remove custom themes in this pass.
+The following remain in the Brand Asset Backlog:
 
-Keep them working.
+- final app icon
+- final `[AT]` SVG
+- final wordmark
+- production splash artwork
+- splash → exact-logo shared transition
+- store marketing assets
 
-We may revisit whether to simplify/remove them later, but that is not part of this implementation.
+Do not improvise final assets.
 
-You may improve how custom themes are presented inside the redesigned gallery if helpful.
-
----
-
-# 9. GOAL ACTIONS / VISUAL POLISH
-
-Continue refining the visual presentation of:
-
-- Progress action
-- Edit action
-- Delete action
-- CTA rows
-- inline control groupings
-
-The action system is better than before, but still deserves another polish pass.
-
-The controls should feel:
-
-- quieter
-- more intentional
-- more museum/editorial
-- less like generic button boxes
-
-Do not reduce usability.
+Continue using the text `[AT]` placeholder where needed.
 
 ---
 
-# 10. DOCUMENTATION
+# 26. DATA SAFETY
 
-Update docs as needed.
+Do not change:
 
-At minimum review:
-
-- AGENTS.md
-- REVAMP.MD
-- design.md
-- README.md if necessary
-
-Document:
-
-- Random Art mode
-- expanded art library
-- redesigned gallery
-- counter interaction changes
-- exact-entry bug fix
-- widget theme integration
-- any additive widget payload considerations
-
-Do not let docs drift from implementation.
-
----
-
-# 11. SAFETY RULES
-
-Do NOT break:
-
-- AsyncStorage compatibility
-- goal CRUD
-- habit CRUD
-- history
+- AsyncStorage schemas
+- storage keys
+- goal data
+- habit semantics
+- yearly history
 - rollover
-- progress calculations
-- habit 0/1/2 semantics
-- widgets
-- sharing
-- art theme compatibility
-- custom theme compatibility
-
-Do NOT rename:
-
-- existing AsyncStorage keys
+- custom themes
+- Random Art persistence
 - bundle identifiers
-- package identifiers
-- widget identifiers/contracts unless absolutely necessary
+- widget contracts except backward-compatible additions already approved
 
-Do not reseed or wipe existing user data.
+Year Archive derives from existing habit checks.
 
-This must still feel like a seamless upgrade.
+Do not create duplicate history storage.
 
 ---
 
-# 12. IMPLEMENTATION ORDER
+# 27. VERIFICATION
 
-Suggested order:
+Run:
 
-1. inspect current theme/gallery/modal/counter/widget implementation
-2. add Random Art theme mode
-3. expand art collection by ~50 more works
-4. redesign gallery for larger collection
-5. rework sheets/modals
-6. fix counter gesture area and discoverability
-7. fix exact-entry persistence/keyboard bug
-8. integrate theme selection into widgets
-9. polish actions/controls
-10. update docs
-11. run verification
-12. inspect diff
-13. make focused commits
+`npm run verify:storage`
+
+`npx expo-doctor`
+
+Verify:
+
+- Habits/Goals switching
+- theme crossfade
+- Random Art startup
+- gallery selection
+- drawer actions
+- add insertion
+- delete + Undo
+- drag reorder
+- history
+- Year Archive calculations
+- share capture
+- reduced motion
+- widget payload remains valid
+- classic/custom themes still work
+
+Do not claim physical-device testing unless performed.
+
+---
+
+# 28. FINAL REPORT
+
+Report:
+
+1. motion/navigation changes
+2. gallery theme transition
+3. tab transition
+4. drawer/action continuity
+5. insert/delete/reorder animation
+6. collapsing header
+7. Year Archive implementation
+8. History navigation updates
+9. share-as-print behavior
+10. reduced-motion handling
+11. performance considerations
+12. storage verification
+13. build/test results
+14. commits
+15. remaining device tests
+16. items still waiting on Claude Design
 
 Stay on `feature/revamp`.
-Do not merge to `main`.
 
----
-
-# 13. VERIFICATION
-
-Before finishing:
-
-- run `npm run verify:storage`
-- run `npx expo-doctor`
-- verify old stored theme IDs still resolve
-- verify Random Art persists and resolves safely
-- verify expanded art catalog loads correctly
-- verify gallery is usable with the larger collection
-- verify Add Goal / Add Habit / Share / Theme flows still work
-- verify exact numeric entry works from 0 and non-zero states
-- verify Apply always persists correctly
-- verify widgets receive theme/custom color data correctly
-- inspect narrow layouts
-- inspect accidental business-logic changes
-
-At the end report:
-
-1. what changed
-2. files changed
-3. Random Art behavior
-4. expanded art catalog
-5. gallery redesign
-6. modal/sheet redesign
-7. counter fixes
-8. exact-entry bug fix
-9. widget theme integration
-10. storage/build verification
-11. commits created
-12. remaining physical-device testing
-
----
-
-# 14. IMPLEMENTED (this pass)
-
-Shipped on `feature/revamp` without merging to `main`.
-
-- Random Art: stored as `random-art` on `rt_hue_v1`. Launch picks a bundled
-  art plate, avoiding the previous pick via additive `yt_random_art_last_v1`.
-  `makeTheme` receives the resolved plate id. Widgets use that session plate.
-- Catalog: 18 locked plates + 54 additional OA landscapes (72 total) from AIC
-  and Cleveland, with bundled JPEG + ASCII derivatives.
-- Gallery: stamp-grid with artist chips, Random Art tile, Paper / Classic /
-  Custom index rows.
-- Sheets: `AtelierSheet` + `AtelierActions` + ink toggles for Add/Edit Goal,
-  Add/Edit Habit, Share, Theme, and the progress drawer footer.
-- Counter: larger framed scrub, cue copy, one-shot hint, `flush()` on Apply,
-  iOS Done accessory. Typed 55 from 0 now persists.
-- Widgets: additive `themeKind` / `themePrimary` / `themeBg` / `themeText`.
-  Native iOS/Android tint from those hex values; legacy `theme` still required.
+DO NOT MERGE TO MAIN.

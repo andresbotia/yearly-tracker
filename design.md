@@ -155,13 +155,46 @@ must not block saving a typed value such as 55.
 `○ Incomplete` / `● Complete`. Archival mark, not a segmented control.
 
 ### Drawer
-Bottom sheet, museum paper, hairline, square edges. Rise from bottom. Keyboard- and safe-area-aware. Used for count and milestone progress. Critical/complex dialogs may remain centered modals.
+Bottom sheet, museum paper, hairline, square edges, 3px accent rule. Rise from bottom. Keyboard- and safe-area-aware. Used for progress, add/edit goal, add/edit habit, and Year Archive day detail. Critical/complex dialogs (theme gallery, share, rollover, welcome) may remain centered or existing modals.
+
+Completion flash (presentation only): `[AT] / 04 / COMPLETE` using the goal’s current catalogue index. Do not persist an accession id.
 
 ### Reduced motion
 Honor OS reduce-motion. Disable Living Canvas, use short fades, keep every control functional. No feature may depend on animation.
 
+Theme selection: simple crossfade. Tabs: instant indicator + light fade.
+Sheets: minimal translate/fade. Row insert/delete: opacity only.
+Header: immediate/low-motion. Year Archive: no progressive reveal.
+
 ### Performance
-iPhone 7 is a first-class target. One artwork layer, one ASCII layer. Classic/custom themes must not run Living Canvas.
+iPhone 7 is a first-class target. One artwork layer, one ASCII layer. Classic/custom themes must not run Living Canvas. Pause Living Canvas during drawers, sheets, and theme transitions. Crossfade at most two plates, then unmount the outgoing image. Year Archive renders one Text node per month, not hundreds of day views.
+
+### Collapsing header
+Sticky kicker: `[AT]  ATELIER TRACKER  /  2026`.
+Expanded (scroll top): serif title + artwork credit.
+Collapsed: kicker only. Title/credit fade via Reanimated scroll values — no per-frame React state.
+
+### Tabs
+HABITS / GOALS share a moving 1px ink indicator (~200ms). Incoming pane fades in from a small opposing offset. Not a carousel. No swipe between tabs (conflicts with habit cells and reorder).
+
+### Theme transitions
+Gallery stamp → workspace: selection press, gallery dismisses, new plate scales/fades onto the canvas, previous plate dissolves, veil stays for contrast.
+Random Art session start: paper veil first, artwork resolves in ~400–700ms. Do not block JS ready.
+Fixed theme changes crossfade. Classic/custom fade art away onto the solid palette.
+
+### Year Archive
+Signature accession sheet of the current tracked year, derived only from existing habit checks. No new storage.
+
+Day mark (deterministic):
+- G = checks equal to 1, B = checks equal to 2, missing = 0
+- `.` if G = 0 and B = 0
+- `×` if B > G
+- `+` otherwise
+
+Layout: month-labeled ASCII rows (`JAN .++.+…`) on 375pt. Tap a day for a ledger of that date’s habit marks. Access from Habit History (`Archive`), not a third primary tab.
+
+### Share as print
+UI-only: `[AT] / PRINT` paper rises while the real card is captured off-screen. Native share is not delayed for the animation. Exported image stays static and capture-sized.
 
 ## Microinteractions stance
 - Habit cells map 0/1/2 to `.` / `+` / `×` visually. Stored values do not change.

@@ -246,6 +246,65 @@ function main() {
   }
   const backdropPath = path.join(ROOT, "components", "art", "ArtBackdrop.js");
   if (!fs.existsSync(backdropPath)) fail("missing components/art/ArtBackdrop.js");
+  const backdropSrc = read(backdropPath);
+  if (!backdropSrc.includes("incoming") || !backdropSrc.includes("outgoing")) {
+    fail("ArtBackdrop missing plate crossfade");
+  }
+
+  const yearArchivePath = path.join(ROOT, "utils", "yearArchive.js");
+  if (!fs.existsSync(yearArchivePath)) fail("missing utils/yearArchive.js");
+  const yearArchiveSrc = read(yearArchivePath);
+  if (!yearArchiveSrc.includes("export function dayMark")) {
+    fail("year archive dayMark missing");
+  }
+  if (!yearArchiveSrc.includes("if (bad > good) return \"×\"")) {
+    fail("year archive formula must mark more-bad-than-good as ×");
+  }
+  if (!yearArchiveSrc.includes("yt_")) {
+    // formula file must not invent storage keys
+  }
+  for (const key of [
+    "yt_year_archive_v1",
+    "yt_archive_v1",
+    "rt_year_archive_v1",
+  ]) {
+    if (yearArchiveSrc.includes(key) || appSrcAfter.includes(key)) {
+      fail(`Year Archive must not persist ${key}`);
+    }
+  }
+
+  function dayMarkCheck(habits, key) {
+    let good = 0;
+    let bad = 0;
+    for (const habit of habits) {
+      const v = (habit.checks || {})[key] || 0;
+      if (v === 1) good += 1;
+      else if (v === 2) bad += 1;
+    }
+    if (good === 0 && bad === 0) return ".";
+    if (bad > good) return "×";
+    return "+";
+  }
+  const archiveHabits = [
+    { checks: { "2026-01-01": 1, "2026-01-02": 2, "2026-01-04": 1 } },
+    { checks: { "2026-01-01": 1, "2026-01-02": 2 } },
+  ];
+  assert.strictEqual(dayMarkCheck(archiveHabits, "2026-01-01"), "+");
+  assert.strictEqual(dayMarkCheck(archiveHabits, "2026-01-02"), "×");
+  assert.strictEqual(dayMarkCheck(archiveHabits, "2026-01-03"), ".");
+  assert.strictEqual(dayMarkCheck(archiveHabits, "2026-01-04"), "+");
+
+  const yearArchiveUi = path.join(ROOT, "components", "YearArchive.js");
+  if (!fs.existsSync(yearArchiveUi)) fail("missing YearArchive component");
+  if (!appSrcAfter.includes("YearArchive") || !appSrcAfter.includes("selectTab(\"archive\")")) {
+    fail("Year Archive is not wired into App.js");
+  }
+  if (!appSrcAfter.includes("CollapsingKicker") || !appSrcAfter.includes("AtelierTabs")) {
+    fail("collapsing header or tab indicator missing from App.js");
+  }
+  if (!tokensSrc.includes("crossfade:") || !tokensSrc.includes("reveal:")) {
+    fail("theme motion duration tokens missing");
+  }
 
   const payloadMatch = appSrcAfter.match(
     /function buildWidgetPayload[\s\S]*?return \{[\s\S]*?habits:[\s\S]*?\};/

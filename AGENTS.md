@@ -98,6 +98,8 @@ Preserve:
 
 Presentation may change. Stored values, IDs, and formulas may not.
 
+Year Archive is presentation derived from existing habit checks. Do not add a second history store.
+
 Existing art theme ids must keep resolving: `cypresses`, `flowering-orchard`, `water-lilies`, `morning-seine`, `vetheuil`, `museum-paper`.
 
 `random-art` is a stored theme mode, not a catalog plate. Do not pass it into `makeTheme` — resolve it to a bundled art id first.
