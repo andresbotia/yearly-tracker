@@ -87,9 +87,12 @@ The painting must remain clearly recognizable.
 
 ## Atelier collection
 
-Curated impressionist / post-impressionist plates. Group the gallery by artist:
+Curated impressionist / post-impressionist plates (~70 bundled works).
+Gallery groups by artist:
 
-Van Gogh · Monet · Sisley · Pissarro · Cézanne · Morisot · Paper · Classic · Custom
+Van Gogh · Monet · Sisley · Pissarro · Cézanne · Morisot · Hassam ·
+Caillebotte · Boudin · Sargent · and related landscape painters · Paper ·
+Classic · Custom
 
 Locked core ids (do not replace): `cypresses`, `wheat-field-cypresses`,
 `women-picking-olives`, `morning-seine`, `haystacks`.
@@ -97,8 +100,12 @@ Locked core ids (do not replace): `cypresses`, `wheat-field-cypresses`,
 Existing production ids also remain: `flowering-orchard`, `water-lilies`,
 `vetheuil`, `museum-paper`.
 
+`random-art` is a stored theme *mode*. On each cold open it picks one bundled
+art plate (never Museum Paper, classic, or custom) and keeps that plate for
+the session, including widgets.
+
 Artwork must come from authoritative museum Open Access sources (Met, NGA,
-AIC). No runtime museum requests.
+AIC, Cleveland Museum of Art). No runtime museum requests.
 
 ## Attribution
 Restrained editorial credit:
@@ -138,7 +145,11 @@ Animate transform and opacity only. Reanimated / UI thread. No JS frame loops, b
 - Success: milestone complete, count goal reaches 100%
 
 ### Atelier Counter
-Count-goal instrument: padded current value, neighbor strip, horizontal scrub, ± tap, long-press repeat, tap-to-enter exact number. Virtualize neighbors (five values). Do not render thousands of numbers. Persist only on Apply.
+Count-goal instrument: padded current value, neighbor strip, horizontal scrub across the whole number zone, ± tap, long-press repeat, tap-to-enter exact number. Virtualize neighbors (five values). Do not render thousands of numbers. Persist only on Apply.
+
+Cue: “Drag the reel · tap the number to type.” One-shot hint motion on open.
+Typed drafts commit on blur, iOS Done accessory, and Apply (`flush()`). Zero
+must not block saving a typed value such as 55.
 
 ### Milestone
 `○ Incomplete` / `● Complete`. Archival mark, not a segmented control.
@@ -173,7 +184,11 @@ IMPORTANT INFORMATION MUST NOT ELLIPSIZE ON NARROW DEVICES.
 - Data tables may scroll horizontally when appropriate
 
 ## Modals
-Square-ish paper panels, hairline rules, Fraunces title, mono kicker.
+Museum-paper sheets (`AtelierSheet`): ink hairline, square edges, 3px accent
+rule, faint art-primary wash (~5%). No blur, glass, or rounded SaaS cards.
+
+Actions (`AtelierActions`): equal-width hairline cells; Cancel is outline,
+confirm is primary fill. Type choices use ink-fill toggles, not pills.
 
 Never display multiple modals at once. Order:
 
@@ -198,12 +213,26 @@ Fresh installs:
 - Do not tell them the app "changed"
 
 ## Theme gallery
-Calm museum collection. Thumbnails, artist, title, year, museum, palette dots,
-selected mark. Titles wrap. Classic and custom remain.
+Stamp-grid / catalog wall, not a long list.
+
+- Random Art tile at the top
+- Artist chips to filter the collection
+- Compact plates (3 columns on 375pt, 4 on wider)
+- Captions wrap (two lines)
+- Museum Paper, Classic, and Custom remain as index rows below the wall
+
+Selected mark is a small ink square on the plate. Titles wrap. Do not ellipsize
+artwork titles on the credit line.
 
 ## ASCII
 Texture, not a gimmick. One Text node per plate. Ramp: ` .:-=+*#%@`.
 ~52 columns. Generated at build time by `scripts/build-art-assets.js`.
+
+## Widgets
+Native widgets keep the existing payload contract. Additive hex fields
+(`themePrimary`, `themeBg`, `themeText`, `themeKind`) tint the widget
+background. Random Art sends the session’s resolved plate, not `random-art`.
+Custom themes send their primary/background. Keep text contrast high.
 
 ## Persistence
 Visual redesign never renames AsyncStorage keys or reshapes stored objects.

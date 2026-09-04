@@ -1,735 +1,597 @@
-# ATELIER MOTION + TACTILE INTERACTION PHASE
+# ATELIER POLISH PHASE — RANDOM THEMES, EXPANDED GALLERY, COUNTER FIXES, SHEET REWORK, WIDGET THEMING
 
-The visual rebrand and art-theme collection are now established.
+Continue on `feature/revamp`.
 
-The next phase focuses on how Atelier Tracker FEELS to use.
+Before changing code:
 
-Creative direction:
+1. Read `AGENTS.md`
+2. Read `REVAMP.MD`
+3. Read `design.md`
+4. Inspect current implementation and recent commits
+5. Stay on `feature/revamp`
+6. Do not modify or merge into `main`
 
-ANALOG INSTRUMENT
-×
-ARCHIVAL INDEX
-×
-QUIET DIGITAL MOTION
+This is a continuation of the Atelier Tracker overhaul.
+Do not treat this as a separate project or rewrite.
 
-This remains part of `feature/revamp`.
+All existing production-safety rules still apply:
 
-Do not create a separate branch.
-Do not modify or merge into `main`.
-
-All existing storage/business-logic safety requirements still apply.
-
----
-
-# 1. PRIMARY OBJECTIVE
-
-Current goal update interactions are functional but still feel like conventional mobile-app controls.
-
-Examples that should be reconsidered:
-
-- large `EDIT / UPDATE / DELETE` button rows
-- count goal `- / number / +`
-- milestone `NOT YET / DONE`
-- static percentage changes
-- static progress bars
-- abrupt modal transitions
-
-Redesign these interactions so they feel native to Atelier Tracker.
-
-Do NOT sacrifice usability for novelty.
-
-Motion should:
-
-- acknowledge input
-- communicate data changes
-- make tracking satisfying
-- reinforce the archival/editorial identity
-
-Motion should NOT:
-
-- become gamification
-- bounce constantly
-- use confetti
-- use flashy particles
-- distract from the artwork
-- make routine actions slower
+- preserve AsyncStorage compatibility
+- preserve existing goal/habit/history logic
+- preserve widget contract compatibility where possible
+- preserve existing user data
+- keep all changes additive and upgrade-safe
 
 ---
 
-# 2. MOTION LANGUAGE
+# 1. RANDOM ART MODE
 
-Use four motion levels.
+Add a new theme option that randomizes the artwork automatically when the app opens.
 
-## MICRO — ~100–180ms
+## Goal
 
-For:
+Allow users to choose a theme mode like:
 
-- button press feedback
-- habit state changes
-- counter ticks
-- toggles
-- focus/selection
+- specific artwork theme
+- Museum Paper
+- classic/custom theme
+- RANDOM ART
 
-Potential treatment:
+When RANDOM ART is selected:
 
-- 0.98 scale
-- slight opacity/tonal shift
-- border/keyline darkening
-- subtle haptic
+- every app launch / cold open chooses a random bundled art theme
+- the artwork should come only from bundled art themes
+- selection should feel curated, not broken
+- all other theme behavior should still work
 
-No exaggerated bounce.
+## Requirements
 
-## INTERACTION — ~180–300ms
+- implement random-art as a real theme option in the theme system
+- do not break old stored theme values
+- store this mode safely using the existing theme persistence approach
+- random choice should happen from valid bundled art themes only
+- exclude non-art themes such as Museum Paper, classic themes, and custom themes from the random pool unless explicitly intended
+- preserve user choice: if they choose a fixed art theme, it should stay fixed
+- theme resolution should remain safe if artwork is missing
 
-For:
+## Suggested behavior
 
-- progress updates
-- counter snapping
-- tabs
-- drawers
-- state transitions
+If current theme is:
+`random-art`
 
-Use restrained springs where appropriate.
+then on app open:
 
-## COMPLETION — ~450–800ms
+- choose one random art theme from the bundled collection
+- resolve all UI/background/widget theme behavior from that selected artwork for the current session
 
-Reserved for:
+Optionally:
 
-- completing a goal
-- completing a milestone
+- remember the last random pick and avoid repeating it immediately on the very next launch if easy to implement
 
-These should feel meaningful but mature.
-
-## AMBIENT — ~30–60 seconds
-
-Reserved for:
-
-- barely perceptible art movement
-- subtle ASCII/paper movement
-
-Ambient animation must be almost invisible.
+Do not overcomplicate this if it risks breaking theme persistence.
 
 ---
 
-# 3. CREATE THE ATELIER COUNTER
+# 2. EXPAND THE ART COLLECTION BY ~50 MORE WORKS
 
-Replace the generic count-goal interaction:
+The current 18-work collection is strong.
+Now expand it significantly.
 
-`[-] [3] [+]`
+Target:
 
-with a purpose-built tactile counter.
+- add approximately 50 MORE public-domain / Open Access works
+- these should be selectable in the app
+- keep the collection cohesive and on-brand
 
-Visual concept:
+This means the app should move from a small set to a substantial Atelier art library.
 
-CURRENT / TARGET
+## Curation rules
 
-             003
-             ───
-       001 002 [003] 004 005
+The new works should still fit the Atelier identity:
 
-       +++.................
+- atmospheric
+- painterly
+- elegant
+- readable behind editorial UI
+- mostly landscape / garden / river / floral / softly architectural
+- not visually chaotic
+- not portrait-dominant
+- not too dark or high-contrast
 
-              15%
+## Preferred artists for expansion
 
-The interaction should evoke:
+Continue prioritizing:
 
-- a mechanical counter
-- film advance
-- an archival index
-- a precision instrument
+- Claude Monet
+- Vincent van Gogh
+- Alfred Sisley
+- Camille Pissarro
+- Paul Cézanne
+- Berthe Morisot
 
-Do not literally copy another product.
+Additional artists are welcome if they clearly fit the same museum/editorial atmosphere.
 
-Create Atelier's own interpretation.
+Possible expansion artists:
 
----
+- Gustave Caillebotte
+- John Singer Sargent (carefully selected landscapes/gardens only)
+- Childe Hassam
+- Mary Cassatt only if a work truly fits the backdrop aesthetic
+- Pierre Bonnard only if the work remains readable and not too busy
 
-# 4. ATELIER COUNTER INTERACTION
+Do not include works merely because they are famous.
+The backdrop quality matters more than name recognition.
 
-Support multiple input methods.
+## Sourcing rules
 
-## Horizontal scrub
+Use ONLY authoritative museum Open Access / public-domain sources.
+No Pinterest.
+No random wallpaper sites.
+No unofficial reproductions.
 
-Dragging horizontally adjusts progress.
+Maintain metadata for each work:
 
-As values cross integer boundaries:
+- id
+- title
+- artist
+- year
+- museum
+- museumObjectId if available
+- source URL
+- rights
+- isPublicDomain
 
-- provide a light haptic tick
-- animate neighboring values
-- center value remains visually dominant
-- values should magnetically snap
+Generate:
 
-On release:
+- optimized mobile derivative
+- ASCII derivative
+- palette metadata
 
-- settle naturally to the nearest valid value
+No runtime museum API calls.
 
-## Tap
+## Performance / bundle-size responsibility
 
-Allow single-step increment/decrement through intuitive tap regions or subtle controls.
+Because 50 more works is substantial:
 
-Do not require precise swiping for a simple +1.
+- optimize all derivatives carefully
+- keep quality high enough for full-screen backdrops
+- be mindful of bundle size
+- report the approximate asset impact in the final summary
 
-## Long press
-
-Allow controlled repeated increment/decrement.
-
-Acceleration may increase gently during a long hold.
-
-## Direct entry
-
-Tapping the primary number should allow exact numeric input.
-
-This is REQUIRED for large goals.
-
-Example:
-
-`Run 500 miles`
-
-A user must be able to go:
-
-`288 → 337`
-
-without swiping through 49 individual values.
-
----
-
-# 5. ADAPT COUNTER SCALE TO TARGET SIZE
-
-The visual interaction should adapt intelligently.
-
-Example:
-
-Target 20:
-
-- integer-by-integer wheel works beautifully
-
-Target 500:
-
-- direct entry and faster scrubbing become more important
-
-Target 10,000:
-
-- do not render thousands of neighboring numbers
-- virtualize the concept
-- keep animation lightweight
-
-Do not create performance issues based on goal target size.
-
-The counter is presentation only.
-
-Use the existing progress persistence handlers.
+If needed, preserve a compact derivative strategy, but do not silently skip the collection expansion.
 
 ---
 
-# 6. ANIMATE PROGRESS CHANGES
+# 3. REDESIGN THE THEME GALLERY
 
-Important numeric changes should not abruptly replace text.
+The current theme picker is becoming too much of a long scroll list.
 
-Examples:
+It now needs to feel like browsing a curated visual collection.
 
-`03 → 04`
+## Inspiration direction
 
-`15% → 20%`
+Take inspiration from visually rich collection browsing / stamp-grid / gallery-wall interactions.
 
-`4% yearly → 5% yearly`
+The result should feel more like:
 
-Possible treatment:
+- a curated exhibition browser
+- a catalog wall
+- a collectible print/stamp selection surface
 
-- vertical roll
-- translate/fade
-- digit swap
+and less like:
 
-Keep animations short.
+- a plain long settings list
 
-Synchronize numeric animation with the ASCII/editorial progress representation.
+Do not directly copy another design.
+Translate the feeling into Atelier Tracker.
 
-Example:
+## Requirements
 
-`+++.................`
+Redesign the gallery so the artwork is easier and more enjoyable to browse.
 
-becomes:
+Possible ideas:
 
-`++++................`
+- artist-grouped sections with a more visual layout
+- a grid / masonry / stamp-board feeling
+- compact plates that open larger detail
+- a featured section + grouped collections
+- a denser “collection browser” with better visual hierarchy
+- tabs or segmented artist group browsing if helpful
 
-The newly added `+` may briefly appear using the active artwork accent before settling into ink.
+The final experience must support:
 
----
+- art themes
+- Random Art option
+- Museum Paper
+- Classic themes
+- Custom themes
 
-# 7. MILESTONE GOAL INTERACTION
+All should remain accessible and understandable.
 
-Replace the generic:
+## UX goals
 
-`NOT YET / DONE`
+Users should be able to:
 
-segmented control.
-
-Create a simple Atelier milestone control.
-
-Concept:
-
-`○  INCOMPLETE`
-
-becomes:
-
-`●  COMPLETE`
-
-The interaction should feel like applying an archival mark or catalog stamp.
-
-Possible completion sequence:
-
-1. touch response
-2. indicator fills
-3. label transitions
-4. progress line completes
-5. success haptic
-6. brief Atelier completion notation appears
-
-Example:
-
-`[AT] / GOAL COMPLETE`
-
-Then quietly settle.
-
-No:
-
-- confetti
-- fireworks
-- coins
-- trophy explosions
-- loud badges
-
----
-
-# 8. GOAL COMPLETION MOMENT
-
-When a count goal reaches 100%:
-
-- animate the final number
-- animate percentage to 100%
-- complete the editorial progress line
-- trigger tasteful success haptic
-- briefly display an Atelier completion mark
-- settle into the EXISTING completed state
-
-Do not change:
-
-- completion calculations
-- completed sorting
-- hide completed
-- persistence
-
-Presentation only.
-
----
-
-# 9. REDESIGN GOAL ACTIONS
-
-The current three large buttons:
-
-EDIT
-UPDATE
-DELETE
-
-consume too much visual weight.
-
-Refine this action system.
-
-Goals themselves should remain the focal point.
-
-Explore a quieter editorial interaction such as:
-
-`EDIT     PROGRESS     DELETE`
-
-or an indexed action rail / small textual controls.
-
-Requirements:
-
-- tap targets remain accessible
-- destructive action remains clearly differentiated
-- controls must work on iPhone 7
-- no tiny inaccessible text links
-- no generic rounded icon buttons
-
-Consider making the most common action — updating progress — clearly primary without making every goal row visually heavy.
-
----
-
-# 10. ATELIER DRAWER
-
-Evaluate replacing count/milestone centered update modals with a reusable bottom drawer.
-
-Concept:
-
-────────────────────────────
-02 / READ 20 BOOKS
-
-CURRENT PROGRESS
-
-             003
-
-      001 002 [003] 004 005
-
-+++............... 15%
-
-CANCEL APPLY
-────────────────────────────
-
-The artwork remains visible above and subtly behind the drawer.
-
-Drawer visual language:
-
-- museum paper
-- hairline rule
-- Atelier typography
-- square edges / minimal corner radius
-- no generic SaaS card styling
-
-Motion:
-
-- rise from bottom
-- restrained spring
-- safe-area aware
-- keyboard-aware
-- smooth dismissal
-
-Use the drawer for:
-
-- count progress
-- milestone state
-
-Potentially use it for editing where appropriate.
-
-Do NOT blindly convert critical or complex dialogs if a standard modal is safer.
-
----
-
-# 11. HAPTIC LANGUAGE
-
-Create a deliberate haptic hierarchy.
-
-Examples:
-
-## Light tick
-
-- crossing one counter increment
-- habit selection
-- minor toggle
-
-## Selection
-
-- switching counter mode
-- choosing theme/state
-
-## Success
-
-- completing milestone
-- reaching 100%
-
-Do not fire strong haptics repeatedly during fast scrubbing.
-
-Throttle appropriately.
-
-Existing habit haptics must continue working.
-
----
-
-# 12. HABIT ANIMATION REFINEMENT
-
-Keep existing habit logic:
-
-0 = empty
-1 = good
-2 = bad
-
-Presentation:
-
-`.` → `+` → `×`
-
-Enhance transitions slightly.
-
-Possible treatment:
-
-- quick scale/fade
-- accent-color flash
-- appropriate haptic
-
-Do not make habit interactions slower.
-
-The character change should remain immediate.
-
----
-
-# 13. LIVING CANVAS
-
-Add OPTIONAL extremely subtle ambient movement to ArtTheme backgrounds.
-
-Concept:
-
-Artwork transform:
-
-scale:
-`1.000 → ~1.012–1.015`
-
-translate:
-approximately `3–8px`
-
-duration:
-approximately `30–60 seconds`
-
-then reverse smoothly.
-
-ASCII layer may drift independently by only ~1–2px.
-
-The user should NOT immediately think:
-
-"the background is zooming."
-
-They should eventually notice:
-
-"this feels slightly alive."
-
-Avoid obvious Ken Burns effects.
-
----
-
-# 14. ART-SPECIFIC MOTION MUST REMAIN GENERIC
-
-Do not attempt to animate individual objects inside paintings.
-
-No:
-
-- moving trees
-- animated clouds painted from scratch
-- AI object segmentation
-- generated water motion
-
-The paintings remain paintings.
-
-Motion comes from subtle camera/parallax treatment only.
-
-This keeps:
-
-- artistic integrity
-- performance
-- offline behavior
-
----
-
-# 15. REDUCED MOTION
-
-Respect the OS reduced-motion preference.
-
-When enabled:
-
-- disable Living Canvas
-- remove long transforms
-- drawer may fade/translate minimally
-- numeric transitions use simple fades
-- all interactions remain fully functional
-
-No feature may depend on animation.
-
----
-
-# 16. PERFORMANCE
-
-iPhone 7 remains a first-class performance target.
-
-Prefer:
-
-- React Native Reanimated
-- UI-thread transforms
-- opacity
-- transform
+- browse a lot of works without feeling overwhelmed
+- see artwork more quickly
+- understand which theme is active
+- switch between artists/collections more fluidly
+- still access custom/classic options
 
 Avoid:
 
-- JS-driven frame loops
-- runtime blur
-- particles
-- repeated image processing
-- huge animated trees
-- unnecessary state updates during drag
-
-One artwork layer remains one artwork layer.
-
-One ASCII layer remains one ASCII layer.
+- endless giant cards
+- visually repetitive list rows
+- cluttered metadata overload
+- tiny unreadable thumbnails
 
 ---
 
-# 17. ACCESSIBILITY
+# 4. REWORK SHEETS / MODALS
 
-The custom counter must remain accessible.
+The current add/edit/share sheets work, but the button treatment and paper blocks still feel too generic.
 
-Expose:
+Rework:
 
-- current value
-- target
-- increment action
-- decrement action
-- direct-value entry
+- Add Goal
+- Add Habit
+- Edit Habit
+- Edit Goal
+- Share
+- Theme / Custom Theme flows where relevant
 
-VoiceOver users must not be required to perform a custom drag gesture.
+## Goal
 
-All motion-enhanced buttons retain meaningful labels.
+These interactions should feel integrated with the art aesthetic.
 
-Milestone controls expose correct checked/completed state.
+The sheets should not feel like generic white popups dropped on top of a painting.
+
+## Direction
+
+Blend the sheet language more thoughtfully with the artwork.
+
+Possible techniques:
+
+- museum-paper sheet with subtle tonal depth
+- faint art-aware tinting
+- subtle top hairline / framing
+- minimal translucent wash or softly integrated surface treatment
+- restrained layering so the art still belongs to the environment
+
+Do NOT use:
+
+- heavy blur
+- loud glassmorphism
+- thick rounded cards
+- generic iOS stock popup styling
+- overdesigned decorative frames
+
+The result should feel:
+
+- editorial
+- quiet
+- premium
+- integrated
+- tactile
+
+## Button treatment
+
+The current action buttons in these sheets still need refinement.
+
+Revisit:
+
+- Save
+- Cancel
+- Share
+- Back
+- Apply
+- Template choices
+- Type toggles
+
+Improve hierarchy, spacing, and visual language so the controls fit Atelier better.
+
+Do not hurt accessibility or tap-target size.
 
 ---
 
-# 18. BUSINESS LOGIC IS FROZEN
+# 5. COUNTER SCRUB FIX + DISCOVERABILITY
 
-Do not modify the underlying semantics of:
+The Atelier Counter concept is good, but the current interaction is not working well enough.
 
-- goal progress
-- goal target
-- completion
-- goal CRUD
-- habit CRUD
-- habit values
-- yearly calculations
-- history
-- rollover
-- undo
-- reordering
-- widgets
-- sharing
+Fix it.
 
-The motion system consumes existing handlers.
+## Problems to solve
 
-It does not replace them.
+- the scrub/scroll area feels too small
+- it is not obvious enough that the user can scrub
+- the interaction is less reliable than intended
+- the animation/gesture handling needs refinement
 
-AsyncStorage schemas remain unchanged.
+## Requirements
+
+Make the counter easier to understand and easier to manipulate.
+
+### Improve gesture area
+
+- enlarge the interactive scrub region significantly
+- user should not need to hit a tiny exact strip
+- the whole number zone / rail should feel draggable
+
+### Improve discoverability
+
+Users should be able to tell that the counter is interactive.
+
+Consider:
+
+- more visual emphasis around the rail
+- slight cue text
+- subtle motion hint on first open
+- directional cues
+- a more obviously “scrollable” or “scrubbable” treatment
+
+Do this tastefully.
+Do not turn it into a tutorial-heavy control.
+
+### Improve motion quality
+
+The scrubbing should feel smoother and more reliable.
+
+Potential direction:
+
+- a more legible horizontal reel / slider / index track
+- stronger snap behavior
+- larger center emphasis
+- better relationship between drag distance and value change
+- more forgiving gesture recognition
+
+It should feel beautiful and satisfying.
+
+Do not directly copy external references.
+Use them only as inspiration.
 
 ---
 
-# 19. DESIGN DOCUMENTATION
+# 6. COUNTER EXACT-ENTRY BUG FIX
 
-Update `design.md` with a formal Motion section.
+There is a current bug:
+
+If the counter is at 0 and the user types a value such as 55 and then taps Apply, the new value may not persist correctly.
+
+This must be fixed.
+
+## Requirements
+
+- entering a valid number manually must always save correctly
+- the value should persist through the existing handlers
+- typed values must clamp to 0…target
+- if the value is valid, Apply must commit it
+- the current zero-state must not break manual entry
+
+## Keyboard UX
+
+The current keyboard flow also feels buggy.
+
+The numeric entry should be improved so it is obvious how to finish input.
+
+Potential improvements:
+
+- add an explicit keyboard accessory / Done control on iOS
+- commit typed draft cleanly on blur and/or Apply
+- ensure number-pad behavior does not trap the user
+- separate draft string state from committed numeric state properly
+
+Do not rely on the user pressing a return key that may not exist on the current keyboard.
+
+This exact-entry path must be reliable, especially for larger goals.
+
+---
+
+# 7. WIDGET THEME INTEGRATION
+
+Implement the selected app theme into the widgets.
+
+This was already part of the broader vision and should now be completed.
+
+## For art themes
+
+If the user has selected an art theme:
+
+- propagate that selection into widget rendering in a practical widget-safe way
+- use the selected artwork / palette appropriately
+- if full artwork usage is too heavy or constrained, use a widget-safe crop / derivative / themed background approach
+- keep widget readability high
+
+## For Random Art
+
+If the user selected Random Art:
+
+- decide on a stable widget behavior
+- recommended: widget uses the currently resolved random artwork/palette for the current session update payload, not a separate random choice on every widget refresh
+- avoid jarring inconsistency
+
+## For custom themes
+
+If the user selected a custom theme:
+
+- use the custom primary/background palette in the widget background treatment
+- at minimum, apply the custom primary color meaningfully
+- keep text contrast and legibility safe
+
+## Safety
+
+Do NOT break:
+
+- widget payload contracts
+- existing widget functionality
+- existing update paths
+
+If payload changes are needed:
+
+- keep them additive / backward-compatible when possible
+- document them clearly
+
+---
+
+# 8. CUSTOM THEMES
+
+Do NOT remove custom themes in this pass.
+
+Keep them working.
+
+We may revisit whether to simplify/remove them later, but that is not part of this implementation.
+
+You may improve how custom themes are presented inside the redesigned gallery if helpful.
+
+---
+
+# 9. GOAL ACTIONS / VISUAL POLISH
+
+Continue refining the visual presentation of:
+
+- Progress action
+- Edit action
+- Delete action
+- CTA rows
+- inline control groupings
+
+The action system is better than before, but still deserves another polish pass.
+
+The controls should feel:
+
+- quieter
+- more intentional
+- more museum/editorial
+- less like generic button boxes
+
+Do not reduce usability.
+
+---
+
+# 10. DOCUMENTATION
+
+Update docs as needed.
+
+At minimum review:
+
+- AGENTS.md
+- REVAMP.MD
+- design.md
+- README.md if necessary
 
 Document:
 
-- motion durations
-- haptic hierarchy
-- Atelier Counter
-- completion behavior
-- Living Canvas
-- reduced motion
-- performance constraints
+- Random Art mode
+- expanded art library
+- redesigned gallery
+- counter interaction changes
+- exact-entry bug fix
+- widget theme integration
+- any additive widget payload considerations
 
-Update `AGENTS.md` only where stable engineering rules need clarification.
-
-Keep REVAMP.MD as the implementation specification.
+Do not let docs drift from implementation.
 
 ---
 
-# 20. IMPLEMENTATION ORDER
+# 11. SAFETY RULES
 
-Remain on `feature/revamp`.
+Do NOT break:
 
-Suggested focused commits:
+- AsyncStorage compatibility
+- goal CRUD
+- habit CRUD
+- history
+- rollover
+- progress calculations
+- habit 0/1/2 semantics
+- widgets
+- sharing
+- art theme compatibility
+- custom theme compatibility
 
-1. `feat/motion-foundation`
-2. `feat/atelier-counter`
-3. `feat/milestone-interaction`
-4. `feat/atelier-drawer`
-5. `feat/progress-motion`
-6. `feat/living-canvas`
+Do NOT rename:
 
-Actual commit names may differ, but keep work separable.
+- existing AsyncStorage keys
+- bundle identifiers
+- package identifiers
+- widget identifiers/contracts unless absolutely necessary
 
-Recommended order:
+Do not reseed or wipe existing user data.
 
-1. audit current progress handlers/modal flows
-2. define motion tokens
-3. implement shared animated-number/progress primitives
-4. implement Atelier Counter
-5. add exact numeric entry
-6. implement milestone control
-7. implement Atelier Drawer
-8. refine goal action controls
-9. add completion moments
-10. refine habits
-11. implement Living Canvas
-12. reduced-motion pass
-13. performance pass
-14. verification
-
-Do not stop after the counter.
-
-Complete the interaction language throughout the app.
+This must still feel like a seamless upgrade.
 
 ---
 
-# 21. VERIFICATION
+# 12. IMPLEMENTATION ORDER
 
-Run:
+Suggested order:
 
-`npm run verify:storage`
+1. inspect current theme/gallery/modal/counter/widget implementation
+2. add Random Art theme mode
+3. expand art collection by ~50 more works
+4. redesign gallery for larger collection
+5. rework sheets/modals
+6. fix counter gesture area and discoverability
+7. fix exact-entry persistence/keyboard bug
+8. integrate theme selection into widgets
+9. polish actions/controls
+10. update docs
+11. run verification
+12. inspect diff
+13. make focused commits
 
-`npx expo-doctor`
-
-and all other existing relevant checks.
-
-Verify:
-
-- progress values persist exactly as before
-- old upgrade fixture still passes
-- counter cannot exceed valid bounds
-- direct entry validates correctly
-- boolean/milestone state persists
-- completed sorting still works
-- hide completed still works
-- undo remains functional
-- no duplicate updates
-- rapid scrubbing does not flood AsyncStorage/haptics
-- reduced motion works
-- classic themes do not gain unwanted backdrop motion
-- custom themes remain valid
-- no native widget contract changed
-
-Inspect diffs for accidental business logic modifications.
-
-Do not claim physical-device testing unless actually performed.
+Stay on `feature/revamp`.
+Do not merge to `main`.
 
 ---
 
-# 22. PHYSICAL DEVICE TEST CHECKLIST
+# 13. VERIFICATION
 
-After implementation we will test manually:
+Before finishing:
 
-COUNT GOAL
+- run `npm run verify:storage`
+- run `npx expo-doctor`
+- verify old stored theme IDs still resolve
+- verify Random Art persists and resolves safely
+- verify expanded art catalog loads correctly
+- verify gallery is usable with the larger collection
+- verify Add Goal / Add Habit / Share / Theme flows still work
+- verify exact numeric entry works from 0 and non-zero states
+- verify Apply always persists correctly
+- verify widgets receive theme/custom color data correctly
+- inspect narrow layouts
+- inspect accidental business-logic changes
 
-- +1 feels good
-- -1 feels good
-- scrub feels predictable
-- haptic does not become annoying
-- long press works
-- direct numeric entry works
-- 3 / 20 feels good
-- 288 / 500 remains practical
+At the end report:
 
-MILESTONE
+1. what changed
+2. files changed
+3. Random Art behavior
+4. expanded art catalog
+5. gallery redesign
+6. modal/sheet redesign
+7. counter fixes
+8. exact-entry bug fix
+9. widget theme integration
+10. storage/build verification
+11. commits created
+12. remaining physical-device testing
 
-- incomplete → complete feels satisfying
-- complete → incomplete works
-- persisted value correct
+---
 
-DRAWER
+# 14. IMPLEMENTED (this pass)
 
-- iPhone 7
-- keyboard
-- safe area
-- dismissal
-- no clipping
+Shipped on `feature/revamp` without merging to `main`.
 
-ANIMATION
-
-- no dropped frames
-- progress transitions smooth
-- artwork drift almost imperceptible
-
-ACCESSIBILITY
-
-- reduced motion
-- VoiceOver semantics
+- Random Art: stored as `random-art` on `rt_hue_v1`. Launch picks a bundled
+  art plate, avoiding the previous pick via additive `yt_random_art_last_v1`.
+  `makeTheme` receives the resolved plate id. Widgets use that session plate.
+- Catalog: 18 locked plates + 54 additional OA landscapes (72 total) from AIC
+  and Cleveland, with bundled JPEG + ASCII derivatives.
+- Gallery: stamp-grid with artist chips, Random Art tile, Paper / Classic /
+  Custom index rows.
+- Sheets: `AtelierSheet` + `AtelierActions` + ink toggles for Add/Edit Goal,
+  Add/Edit Habit, Share, Theme, and the progress drawer footer.
+- Counter: larger framed scrub, cue copy, one-shot hint, `flush()` on Apply,
+  iOS Done accessory. Typed 55 from 0 now persists.
+- Widgets: additive `themeKind` / `themePrimary` / `themeBg` / `themeText`.
+  Native iOS/Android tint from those hex values; legacy `theme` still required.

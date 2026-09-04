@@ -128,13 +128,23 @@ function main() {
   assert.ok(Array.isArray(history) && history[0]?.year === 2025);
   assert.ok(history[0].goals?.[0]?.id === "g_old_run");
 
-  // Art theme ids must not collide with classic ids.
+  // Art theme ids come from the catalog plus Museum Paper.
+  // Random Art is a stored mode id, not a catalog plate.
   const artSrc = read(path.join(ROOT, "themes", "artThemes.js"));
-  const artIds = [...artSrc.matchAll(/id:\s*"([^"]+)"/g)].map((m) => m[1]);
+  const catalog = JSON.parse(
+    read(path.join(ROOT, "assets", "art", "catalog.json"))
+  );
+  const artIds = [...catalog.map((item) => item.id), "museum-paper"];
   for (const id of artIds) {
     if (CLASSIC_THEME_IDS.includes(id)) {
       fail(`art theme id collides with classic theme: ${id}`);
     }
+  }
+  if (!artSrc.includes("RANDOM_ART_ID") || !artSrc.includes('"random-art"')) {
+    fail("Random Art mode missing from artThemes.js");
+  }
+  if (!appSrc.includes("sessionArtId") || !appSrc.includes("RANDOM_ART_ID")) {
+    fail("Random Art session resolution missing from App.js");
   }
 
   // makeTheme still exported and THEMES still contains original 19.
@@ -146,7 +156,6 @@ function main() {
   }
 
   const imagesJs = read(path.join(ROOT, "assets", "art", "images.js"));
-  const catalog = JSON.parse(read(path.join(ROOT, "assets", "art", "catalog.json")));
   const habitAscii = read(path.join(ROOT, "utils", "habitAscii.js"));
   const appSrcAfter = appSrc;
 
@@ -164,6 +173,15 @@ function main() {
   }
   const counterPath = path.join(ROOT, "components", "atelier", "AtelierCounter.js");
   if (!fs.existsSync(counterPath)) fail("missing AtelierCounter");
+  const counterSrc = read(counterPath);
+  if (!counterSrc.includes("flush") || !counterSrc.includes("InputAccessoryView")) {
+    fail("AtelierCounter exact-entry flush or iOS Done accessory missing");
+  }
+  const sheetPath = path.join(ROOT, "components", "atelier", "AtelierSheet.js");
+  if (!fs.existsSync(sheetPath)) fail("missing AtelierSheet");
+  if (catalog.length < 60) {
+    fail(`expected expanded catalog (~68+), got ${catalog.length}`);
+  }
   const tokensSrc = read(path.join(ROOT, "utils", "tokens.js"));
   if (!tokensSrc.includes("ambient:") || !tokensSrc.includes("completion:")) {
     fail("motion duration tokens missing");
@@ -220,6 +238,12 @@ function main() {
   if (REQUIRED_KEYS.includes("yt_revamp_intro_seen_v1")) {
     fail("yt_revamp_intro_seen_v1 must remain additive, not a required old key");
   }
+  if (!storageSrc.includes("yt_random_art_last_v1")) {
+    fail("random art last-pick key missing from storage.js");
+  }
+  if (REQUIRED_KEYS.includes("yt_random_art_last_v1")) {
+    fail("yt_random_art_last_v1 must remain additive, not a required old key");
+  }
   const backdropPath = path.join(ROOT, "components", "art", "ArtBackdrop.js");
   if (!fs.existsSync(backdropPath)) fail("missing components/art/ArtBackdrop.js");
 
@@ -227,7 +251,16 @@ function main() {
     /function buildWidgetPayload[\s\S]*?return \{[\s\S]*?habits:[\s\S]*?\};/
   );
   if (!payloadMatch) fail("buildWidgetPayload shape not found");
-  for (const field of ["yearlyProgress", "theme", "goals", "habits", "todayState"]) {
+  for (const field of [
+    "yearlyProgress",
+    "theme",
+    "goals",
+    "habits",
+    "todayState",
+    "themeKind",
+    "themePrimary",
+    "themeBg",
+  ]) {
     if (!payloadMatch[0].includes(field)) fail(`widget payload missing ${field}`);
   }
 
@@ -241,7 +274,7 @@ function main() {
   console.log(`  habits: ${habits.length}`);
   console.log(`  theme: ${hue}`);
   console.log(`  history years: ${history.map((h) => h.year).join(", ")}`);
-  console.log(`  art themes: ${artIds.join(", ")}`);
+  console.log(`  art themes: ${artIds.length} (catalog ${catalog.length} + museum-paper)`);
   console.log(`  catalog plates: ${catalog.length}`);
 }
 

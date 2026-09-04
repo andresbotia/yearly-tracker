@@ -31,7 +31,7 @@ All data is stored locally on your device. Nothing is uploaded or shared.
 - Track progress with counts or milestones
 - Log daily habits (empty / good / bad)
 - Browse habit history
-- Choose an Atelier art theme, a classic palette, or a custom theme
+- Choose an Atelier art theme, Random Art, a classic palette, or a custom theme
 
 Everything works fully offline. Artwork is bundled; the app never calls museum APIs at runtime.
 
