@@ -72,3 +72,7 @@ android/app/debug.keystore
 
 # Art pipeline cache (masters stay out of the app bundle)
 scripts/.art-cache/
+
+# Temporary Claude brand handoff (do not commit)
+Atelier Tracker rebranding.zip
+.tmp-brand-handoff/
