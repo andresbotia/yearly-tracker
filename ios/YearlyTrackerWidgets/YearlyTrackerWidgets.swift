@@ -53,7 +53,7 @@ private func mutedInk(_ payload: SharedStore.WidgetPayload?) -> Color {
         ?? Color(red: 28 / 255, green: 25 / 255, blue: 22 / 255, opacity: 0.62)
 }
 
-private func accentColor(_ payload: SharedStore.WidgetPayload?) -> Color {
+private func atelierAccentColor(_ payload: SharedStore.WidgetPayload?) -> Color {
     colorFromHex(payload?.themePrimary) ?? inkColor(payload)
 }
 
@@ -209,7 +209,7 @@ private struct YearlyProgressView: View {
 
                 Text(asciiBar(pct, width: 22))
                     .font(dataFont(11))
-                    .foregroundColor(accentColor(payload))
+                    .foregroundColor(atelierAccentColor(payload))
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
             }
@@ -340,7 +340,7 @@ private struct HighlightGoalView: View {
 
                 Text(asciiBar(pct, width: 22))
                     .font(dataFont(11))
-                    .foregroundColor(accentColor(payload))
+                    .foregroundColor(atelierAccentColor(payload))
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
 
