@@ -304,13 +304,25 @@ function main() {
   }
   const introSrc = read(path.join(ROOT, "components", "art", "RevampIntroModal.js"));
   if (!introSrc.includes("James Clear") || !introSrc.includes("Personal yearly archive")) {
-    fail("fresh Atelier welcome is missing required copy");
+    fail("fresh Yearly welcome is missing required copy");
+  }
+  if (!introSrc.includes("Welcome to Yearly Tracker")) {
+    fail("fresh welcome is not branded Yearly Tracker");
+  }
+  if (introSrc.includes("Yearly Tracker is now Atelier Tracker")) {
+    fail("existing-user welcome still announces a name change");
+  }
+  if (!introSrc.includes("A new edition of Yearly Tracker")) {
+    fail("existing-user welcome is missing redesign copy");
   }
   const choicePath = path.join(ROOT, "components", "art", "RevampThemeChoiceModal.js");
   if (!fs.existsSync(choicePath)) fail("missing RevampThemeChoiceModal");
   const choiceSrc = read(choicePath);
   if (!choiceSrc.includes("Keep my current theme") || !choiceSrc.includes("Try Random Art")) {
     fail("style-choice card is missing required actions");
+  }
+  if (choiceSrc.includes("Atelier Tracker")) {
+    fail("style-choice card still uses Atelier Tracker copy");
   }
   const onboardPath = path.join(ROOT, "components", "atelier", "CatalogueOnboarding.js");
   if (!fs.existsSync(onboardPath)) fail("missing CatalogueOnboarding");
@@ -328,9 +340,9 @@ function main() {
     fail("catalogue onboarding overlay must keep blocking pointer events");
   }
   if (!introSrc.includes("ScrollView") || !introSrc.includes("maxHeight")) {
-    fail("Atelier welcome is not scroll-safe on short screens");
+    fail("Yearly welcome is not scroll-safe on short screens");
   }
-  if (!introSrc.includes("Enter Atelier") || !introSrc.includes("Personal yearly archive")) {
+  if (!introSrc.includes("Enter Yearly") || !introSrc.includes("Personal yearly archive")) {
     fail("short-screen welcome lost required copy");
   }
   if (!gallerySrc.includes("Replay guide") || !gallerySrc.includes("onReplayGuide")) {
@@ -464,7 +476,7 @@ function main() {
     fail("collapsing header or tab indicator missing from App.js");
   }
   const headerSrc = read(path.join(ROOT, "components", "editorial", "CollapsingHeader.js"));
-  if (/<Text[\s\S]*?>\s*Atelier Tracker\s*<\/Text>/.test(headerSrc)) {
+  if (/<Text[\s\S]*?>\s*(Atelier Tracker|Yearly Tracker)\s*<\/Text>/.test(headerSrc)) {
     fail("redundant serif product title still in collapsing header");
   }
   if (!headerSrc.includes("BrandMark") || headerSrc.includes("[AT]  ATELIER TRACKER")) {
@@ -476,11 +488,28 @@ function main() {
   if (!appSrcAfter.includes("contentInsetAdjustmentBehavior=\"never\"")) {
     fail("Goals/Habits lists missing native overscroll inset fix");
   }
-  const brandMark = path.join(ROOT, "assets", "brand", "marks", "atelier-mark-24.png");
-  const brandIcon = path.join(ROOT, "assets", "brand", "icons", "atelier-app-icon-1024.png");
+  const brandMark = path.join(ROOT, "assets", "brand", "marks", "yearly-mark-24.png");
+  const brandIcon = path.join(ROOT, "assets", "brand", "icons", "yearly-app-icon-1024.png");
   const brandSpec = path.join(ROOT, "docs", "brand", "BRAND-SPEC.md");
   if (!fs.existsSync(brandMark) || !fs.existsSync(brandIcon) || !fs.existsSync(brandSpec)) {
-    fail("final Atelier brand assets or BRAND-SPEC.md missing");
+    fail("final Yearly brand assets or BRAND-SPEC.md missing");
+  }
+  const brandSpecSrc = read(brandSpec);
+  if (!brandSpecSrc.includes("Yearly Tracker") || !brandSpecSrc.includes("[YT]")) {
+    fail("BRAND-SPEC.md is not the Yearly Tracker / [YT] spec");
+  }
+  if (fs.existsSync(path.join(ROOT, "assets", "brand", "marks", "atelier-mark-24.png"))) {
+    fail("obsolete Atelier mark is still in assets/brand/marks");
+  }
+  const appJson = read(path.join(ROOT, "app.json"));
+  if (!appJson.includes('"name": "Yearly Tracker"')) {
+    fail("app.json visible name is not Yearly Tracker");
+  }
+  if (!appJson.includes("com.andresbotia.ResolutionTracker") || !appJson.includes("com.andresbotia.yearlytracker")) {
+    fail("bundle/package identifiers must stay ResolutionTracker / yearlytracker");
+  }
+  if (appSrcAfter.includes("Made with Atelier Tracker") || introSrc.includes("Enter Atelier")) {
+    fail("shipping UI still uses Atelier Tracker product copy");
   }
   if (!appSrcAfter.includes("BrandSplash")) {
     fail("loading identity is not using BrandSplash");
