@@ -130,7 +130,6 @@ import {
   pickRandomArtId,
 } from "./themes/artThemes";
 
-import Constants from "expo-constants";
 import {
   getWeeklyRecap,
   getGoalProgress,
@@ -231,55 +230,6 @@ function sortGoals(goals) {
   });
 
   return [...inProgress, ...completed];
-}
-
-function NativeDebugPanel() {
-  const info = useMemo(() => {
-    console.log("RN bridgeless flags", {
-      hasBatchedBridge: !!global.__fbBatchedBridge,
-      hasTurboModuleProxy: !!global.__turboModuleProxy,
-      bridgeless: global.RN$Bridgeless,
-    });
-    const keys = Object.keys(NativeModules || {});
-    return {
-      platform: Platform.OS,
-      appOwnership: Constants.appOwnership,
-      executionEnvironment: Constants.executionEnvironment,
-      androidPackage: Constants.expoConfig?.android?.package,
-      nativeModulesCount: keys.length,
-      nativeModulesSample: keys.slice(0, 30),
-      widgetBridge: NativeModules?.WidgetBridgeAndroid ? "FOUND" : "MISSING",
-      widgetBridgeKeys: NativeModules?.WidgetBridgeAndroid
-        ? Object.keys(NativeModules.WidgetBridgeAndroid)
-        : [],
-    };
-  }, []);
-
-  return (
-    <ScrollView style={{ padding: 12 }}>
-      <Text style={{ fontWeight: "700", fontSize: 18 }}>
-        Native Bridge Debug
-      </Text>
-      <Text>Platform: {info.platform}</Text>
-      <Text>appOwnership: {String(info.appOwnership)}</Text>
-      <Text>executionEnvironment: {String(info.executionEnvironment)}</Text>
-      <Text>expoConfig.android.package: {String(info.androidPackage)}</Text>
-      <Text>NativeModules count: {info.nativeModulesCount}</Text>
-      <Text>WidgetBridgeAndroid: {info.widgetBridge}</Text>
-
-      <Text style={{ marginTop: 10, fontWeight: "700" }}>
-        NativeModules sample:
-      </Text>
-      <Text selectable>
-        {JSON.stringify(info.nativeModulesSample, null, 2)}
-      </Text>
-
-      <Text style={{ marginTop: 10, fontWeight: "700" }}>
-        WidgetBridgeAndroid keys:
-      </Text>
-      <Text selectable>{JSON.stringify(info.widgetBridgeKeys, null, 2)}</Text>
-    </ScrollView>
-  );
 }
 
 function makeStarterGoals() {

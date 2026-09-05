@@ -9,9 +9,11 @@ function assertAndroid() {
   if (Platform.OS !== "android") return false;
   const M = getM();
   if (!M) {
-    console.log(
-      "WidgetBridgeAndroid native module not found. Rebuild dev client?"
-    );
+    if (__DEV__) {
+      console.log(
+        "WidgetBridgeAndroid native module not found. Rebuild dev client?"
+      );
+    }
     return false;
   }
   return true;

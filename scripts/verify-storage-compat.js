@@ -546,6 +546,93 @@ function main() {
     if (!payloadMatch[0].includes(field)) fail(`widget payload missing ${field}`);
   }
 
+  if (
+    appSrcAfter.includes("function NativeDebugPanel") ||
+    appSrcAfter.includes("Native Bridge Debug") ||
+    appSrcAfter.includes("expo-constants")
+  ) {
+    fail("App.js still contains NativeDebugPanel / expo-constants debug leftovers");
+  }
+
+  const dbgWrite = appSrcAfter.indexOf("setDebugWidgetTextAndroid(`DBG");
+  if (dbgWrite >= 0) {
+    const window = appSrcAfter.slice(Math.max(0, dbgWrite - 120), dbgWrite);
+    if (!window.includes("__DEV__")) {
+      fail("Android widget DBG text must sit behind __DEV__");
+    }
+  }
+
+  const eas = JSON.parse(read(path.join(ROOT, "eas.json")));
+  if (eas.build?.production?.developmentClient) {
+    fail("EAS production profile must not enable developmentClient");
+  }
+  if (eas.build?.preview?.developmentClient) {
+    fail("EAS preview profile must not enable developmentClient");
+  }
+  if (eas.build?.development?.developmentClient !== true) {
+    fail("EAS development profile should keep the dev client");
+  }
+
+  const infoPlist = read(path.join(ROOT, "ios", "YearlyTracker", "Info.plist"));
+  if (!infoPlist.includes("<string>Yearly Tracker</string>")) {
+    fail("iOS CFBundleDisplayName is not Yearly Tracker");
+  }
+  if (
+    !infoPlist.includes("com.andresbotia.ResolutionTracker") ||
+    infoPlist.includes("Atelier Tracker")
+  ) {
+    fail("iOS Info.plist lost the ResolutionTracker identity or gained Atelier copy");
+  }
+
+  const androidStrings = read(
+    path.join(ROOT, "android", "app", "src", "main", "res", "values", "strings.xml")
+  );
+  if (!androidStrings.includes(">Yearly Tracker<")) {
+    fail("Android app_name is not Yearly Tracker");
+  }
+  if (
+    !androidStrings.includes("Yearly Progress") ||
+    !androidStrings.includes("Yearly Habits") ||
+    !androidStrings.includes("Yearly Goals")
+  ) {
+    fail("Android widget labels are not Yearly-branded");
+  }
+
+  function walkShipping(dir, acc = []) {
+    if (!fs.existsSync(dir)) return acc;
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, ent.name);
+      if (ent.isDirectory()) walkShipping(p, acc);
+      else if (/\.(js|jsx|json)$/.test(ent.name)) acc.push(p);
+    }
+    return acc;
+  }
+
+  const shippingFiles = [
+    path.join(ROOT, "App.js"),
+    path.join(ROOT, "index.js"),
+    path.join(ROOT, "app.json"),
+    path.join(ROOT, "eas.json"),
+    ...walkShipping(path.join(ROOT, "components")),
+    ...walkShipping(path.join(ROOT, "utils")),
+    ...walkShipping(path.join(ROOT, "native")),
+    ...walkShipping(path.join(ROOT, "features")),
+    ...walkShipping(path.join(ROOT, "themes")),
+  ];
+  for (const file of shippingFiles) {
+    const src = read(file);
+    if (/localhost|127\.0\.0\.1|10\.0\.0\./.test(src)) {
+      fail(
+        `shipping file contains a localhost/dev-server address: ${path.relative(ROOT, file)}`
+      );
+    }
+    if (/(?:Atelier Tracker|ATELIER TRACKER|\[AT\])/.test(src)) {
+      fail(
+        `shipping file still has user-facing Atelier branding: ${path.relative(ROOT, file)}`
+      );
+    }
+  }
+
   if (process.exitCode) {
     console.error("Storage compatibility check failed.");
     process.exit(1);

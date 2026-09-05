@@ -47,6 +47,7 @@ ios/**/*.xcuserstate
 ios/.xcode.env.local
 ios/**/.xcode.env
 ios/**/*.bak.*
+ios/**/*.bak*
 ios/**/*.DISABLED
 *.ipa
 *.xcarchive
