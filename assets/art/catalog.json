@@ -1,0 +1,1551 @@
+[
+  {
+    "id": "cypresses",
+    "title": "Cypresses",
+    "artist": "Vincent van Gogh",
+    "year": "1889",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437980",
+    "accessionNumber": "49.30",
+    "source": "https://www.metmuseum.org/art/collection/search/437980",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP130999.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP130999.jpg"
+    ]
+  },
+  {
+    "id": "wheat-field-cypresses",
+    "title": "Wheat Field with Cypresses",
+    "artist": "Vincent van Gogh",
+    "year": "1889",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "436535",
+    "accessionNumber": "1993.132",
+    "source": "https://www.metmuseum.org/art/collection/search/436535",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-42549-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-42549-001.jpg"
+    ]
+  },
+  {
+    "id": "women-picking-olives",
+    "title": "Women Picking Olives",
+    "artist": "Vincent van Gogh",
+    "year": "1889",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "436536",
+    "accessionNumber": "1995.535",
+    "source": "https://www.metmuseum.org/art/collection/search/436536",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-17161-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-17161-001.jpg"
+    ]
+  },
+  {
+    "id": "flowering-orchard",
+    "title": "The Flowering Orchard",
+    "artist": "Vincent van Gogh",
+    "year": "1888",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "436527",
+    "accessionNumber": "56.13",
+    "source": "https://www.metmuseum.org/art/collection/search/436527",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-14936-045.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-14936-045.jpg"
+    ]
+  },
+  {
+    "id": "morning-seine",
+    "title": "The Seine at Giverny",
+    "artist": "Claude Monet",
+    "year": "1897",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "46655",
+    "accessionNumber": "1963.10.180",
+    "source": "https://www.nga.gov/artworks/46655-seine-giverny",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "note": "Open-access canvas from Monet's morning-on-the-Seine campaign. Existing theme id morning-seine is preserved.",
+    "urls": [
+      "https://media.nga.gov/iiif/public/objects/4/6/6/5/5/46655-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ],
+    "wikimediaFile": "Claude Monet, The Seine at Giverny, 1897, NGA 46655.jpg"
+  },
+  {
+    "id": "haystacks",
+    "title": "Stacks of Wheat (End of Summer)",
+    "artist": "Claude Monet",
+    "year": "1890–91",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "64818",
+    "accessionNumber": "1985.1103",
+    "source": "https://www.artic.edu/artworks/64818/stacks-of-wheat-end-of-summer",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/a38e2828-ec6f-ece1-a30f-70243449197b/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "water-lilies",
+    "title": "Water Lilies",
+    "artist": "Claude Monet",
+    "year": "1906",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "16568",
+    "accessionNumber": "1933.1157",
+    "source": "https://www.artic.edu/artworks/16568/water-lilies",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/adc61da8-d020-d84f-62fb-f5c7435f1f98/full/2000,/0/default.jpg",
+      "https://www.artic.edu/iiif/2/3c27b499-af56-f0d5-93b5-a7f2f1ad5813/full/2000,/0/default.jpg"
+    ],
+    "wikimediaFile": "Claude Monet - Water Lilies - 1933.1157 - Art Institute of Chicago.jpg"
+  },
+  {
+    "id": "japanese-footbridge",
+    "title": "The Japanese Footbridge",
+    "artist": "Claude Monet",
+    "year": "1899",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "74796",
+    "accessionNumber": "1992.9.1",
+    "source": "https://www.nga.gov/artworks/74796-japanese-footbridge",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/0b9cefb5-1ee4-401a-8154-8d4039191a28/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/7/4/7/9/6/74796-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "garden-vetheuil",
+    "title": "The Artist's Garden at Vétheuil",
+    "artist": "Claude Monet",
+    "year": "1881",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "52189",
+    "accessionNumber": "1970.17.45",
+    "source": "https://www.nga.gov/artworks/52189-artists-garden-vetheuil",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/9fc88734-2f9a-4da8-8d46-2b570b201223/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/5/2/1/8/9/52189-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "garden-argenteuil",
+    "title": "The Artist's Garden in Argenteuil",
+    "artist": "Claude Monet",
+    "year": "1873",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "72138",
+    "accessionNumber": "1991.27.1",
+    "source": "https://www.nga.gov/artworks/72138-artists-garden-argenteuil-corner-garden-dahlias",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/4196f97b-1edb-4fae-aa9f-882afe35978b/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/7/2/1/3/8/72138-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "vetheuil",
+    "title": "Banks of the Seine, Vétheuil",
+    "artist": "Claude Monet",
+    "year": "1880",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "46652",
+    "accessionNumber": "1963.10.177",
+    "source": "https://www.nga.gov/artworks/46652-banks-seine-vetheuil",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://commons.wikimedia.org/wiki/Special:FilePath/Claude_Monet%2C_Banks_of_the_Seine%2C_V%C3%A9theuil%2C_1880%2C_NGA_46652.jpg",
+      "https://media.nga.gov/iiif/public/objects/4/6/6/5/2/46652-primary-0-nativeres.ptif/full/!2400,/0/default.jpg"
+    ],
+    "wikimediaFile": "Claude Monet, Banks of the Seine, Vétheuil, 1880, NGA 46652.jpg"
+  },
+  {
+    "id": "rouen-cathedral",
+    "title": "Rouen Cathedral, West Façade",
+    "artist": "Claude Monet",
+    "year": "1894",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "46524",
+    "accessionNumber": "1963.10.49",
+    "source": "https://www.nga.gov/artworks/46524-rouen-cathedral-west-facade",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/413faf9b-5d86-468a-8363-eea43c7fe9ba/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/4/6/5/2/4/46524-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "villeneuve-bridge",
+    "title": "The Bridge at Villeneuve-la-Garenne",
+    "artist": "Alfred Sisley",
+    "year": "1872",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437680",
+    "accessionNumber": "64.287",
+    "source": "https://www.metmuseum.org/art/collection/search/437680",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-14936-041.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-14936-041.jpg"
+    ]
+  },
+  {
+    "id": "versailles-road",
+    "title": "The Road from Versailles to Louveciennes",
+    "artist": "Alfred Sisley",
+    "year": "1879",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437685",
+    "accessionNumber": "64.154.2",
+    "source": "https://www.metmuseum.org/art/collection/search/437685",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-22989-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-22989-001.jpg"
+    ]
+  },
+  {
+    "id": "moret-winter",
+    "title": "Rue Eugène Moussoir at Moret: Winter",
+    "artist": "Alfred Sisley",
+    "year": "1891",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437686",
+    "accessionNumber": "1992.366",
+    "source": "https://www.metmuseum.org/art/collection/search/437686",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-33708-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-33708-001.jpg"
+    ]
+  },
+  {
+    "id": "pontoise-hill",
+    "title": "Jalais Hill, Pontoise",
+    "artist": "Camille Pissarro",
+    "year": "1867",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437299",
+    "accessionNumber": "51.30.2",
+    "source": "https://www.metmuseum.org/art/collection/search/437299",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "note": "Île-de-France landscape: wide sky, muted land, restrained palette.",
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DT1859.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DT1859.jpg"
+    ]
+  },
+  {
+    "id": "sainte-victoire-viaduct",
+    "title": "Mont Sainte-Victoire and the Viaduct of the Arc River Valley",
+    "artist": "Paul Cézanne",
+    "year": "1882–85",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "435877",
+    "accessionNumber": "29.100.64",
+    "source": "https://www.metmuseum.org/art/collection/search/435877",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-20099-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-20099-001.jpg"
+    ]
+  },
+  {
+    "id": "girl-in-boat",
+    "title": "Girl in a Boat with Geese",
+    "artist": "Berthe Morisot",
+    "year": "c. 1889",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "52194",
+    "accessionNumber": "1970.17.50",
+    "source": "https://www.nga.gov/artworks/52194-girl-boat-geese",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/5568ca30-4751-4861-b31a-9515a6114398/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/5/2/1/9/4/52194-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "cliff-walk-at-pourville",
+    "title": "Cliff Walk at Pourville",
+    "artist": "Claude Monet",
+    "year": "1882",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "14620",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/14620",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/b0effb1c-ff23-bbaa-f809-9fd94e31c1a0/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "water-lily-pond",
+    "title": "Water Lily Pond",
+    "artist": "Claude Monet",
+    "year": "1900",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "87088",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/87088",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/8534685d-1102-e1e3-e194-94f6e925e8b0/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-beach-at-sainte-adresse",
+    "title": "The Beach at Sainte-Adresse",
+    "artist": "Claude Monet",
+    "year": "1867",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "14598",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/14598",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/95be2572-b53d-8e7b-abc9-10eb48d4fa5d/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "stacks-of-wheat-end-of-day-autumn",
+    "title": "Stacks of Wheat (End of Day, Autumn)",
+    "artist": "Claude Monet",
+    "year": "1890",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "14624",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/14624",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/4c364c64-2108-4e19-5fc5-1ab26ba924a7/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "branch-of-the-seine-near-giverny-mist",
+    "title": "Branch of the Seine near Giverny (Mist)",
+    "artist": "Claude Monet",
+    "year": "1897",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "16564",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/16564",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/838d8c33-a3b4-68ea-587b-87ceec2011af/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "on-the-bank-of-the-seine-bennecourt",
+    "title": "On the Bank of the Seine, Bennecourt",
+    "artist": "Claude Monet",
+    "year": "1868",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "81539",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/81539",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/66f95ea3-a11a-1cf4-6599-d0a49bb25744/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-artist-s-house-at-argenteuil",
+    "title": "The Artist's House at Argenteuil",
+    "artist": "Claude Monet",
+    "year": "1873",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "16554",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/16554",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/7d533ed4-ff54-fa2c-64f4-2b16bfbb5880/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "poppy-field-giverny",
+    "title": "Poppy Field (Giverny)",
+    "artist": "Claude Monet",
+    "year": "1890",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "4783",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/4783",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/db94c894-a24c-c2e0-9db9-0506567a0152/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "houses-of-parliament-london",
+    "title": "Houses of Parliament, London",
+    "artist": "Claude Monet",
+    "year": "1900",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "16584",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/16584",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/03930df3-1e6c-eeca-8660-c0b22ca477ff/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "charing-cross-bridge-london",
+    "title": "Charing Cross Bridge, London",
+    "artist": "Claude Monet",
+    "year": "1901",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "16544",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/16544",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/e9179922-f68d-34c5-481d-abf49e046863/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "waterloo-bridge-gray-weather",
+    "title": "Waterloo Bridge, Gray Weather",
+    "artist": "Claude Monet",
+    "year": "1900",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "103139",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/103139",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/6f61a6fc-dcd8-e801-0ad8-5f7e561d91b6/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "a-turn-in-the-road",
+    "title": "A Turn in the Road",
+    "artist": "Alfred Sisley",
+    "year": "1873",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "96559",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/96559",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/0f076222-52b2-9bb4-4409-72fdf485d895/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-seine-at-port-marly-piles-of-sand",
+    "title": "The Seine at Port-Marly, Piles of Sand",
+    "artist": "Alfred Sisley",
+    "year": "1875",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "16633",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/16633",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/c4425cb6-d8b5-6390-603d-7f802406d05d/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "street-in-moret",
+    "title": "Street in Moret",
+    "artist": "Alfred Sisley",
+    "year": "1890",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "81561",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/81561",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/c233d88b-fe56-6b9e-d5c2-47b9a7386756/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "watering-place-at-marly",
+    "title": "Watering Place at Marly",
+    "artist": "Alfred Sisley",
+    "year": "1875",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "37741",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/37741",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/ed7aa098-e5c9-04dd-b09c-3416d1c56854/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "landscape-along-the-seine-with-the-institu",
+    "title": "Landscape along the Seine with the Institut de France and the Pont des Arts",
+    "artist": "Alfred Sisley",
+    "year": "1875",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "58984",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/58984",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/2bcffdac-951e-569f-8f05-f4c8e4228302/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "rabbit-warren-at-pontoise-snow",
+    "title": "Rabbit Warren at Pontoise, Snow",
+    "artist": "Camille Pissarro",
+    "year": "1879",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "20530",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/20530",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/053f9be8-3617-c4ef-36cd-1deb5e13b288/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-banks-of-the-marne-in-winter",
+    "title": "The Banks of the Marne in Winter",
+    "artist": "Camille Pissarro",
+    "year": "1866",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "6005",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/6005",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/3d950ecc-73f4-c28a-f216-0940b23fa5e8/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "haymaking-at-eragny",
+    "title": "Haymaking at Éragny",
+    "artist": "Camille Pissarro",
+    "year": "1892",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "87000",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/87000",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/b84a9755-ca8d-8bd5-5a59-e910b20e3ba5/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "snow-at-louveciennes",
+    "title": "Snow at Louveciennes",
+    "artist": "Camille Pissarro",
+    "year": "1870",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "45838",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/45838",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/d4e43d76-594b-ce65-c1a3-45c865624f70/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "bailey-s-beach-newport-r-i",
+    "title": "Bailey's Beach, Newport, R.I.",
+    "artist": "Childe Hassam",
+    "year": "1901",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "107862",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/107862",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/16facedd-c8c3-fbfc-a854-23c2d710a889/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-little-pond-appledore",
+    "title": "The Little Pond, Appledore",
+    "artist": "Childe Hassam",
+    "year": "1890",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "105462",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/105462",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/b4ee4891-5d7b-11ad-93df-2b64e34de991/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "woman-in-a-garden",
+    "title": "Woman in a Garden",
+    "artist": "Berthe Morisot",
+    "year": "1882",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "153798",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/153798",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/5edb357d-2e8f-8673-d9e8-4b1150af3895/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-poet-s-garden",
+    "title": "The Poet's Garden",
+    "artist": "Vincent van Gogh",
+    "year": "1888",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "14586",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/14586",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/d4bc1723-7cbc-d36d-a9cb-f84553f2a6f6/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "fishing-in-spring-the-pont-de-clichy-asnie",
+    "title": "Fishing in Spring, the Pont de Clichy (Asnières)",
+    "artist": "Vincent van Gogh",
+    "year": "1887",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "109314",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/109314",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/5512cee9-6d00-d01b-b0be-ac7843cc8f76/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "washerwomen-at-the-edge-of-the-pond",
+    "title": "Washerwomen at the Edge of the Pond",
+    "artist": "Eugène Boudin",
+    "year": "1880",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "52180",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/52180",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/30f72d2d-0771-981a-b5e7-5848513aeb42/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "water-lilies-agapanthus",
+    "title": "Water Lilies (Agapanthus)",
+    "artist": "Claude Monet",
+    "year": "1915",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "136510",
+    "accessionNumber": "1960.81",
+    "source": "https://clevelandart.org/art/1960.81",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1960.81/1960.81_web.jpg"
+    ]
+  },
+  {
+    "id": "gardener-s-house-at-antibes",
+    "title": "Gardener's House at Antibes",
+    "artist": "Claude Monet",
+    "year": "1888",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "95272",
+    "accessionNumber": "1916.1044",
+    "source": "https://clevelandart.org/art/1916.1044",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1916.1044/1916.1044_web.jpg"
+    ]
+  },
+  {
+    "id": "the-seine-at-bas-meudon",
+    "title": "The Seine at Bas-Meudon",
+    "artist": "Johan Barthold Jongkind",
+    "year": "1865",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "157104",
+    "accessionNumber": "1993.236",
+    "source": "https://clevelandart.org/art/1993.236",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1993.236/1993.236_web.jpg"
+    ]
+  },
+  {
+    "id": "saint-mammes-loing-canal",
+    "title": "Saint-Mammès, Loing Canal",
+    "artist": "Alfred Sisley",
+    "year": "1885",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "136760",
+    "accessionNumber": "1961.262",
+    "source": "https://clevelandart.org/art/1961.262",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1961.262/1961.262_web.jpg"
+    ]
+  },
+  {
+    "id": "sweeping-snow",
+    "title": "Sweeping Snow",
+    "artist": "Childe Hassam",
+    "year": "1890",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "117805",
+    "accessionNumber": "1938.42",
+    "source": "https://clevelandart.org/art/1938.42",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1938.42/1938.42_web.jpg"
+    ]
+  },
+  {
+    "id": "the-beach-at-deauville",
+    "title": "The Beach at Deauville",
+    "artist": "Eugène Boudin",
+    "year": "1864",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "125091",
+    "accessionNumber": "1946.71",
+    "source": "https://clevelandart.org/art/1946.71",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1946.71/1946.71_web.jpg"
+    ]
+  },
+  {
+    "id": "the-coast-at-trouville",
+    "title": "The Coast at Trouville",
+    "artist": "Eugène Boudin",
+    "year": "1865",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "142394",
+    "accessionNumber": "1966.208",
+    "source": "https://clevelandart.org/art/1966.208",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1966.208/1966.208_web.jpg"
+    ]
+  },
+  {
+    "id": "the-large-plane-trees-road-menders-at-sain",
+    "title": "The Large Plane Trees (Road Menders at Saint-Rémy)",
+    "artist": "Vincent van Gogh",
+    "year": "1889",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "125249",
+    "accessionNumber": "1947.209",
+    "source": "https://clevelandart.org/art/1947.209",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1947.209/1947.209_web.jpg"
+    ]
+  },
+  {
+    "id": "bordighera",
+    "title": "Bordighera",
+    "artist": "Claude Monet",
+    "year": "1884",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "81537",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/81537",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/4d1b3ad0-14db-0d21-ad9f-17abb8bdfbb5/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "rocks-at-port-goulphar-belle-ile",
+    "title": "Rocks at Port-Goulphar, Belle-Île",
+    "artist": "Claude Monet",
+    "year": "1886",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "20545",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/20545",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/2765aee9-3d78-ec6c-5c66-a1d9dc8173f6/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-loire",
+    "title": "The Loire",
+    "artist": "Alfred Sisley",
+    "year": "1896",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "73054",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/73054",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/bcc9c3a7-f5b0-41af-210a-bd17797d77d9/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-bay-of-marseille-seen-from-l-estaque",
+    "title": "The Bay of Marseille, Seen from L'Estaque",
+    "artist": "Paul Cézanne",
+    "year": "1885",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "16487",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/16487",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/d4ca6321-8656-3d3f-a362-2ee297b2b813/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "auvers-panoramic-view",
+    "title": "Auvers, Panoramic View",
+    "artist": "Paul Cézanne",
+    "year": "1873",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "14556",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/14556",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/90bc0cec-0d4e-9af5-3912-52a082a428e5/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "new-england-headlands",
+    "title": "New England Headlands",
+    "artist": "Childe Hassam",
+    "year": "1899",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "5349",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/5349",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/f72dbf42-8655-8788-d899-9e87a0466d28/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "foret-de-compiegne",
+    "title": "Forêt de Compiègne",
+    "artist": "Berthe Morisot",
+    "year": "1885",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "53058",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/53058",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/bfc9b17a-cc18-7bd3-4d78-e925bb1a8b27/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "terrace-and-observation-deck-at-the-moulin",
+    "title": "Terrace and Observation Deck at the Moulin de Blute-Fin, Montmartre",
+    "artist": "Vincent van Gogh",
+    "year": "1887",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "27954",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/27954",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/a971fad5-a24d-9985-03fb-1f17db9a9d74/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "approaching-storm",
+    "title": "Approaching Storm",
+    "artist": "Eugène Boudin",
+    "year": "1864",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "27764",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/27764",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/04cb7292-b20b-b313-2c08-19e685b70e7e/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "la-touques-near-deauville",
+    "title": "La Touques near Deauville",
+    "artist": "Eugène Boudin",
+    "year": "1883",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "59823",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/59823",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/8a55bdea-0087-deb5-01b2-def2d7ba27a8/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "mill-of-pont-maupuit",
+    "title": "Mill of Pont Maupuit",
+    "artist": "Armand Guillaumin",
+    "year": "1900",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "16502",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/16502",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/f4abdcdc-1d4f-4b8c-5f16-dacc42d509f5/full/843,/0/default.jpg",
+      "https://www.artic.edu/iiif/2/f4abdcdc-1d4f-4b8c-5f16-dacc42d509f5/full/800,/0/default.jpg",
+      "https://www.artic.edu/iiif/2/f4abdcdc-1d4f-4b8c-5f16-dacc42d509f5/full/1200,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-fountain-villa-torlonia-frascati-italy",
+    "title": "The Fountain, Villa Torlonia, Frascati, Italy",
+    "artist": "John Singer Sargent",
+    "year": "1907",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "69780",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/69780",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/3f9aa9db-61e1-7060-fdb0-bfd7e41ddd08/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "low-tide-at-pourville-near-dieppe-1882",
+    "title": "Low Tide at Pourville, near Dieppe, 1882",
+    "artist": "Claude Monet",
+    "year": "1882",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "125234",
+    "accessionNumber": "1947.196",
+    "source": "https://clevelandart.org/art/1947.196",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1947.196/1947.196_web.jpg"
+    ]
+  },
+  {
+    "id": "edge-of-the-woods-near-l-hermitage-pontois",
+    "title": "Edge of the Woods Near L'Hermitage, Pontoise",
+    "artist": "Camille Pissarro",
+    "year": "1879",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "128392",
+    "accessionNumber": "1951.356",
+    "source": "https://clevelandart.org/art/1951.356",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1951.356/1951.356_web.jpg"
+    ]
+  },
+  {
+    "id": "the-lock-at-pontoise",
+    "title": "The Lock at Pontoise",
+    "artist": "Camille Pissarro",
+    "year": "1872",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "155626",
+    "accessionNumber": "1990.7",
+    "source": "https://clevelandart.org/art/1990.7",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1990.7/1990.7_web.jpg"
+    ]
+  },
+  {
+    "id": "the-brook",
+    "title": "The Brook",
+    "artist": "Paul Cézanne",
+    "year": "1895",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "135173",
+    "accessionNumber": "1958.20",
+    "source": "https://clevelandart.org/art/1958.20",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1958.20/1958.20_web.jpg"
+    ]
+  },
+  {
+    "id": "the-pigeon-tower-at-bellevue",
+    "title": "The Pigeon Tower at Bellevue",
+    "artist": "Paul Cézanne",
+    "year": "1890",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "115405",
+    "accessionNumber": "1936.19",
+    "source": "https://clevelandart.org/art/1936.19",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1936.19/1936.19_web.jpg"
+    ]
+  },
+  {
+    "id": "mount-sainte-victoire",
+    "title": "Mount Sainte-Victoire",
+    "artist": "Paul Cézanne",
+    "year": "1904",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "135185",
+    "accessionNumber": "1958.21",
+    "source": "https://clevelandart.org/art/1958.21",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1958.21/1958.21_web.jpg"
+    ]
+  },
+  {
+    "id": "villas-at-trouville",
+    "title": "Villas at Trouville",
+    "artist": "Gustave Caillebotte",
+    "year": "1884",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "91231",
+    "accessionNumber": "2020.105",
+    "source": "https://clevelandart.org/art/2020.105",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/2020.105/2020.105_web.jpg"
+    ]
+  },
+  {
+    "id": "two-poplars-in-the-alpilles-near-saint-rem",
+    "title": "Two Poplars in the Alpilles near Saint-Rémy",
+    "artist": "Vincent van Gogh",
+    "year": "1889",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "135310",
+    "accessionNumber": "1958.32",
+    "source": "https://clevelandart.org/art/1958.32",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1958.32/1958.32_web.jpg"
+    ]
+  },
+  {
+    "id": "red-fuji",
+    "title": "South Wind, Clear Sky (Red Fuji)",
+    "displayTitle": "Red Fuji",
+    "artist": "Katsushika Hokusai",
+    "year": "ca. 1830–32",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "36490",
+    "accessionNumber": "JP9",
+    "source": "https://www.metmuseum.org/art/collection/search/36490",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "note": "Quiet atmospheric Fuji from Thirty-six Views. Canonical series title retained in metadata.",
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP141062.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP141062.jpg"
+    ]
+  },
+  {
+    "id": "kajikazawa",
+    "title": "Kajikazawa in Kai Province",
+    "displayTitle": "Kajikazawa",
+    "artist": "Katsushika Hokusai",
+    "year": "ca. 1830–32",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "56727",
+    "accessionNumber": "JP2581",
+    "source": "https://www.metmuseum.org/art/collection/search/56727",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP140973.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP140973.jpg"
+    ]
+  },
+  {
+    "id": "mishima-pass",
+    "title": "Mishima Pass in Kai Province",
+    "displayTitle": "Mishima Pass",
+    "artist": "Katsushika Hokusai",
+    "year": "ca. 1830–32",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "56786",
+    "accessionNumber": "JP2556",
+    "source": "https://www.metmuseum.org/art/collection/search/56786",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP141043.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP141043.jpg"
+    ]
+  },
+  {
+    "id": "shower-below-summit",
+    "title": "Shower Below the Summit",
+    "displayTitle": "Shower Below the Summit",
+    "artist": "Katsushika Hokusai",
+    "year": "c. 1830/33",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "87008",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/87008",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/bbb6d024-f931-2e2f-eb95-750991834b1c/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "kinryuzan-asakusa",
+    "title": "The Kinryusan Temple at Asakusa",
+    "displayTitle": "Kinryusan Temple",
+    "artist": "Utagawa Hiroshige",
+    "year": "1856",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "53680",
+    "accessionNumber": "JP1025",
+    "source": "https://www.metmuseum.org/art/collection/search/53680",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP122116.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP122116.jpg"
+    ]
+  },
+  {
+    "id": "twilight-moon-ryogoku",
+    "title": "Twilight Moon at Ryōgoku Bridge",
+    "displayTitle": "Twilight Moon, Ryōgoku",
+    "artist": "Utagawa Hiroshige",
+    "year": "c. 1830s",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "45294",
+    "accessionNumber": "JP1312",
+    "source": "https://www.metmuseum.org/art/collection/search/45294",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP123224.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP123224.jpg"
+    ]
+  },
+  {
+    "id": "evening-snow-uchikawa",
+    "title": "Evening Snow at Uchikawa",
+    "displayTitle": "Evening Snow, Uchikawa",
+    "artist": "Utagawa Hiroshige",
+    "year": "ca. 1836",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "56890",
+    "accessionNumber": "JP2467",
+    "source": "https://www.metmuseum.org/art/collection/search/56890",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP120449.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP120449.jpg"
+    ]
+  },
+  {
+    "id": "autumn-moon-tama",
+    "title": "Autumn Moon on the Tama River",
+    "displayTitle": "Autumn Moon, Tama",
+    "artist": "Utagawa Hiroshige",
+    "year": "ca. 1838",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "56519",
+    "accessionNumber": "JP1887",
+    "source": "https://www.metmuseum.org/art/collection/search/56519",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/as/original/DP123257.jpg",
+      "https://images.metmuseum.org/CRDImages/as/web-large/DP123257.jpg"
+    ]
+  },
+  {
+    "id": "mishima-morning-mist",
+    "title": "Mishima: Morning Mist",
+    "displayTitle": "Mishima, Morning Mist",
+    "artist": "Utagawa Hiroshige",
+    "year": "c. 1833/34",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "10926",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/10926",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/c047003a-949c-a581-7c5a-2c415e8cac75/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "night-rain-karasaki",
+    "title": "Night Rain at Karasaki",
+    "displayTitle": "Night Rain, Karasaki",
+    "artist": "Utagawa Hiroshige",
+    "year": "c. 1835",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "152490",
+    "accessionNumber": "1985.312",
+    "source": "https://clevelandart.org/art/1985.312",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1985.312/1985.312_web.jpg"
+    ]
+  },
+  {
+    "id": "venice-salute",
+    "title": "Venice, from the Porch of Madonna della Salute",
+    "displayTitle": "Venice, Madonna della Salute",
+    "artist": "Joseph Mallord William Turner",
+    "year": "ca. 1835",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437853",
+    "accessionNumber": "99.31",
+    "source": "https://www.metmuseum.org/art/collection/search/437853",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP169568.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP169568.jpg"
+    ]
+  },
+  {
+    "id": "saltash-ferry",
+    "title": "Saltash with the Water Ferry, Cornwall",
+    "displayTitle": "Saltash Ferry",
+    "artist": "Joseph Mallord William Turner",
+    "year": "1811",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437852",
+    "accessionNumber": "89.15.9",
+    "source": "https://www.metmuseum.org/art/collection/search/437852",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP169566.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP169566.jpg"
+    ]
+  },
+  {
+    "id": "mortlake-terrace",
+    "title": "Mortlake Terrace",
+    "artist": "Joseph Mallord William Turner",
+    "year": "1827",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "116",
+    "accessionNumber": "1937.1.109",
+    "source": "https://www.nga.gov/artworks/116-mortlake-terrace",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/d90b641f-b6fe-4fc4-a520-69accf46513b/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/1/1/6/116-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "approach-to-venice",
+    "title": "Approach to Venice",
+    "artist": "Joseph Mallord William Turner",
+    "year": "1844",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "117",
+    "accessionNumber": "1937.1.110",
+    "source": "https://www.nga.gov/artworks/117-approach-venice",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/4f117b4f-4efe-4b2e-88e7-a01975003d95/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/1/1/7/117-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "keelmen-moonlight",
+    "title": "Keelmen Heaving in Coals by Moonlight",
+    "displayTitle": "Keelmen by Moonlight",
+    "artist": "Joseph Mallord William Turner",
+    "year": "1835",
+    "museum": "National Gallery of Art",
+    "museumObjectId": "1225",
+    "accessionNumber": "1942.9.86",
+    "source": "https://www.nga.gov/artworks/1225-keelmen-heaving-coals-moonlight",
+    "rights": "CC0 — National Gallery of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://api.nga.gov/iiif/c1e33e8d-ffe4-4d20-a267-87ffcf94f7ce/full/2000,/0/default.jpg",
+      "https://media.nga.gov/iiif/public/objects/1/2/2/5/1225-primary-0-nativeres.ptif/full/2000,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "the-ferryman",
+    "title": "The Ferryman",
+    "artist": "Camille Corot",
+    "year": "ca. 1865",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "435969",
+    "accessionNumber": "14.40.811",
+    "source": "https://www.metmuseum.org/art/collection/search/435969",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-24153-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-24153-001.jpg"
+    ]
+  },
+  {
+    "id": "fontainebleau-oaks",
+    "title": "Fontainebleau: Oak Trees at Bas-Bréau",
+    "displayTitle": "Fontainebleau Oaks",
+    "artist": "Camille Corot",
+    "year": "1832 or 1833",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "435970",
+    "accessionNumber": "1979.404",
+    "source": "https://www.metmuseum.org/art/collection/search/435970",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DT2009.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DT2009.jpg"
+    ]
+  },
+  {
+    "id": "ville-davray",
+    "title": "Ville-d'Avray",
+    "artist": "Camille Corot",
+    "year": "1870",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "435988",
+    "accessionNumber": "87.15.141",
+    "source": "https://www.metmuseum.org/art/collection/search/435988",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP-19283-001.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP-19283-001.jpg"
+    ]
+  },
+  {
+    "id": "pond-ville-davray",
+    "title": "Pond at Ville-d'Avray",
+    "artist": "Camille Corot",
+    "year": "late 1860s",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "124078",
+    "accessionNumber": "1944.80",
+    "source": "https://clevelandart.org/art/1944.80",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1944.80/1944.80_web.jpg"
+    ]
+  },
+  {
+    "id": "italian-landscape-corot",
+    "title": "Italian Landscape",
+    "artist": "Camille Corot",
+    "year": "ca. 1825–28",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "435973",
+    "accessionNumber": "50.71.2",
+    "source": "https://www.metmuseum.org/art/collection/search/435973",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP332568.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP332568.jpg"
+    ]
+  },
+  {
+    "id": "sunset-oise",
+    "title": "Sunset on the River Oise",
+    "displayTitle": "Sunset, River Oise",
+    "artist": "Charles François Daubigny",
+    "year": "1866",
+    "museum": "Cleveland Museum of Art",
+    "museumObjectId": "140338",
+    "accessionNumber": "1964.289",
+    "source": "https://clevelandart.org/art/1964.289",
+    "rights": "CC0 — Cleveland Museum of Art Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://openaccess-cdn.clevelandart.org/1964.289/1964.289_web.jpg"
+    ]
+  },
+  {
+    "id": "southampton-water",
+    "title": "Nocturne: Blue and Gold—Southampton Water",
+    "displayTitle": "Southampton Water",
+    "artist": "James McNeill Whistler",
+    "year": "1872",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "56905",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/56905",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/50034c7f-ce51-00f1-430e-a6f7efc233fc/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "cremorne-gardens",
+    "title": "Cremorne Gardens, No. 2",
+    "displayTitle": "Cremorne Gardens",
+    "artist": "James McNeill Whistler",
+    "year": "ca. 1870–80",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "13223",
+    "accessionNumber": "12.32",
+    "source": "https://www.metmuseum.org/art/collection/search/13223",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ad/original/DT2780.jpg",
+      "https://images.metmuseum.org/CRDImages/ad/web-large/DT2780.jpg"
+    ]
+  },
+  {
+    "id": "moonlight-wood-island",
+    "title": "Moonlight, Wood Island Light",
+    "displayTitle": "Wood Island Light",
+    "artist": "Winslow Homer",
+    "year": "1894",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "11127",
+    "accessionNumber": "11.116.2",
+    "source": "https://www.metmuseum.org/art/collection/search/11127",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ad/original/DP232469.jpg",
+      "https://images.metmuseum.org/CRDImages/ad/web-large/DP232469.jpg"
+    ]
+  },
+  {
+    "id": "flower-clouds",
+    "title": "Flower Clouds",
+    "artist": "Odilon Redon",
+    "year": "c. 1903",
+    "museum": "Art Institute of Chicago",
+    "museumObjectId": "76395",
+    "accessionNumber": "",
+    "source": "https://www.artic.edu/artworks/76395",
+    "rights": "CC0 — Art Institute of Chicago Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://www.artic.edu/iiif/2/fb2077d9-82cc-ca7e-f450-5471d7f78c9a/full/1600,/0/default.jpg"
+    ]
+  },
+  {
+    "id": "vase-flowers-pink",
+    "title": "Vase of Flowers (Pink Background)",
+    "displayTitle": "Vase of Flowers",
+    "artist": "Odilon Redon",
+    "year": "ca. 1906",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437382",
+    "accessionNumber": "59.16.3",
+    "source": "https://www.metmuseum.org/art/collection/search/437382",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DT2159.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DT2159.jpg"
+    ]
+  },
+  {
+    "id": "bouquet-chinese-vase",
+    "title": "Bouquet in a Chinese Vase",
+    "displayTitle": "Bouquet, Chinese Vase",
+    "artist": "Odilon Redon",
+    "year": "ca. 1912–14",
+    "museum": "The Metropolitan Museum of Art",
+    "museumObjectId": "437378",
+    "accessionNumber": "64.266",
+    "source": "https://www.metmuseum.org/art/collection/search/437378",
+    "rights": "CC0 — The Met Open Access",
+    "isPublicDomain": true,
+    "urls": [
+      "https://images.metmuseum.org/CRDImages/ep/original/DP240599.jpg",
+      "https://images.metmuseum.org/CRDImages/ep/web-large/DP240599.jpg"
+    ]
+  }
+]

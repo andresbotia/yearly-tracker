@@ -1,6 +1,7 @@
 // components/HabitHistory.js
+// Presentation-only redesign. Month/year math and stored checks are unchanged.
 
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,15 +10,24 @@ import {
   Platform,
   Pressable,
 } from "react-native";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../utils/tokens";
+import { habitStateChar, habitStateLabel } from "../utils/habitAscii";
+import { useFontsLoaded } from "../utils/fonts";
+import { hapticTick } from "../utils/motion";
+import MetadataLabel from "./editorial/MetadataLabel";
+import EditorialEmpty from "./editorial/EditorialEmpty";
+import SectionRule from "./editorial/SectionRule";
+import EditorialSurface from "./editorial/EditorialSurface";
+import PressableInk from "./motion/PressableInk";
 
 const ANDROID = Platform.OS === "android";
 
 const HISTORY_SQUARE = 22;
 const HISTORY_LABEL_W = 150;
 const HISTORY_LABEL_GAP = 12;
-const HISTORY_ROW_HEIGHT = 52;
-const HISTORY_ROW_GAP = 10;
-const HISTORY_CELL_GAP = 6;
+const HISTORY_ROW_HEIGHT = 44;
+const HISTORY_ROW_GAP = 4;
+const HISTORY_CELL_GAP = 4;
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -40,17 +50,37 @@ function monthDays(year, monthIndex) {
   return out;
 }
 
+const MONTH_SHORT = [
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC",
+];
+
 export default function HabitHistory({
   theme,
   habits,
   historyYear,
   onBack,
+  onOpenArchive,
   todayDate,
 }) {
+  const fontsLoaded = useFontsLoaded();
   const todayYear = todayDate.getFullYear();
   const todayMonth = todayDate.getMonth();
   const currentMonthScrollRef = useRef(null);
   const didScrollRef = useRef(false);
+  const [selectedMonth, setSelectedMonth] = useState(
+    historyYear === todayYear ? todayMonth : 0,
+  );
 
   const months = useMemo(() => {
     if (historyYear > todayYear) return [];
@@ -84,61 +114,186 @@ export default function HabitHistory({
     });
   }, [historyYear, todayYear, todayDate]);
 
+  useEffect(() => {
+    const maxMonth = historyYear < todayYear ? 11 : todayMonth;
+    setSelectedMonth((current) => Math.min(current, maxMonth));
+  }, [historyYear, todayYear, todayMonth]);
+
+  const ink = theme.text;
+  const muted = theme.mutedText;
+  const selected = months.find((m) => m.monthIndex === selectedMonth) || months[0];
+  const availableMonths = useMemo(() => {
+    const maxMonth = historyYear < todayYear ? 11 : todayMonth;
+    const out = [];
+    for (let m = 0; m <= maxMonth; m += 1) {
+      out.push(m);
+    }
+    return out;
+  }, [historyYear, todayYear, todayMonth]);
+
   return (
     <View>
-      <View style={styles.historyHeader}>
+      <EditorialSurface theme={theme} style={styles.historyHeader}>
         <View style={[styles.historyTitleRow, ANDROID && styles.noGap]}>
-          <Text style={[styles.historyTitle, { color: theme.text }]}>
-            Habit History
-          </Text>
-          <Pressable
-            onPress={onBack}
-            style={({ pressed }) => [
-              styles.historyBackBtn,
-              {
-                borderColor: theme.border,
-                backgroundColor: pressed ? theme.border : theme.card,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Back to habits"
-          >
-            <Text style={[styles.historyBackText, { color: theme.text }]}>
-              Back
+          <View style={styles.historyTitleCol}>
+            <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
+              {`ARCHIVE  /  ${historyYear}`}
+            </MetadataLabel>
+            <Text
+              style={[
+                styles.historyTitle,
+                { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
+              ]}
+            >
+              Habit history
             </Text>
-          </Pressable>
+          </View>
+          <View style={styles.historyActions}>
+            {onOpenArchive ? (
+              <PressableInk
+                onPress={onOpenArchive}
+                style={[styles.historyBackBtn, { borderColor: theme.text }]}
+                accessibilityRole="button"
+                accessibilityLabel="Open year archive"
+              >
+                <Text
+                  style={[
+                    styles.historyBackText,
+                    {
+                      color: ink,
+                      fontFamily: fontFamily("data", fontsLoaded),
+                    },
+                  ]}
+                >
+                  Archive
+                </Text>
+              </PressableInk>
+            ) : null}
+            <PressableInk
+              onPress={onBack}
+              style={[styles.historyBackBtn, { borderColor: theme.text }]}
+              accessibilityRole="button"
+              accessibilityLabel="Back to habits"
+            >
+              <Text
+                style={[
+                  styles.historyBackText,
+                  {
+                    color: ink,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+              >
+                Back
+              </Text>
+            </PressableInk>
+          </View>
         </View>
-        <Text style={[styles.historySub, { color: theme.mutedText }]}>
-          Scroll through the months you have completed so far.
+        <Text
+          style={[
+            styles.historySub,
+            { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
+          ]}
+        >
+          . empty   + good   × bad
         </Text>
-      </View>
+      </EditorialSurface>
 
-      <View style={[styles.divider, { backgroundColor: theme.border }]} />
+      <SectionRule theme={theme} />
+
+      {availableMonths.length > 0 && habits.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.monthStrip}
+        >
+          {availableMonths.map((m) => {
+            const on = m === selectedMonth;
+            return (
+              <Pressable
+                key={MONTH_SHORT[m]}
+                onPress={() => {
+                  if (m === selectedMonth) return;
+                  hapticTick();
+                  setSelectedMonth(m);
+                  didScrollRef.current = false;
+                }}
+                style={styles.monthChip}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={MONTH_SHORT[m]}
+              >
+                <Text
+                  style={[
+                    styles.monthChipText,
+                    {
+                      color: on ? ink : muted,
+                      fontFamily: fontFamily("data", fontsLoaded),
+                    },
+                  ]}
+                >
+                  {MONTH_SHORT[m]}
+                </Text>
+                {on ? (
+                  <View style={[styles.monthChipRule, { backgroundColor: ink }]} />
+                ) : (
+                  <View style={styles.monthChipRule} />
+                )}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
 
       {habits.length === 0 || months.length === 0 ? (
-        <View style={styles.historyEmptyWrap}>
-          <Text style={[styles.historyEmptyTitle, { color: theme.text }]}>
-            No habits yet
-          </Text>
-          <Text style={[styles.historyEmptySub, { color: theme.mutedText }]}>
-            Add a habit to start seeing your monthly history.
-          </Text>
-        </View>
+        <EditorialEmpty
+          theme={theme}
+          kicker="Ledger"
+          title="No habits yet"
+          body="Add a habit to start seeing your monthly archive."
+        />
       ) : (
         <View style={styles.monthsStack}>
-          {months.map((month) => {
+          {(selected ? [selected] : months).map((month, monthIdx) => {
             const isCurrentMonth =
-              historyYear === todayYear &&
-              month.monthIndex === todayMonth;
+              historyYear === todayYear && month.monthIndex === todayMonth;
+            const indexLabel = String(month.monthIndex + 1).padStart(2, "0");
 
             return (
               <View key={month.label} style={styles.monthSection}>
                 <View style={styles.monthHeaderRow}>
-                  <Text style={[styles.monthTitle, { color: theme.text }]}>
+                  <Text
+                    style={[
+                      styles.monthIndex,
+                      {
+                        color: muted,
+                        fontFamily: fontFamily("data", fontsLoaded),
+                      },
+                    ]}
+                  >
+                    {indexLabel}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.monthTitle,
+                      {
+                        color: ink,
+                        fontFamily: fontFamily("display", fontsLoaded),
+                      },
+                    ]}
+                  >
                     {month.label}
                   </Text>
-                  <Text style={[styles.monthMeta, { color: theme.mutedText }]}>
-                    {month.days.length} days
+                  <Text
+                    style={[
+                      styles.monthMeta,
+                      {
+                        color: muted,
+                        fontFamily: fontFamily("data", fontsLoaded),
+                      },
+                    ]}
+                  >
+                    {`${month.days.length} DAYS`}
                   </Text>
                 </View>
 
@@ -156,7 +311,10 @@ export default function HabitHistory({
                       <Text
                         style={[
                           styles.historyLabelHeaderText,
-                          { color: theme.mutedText },
+                          {
+                            color: muted,
+                            fontFamily: fontFamily("data", fontsLoaded),
+                          },
                         ]}
                       >
                         Habits
@@ -180,31 +338,30 @@ export default function HabitHistory({
                           <Text
                             style={[
                               styles.historyLabelText,
-                              { color: theme.text },
+                              {
+                                color: ink,
+                                fontFamily: fontFamily(
+                                  "display",
+                                  fontsLoaded,
+                                ),
+                              },
                             ]}
                             numberOfLines={1}
                             ellipsizeMode="tail"
                           >
                             {habit.title}
                           </Text>
-                          <View
+                          <Text
                             style={[
-                              styles.historyBadge,
+                              styles.historyCount,
                               {
-                                borderColor: theme.border,
-                                backgroundColor: theme.card,
+                                color: muted,
+                                fontFamily: fontFamily("data", fontsLoaded),
                               },
                             ]}
                           >
-                            <Text
-                              style={[
-                                styles.historyBadgeText,
-                                { color: theme.text },
-                              ]}
-                            >
-                              {doneCount}/{month.days.length}
-                            </Text>
-                          </View>
+                            {`${doneCount}/${month.days.length}`}
+                          </Text>
                         </View>
                       );
                     })}
@@ -228,10 +385,16 @@ export default function HabitHistory({
                             <Text
                               style={[
                                 styles.historyDayText,
-                                { color: theme.mutedText },
+                                {
+                                  color: muted,
+                                  fontFamily: fontFamily(
+                                    "data",
+                                    fontsLoaded,
+                                  ),
+                                },
                               ]}
                             >
-                              {d.num}
+                              {String(d.num).padStart(2, "0")}
                             </Text>
                           </View>
                         ))}
@@ -249,27 +412,43 @@ export default function HabitHistory({
                             const v = (habit.checks || {})[d.key] || 0;
                             const isFuture =
                               isCurrentMonth && d.num > todayDate.getDate();
-                            const bg =
+                            const char = habitStateChar(v);
+                            const color =
                               v === 1
                                 ? theme.primary
                                 : v === 2
                                   ? theme.danger
-                                  : "transparent";
+                                  : muted;
 
                             return (
                               <View
                                 key={d.key}
                                 style={[
-                                  styles.historySquare,
+                                  styles.historyCell,
                                   {
                                     width: HISTORY_SQUARE,
                                     height: HISTORY_SQUARE,
-                                    borderColor: theme.border,
-                                    backgroundColor: bg,
                                     opacity: isFuture ? 0.35 : 1,
                                   },
                                 ]}
-                              />
+                                accessible
+                                accessibilityLabel={`${habit.title} ${d.key} ${habitStateLabel(v)}`}
+                              >
+                                <Text
+                                  style={[
+                                    styles.historyChar,
+                                    {
+                                      color,
+                                      fontFamily: fontFamily(
+                                        "data",
+                                        fontsLoaded,
+                                      ),
+                                    },
+                                  ]}
+                                >
+                                  {char}
+                                </Text>
+                              </View>
                             );
                           })}
                         </View>
@@ -277,6 +456,7 @@ export default function HabitHistory({
                     </View>
                   </ScrollView>
                 </View>
+                <SectionRule theme={theme} />
               </View>
             );
           })}
@@ -287,62 +467,126 @@ export default function HabitHistory({
 }
 
 const styles = StyleSheet.create({
-  historyHeader: { marginTop: 12 },
+  historyHeader: { marginTop: SPACE.xs, gap: SPACE["2xs"] },
   historyTitleRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 10,
+    gap: SPACE.sm,
   },
-  historyTitle: { fontSize: 22, fontWeight: "950", letterSpacing: 0.2 },
-  historySub: { marginTop: 6, fontSize: 12, fontWeight: "700" },
+  historyTitleCol: {
+    flex: 1,
+    minWidth: 0,
+    gap: SPACE["3xs"],
+  },
+  historyTitle: {
+    fontSize: TYPE_SIZE.bodyLg,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+  },
+  historySub: {
+    marginTop: SPACE["3xs"],
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.data,
+    textTransform: "uppercase",
+  },
+  historyActions: {
+    flexDirection: "row",
+    gap: SPACE.xs,
+    flexShrink: 0,
+  },
   historyBackBtn: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: SPACE.xs,
+    paddingHorizontal: SPACE.sm,
+    minHeight: 36,
+    justifyContent: "center",
   },
-  historyBackText: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
+  historyBackText: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
 
-  divider: { marginTop: 16, height: 1 },
-
-  monthsStack: { marginTop: 12, gap: 22 },
-  monthSection: { gap: 10 },
+  monthStrip: {
+    gap: SPACE.sm,
+    paddingVertical: SPACE.sm,
+    paddingRight: SPACE.sm,
+  },
+  monthChip: {
+    minWidth: 36,
+    minHeight: 36,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    paddingBottom: 4,
+  },
+  monthChipText: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+  },
+  monthChipRule: {
+    marginTop: 4,
+    height: 1,
+    width: 22,
+  },
+  monthsStack: { marginTop: SPACE.xs, gap: SPACE.lg },
+  monthSection: { gap: SPACE.sm },
   monthHeaderRow: {
     flexDirection: "row",
     alignItems: "baseline",
-    justifyContent: "space-between",
-    gap: 10,
+    gap: SPACE.sm,
   },
-  monthTitle: { fontSize: 18, fontWeight: "900", letterSpacing: 0.2 },
-  monthMeta: { fontSize: 12, fontWeight: "800" },
+  monthIndex: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.data,
+    width: 22,
+  },
+  monthTitle: {
+    flex: 1,
+    flexShrink: 1,
+    fontSize: TYPE_SIZE.bodyLg,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+  },
+  monthMeta: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.data,
+  },
 
-  historyGrid: { marginTop: 10, flexDirection: "row" },
+  historyGrid: { marginTop: SPACE.xs, flexDirection: "row" },
   historyLabelCol: { flexShrink: 0 },
   historyLabelHeader: {
     height: HISTORY_ROW_HEIGHT,
     justifyContent: "center",
   },
   historyLabelHeaderText: {
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 0.4,
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.kicker,
     textTransform: "uppercase",
   },
   historyLabelRow: {
     height: HISTORY_ROW_HEIGHT,
     justifyContent: "center",
-    gap: 6,
+    gap: 2,
   },
-  historyLabelText: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
-  historyBadge: {
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+  historyLabelText: {
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
   },
-  historyBadgeText: { fontSize: 11, fontWeight: "900", letterSpacing: 0.2 },
+  historyCount: {
+    fontSize: TYPE_SIZE.kicker,
+    letterSpacing: TYPE_TRACK.data,
+  },
   historyDaysRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -354,7 +598,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  historyDayText: { fontSize: 11, fontWeight: "900" },
+  historyDayText: { fontSize: 9, fontWeight: "600", letterSpacing: 0.2 },
   historySquaresRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -362,15 +606,16 @@ const styles = StyleSheet.create({
     gap: HISTORY_CELL_GAP,
   },
   historyRowGap: { marginBottom: HISTORY_ROW_GAP },
-  historySquare: { borderWidth: 1, borderRadius: 7 },
-  historyEmptyWrap: { paddingVertical: 32, alignItems: "center" },
-  historyEmptyTitle: { fontSize: 16, fontWeight: "900" },
-  historyEmptySub: {
-    marginTop: 6,
-    fontSize: 12,
-    fontWeight: "700",
-    textAlign: "center",
-    maxWidth: 240,
+  historyCell: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyChar: {
+    fontSize: 14,
+    lineHeight: 16,
+    ...Platform.select({
+      android: { includeFontPadding: false },
+    }),
   },
 
   noGap: { gap: 0 },

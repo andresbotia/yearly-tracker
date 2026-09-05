@@ -1,97 +1,104 @@
 // features/share/ShareCards.js
+// Presentation only. Share data calculations live in shareData.js.
 
 import React from "react";
-import { View, Text, StyleSheet, Platform } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { View, Text, StyleSheet } from "react-native";
 import {
   ShareCardFrame,
   useScale,
-  hexToRgba,
 } from "../../components/share/ShareCardFrame";
 import { ShareWeeklyRecapCard } from "../../components/share/cards/WeeklyRecapCard";
+import { asciiBar } from "../../components/editorial/EditorialProgress";
+import { habitStateChar } from "../../utils/habitAscii";
+import { fontFamily } from "../../utils/tokens";
+import { useFontsLoaded } from "../../utils/fonts";
 
-function CardShell({ title, subtitle, width, height, theme, children }) {
+function PosterShell({
+  title,
+  subtitle,
+  width,
+  height,
+  theme,
+  kicker,
+  children,
+}) {
   const { s } = useScale(width);
-  const surfaceBg = hexToRgba(theme.card, 0.42);
+  const fontsLoaded = useFontsLoaded();
 
   return (
     <ShareCardFrame
       width={width}
       height={height}
       theme={theme}
-      // important: don't stretch children vertically
+      kicker={kicker || "Yearly Tracker"}
       contentStyle={{
-        padding: s(32),
+        padding: s(72),
         justifyContent: "flex-start",
         alignItems: "stretch",
       }}
     >
-      <View
+      <Text
         style={[
-          styles.surface,
+          styles.title,
           {
-            // important: let the surface hug content
-            alignSelf: "stretch",
-            borderRadius: s(30),
-            padding: s(26),
-            backgroundColor: surfaceBg,
-            borderColor: hexToRgba(theme.border, 0.6),
+            fontSize: s(56),
+            color: theme.text,
+            fontFamily: fontFamily("display", fontsLoaded),
+            marginTop: s(18),
           },
         ]}
       >
-        <Text style={[styles.title, { fontSize: s(40), color: theme.text }]}>
-          {title}
+        {String(title || "").toUpperCase()}
+      </Text>
+      {!!subtitle && (
+        <Text
+          style={[
+            styles.subtitle,
+            {
+              fontSize: s(24),
+              color: theme.mutedText,
+              marginTop: s(10),
+              fontFamily: fontFamily("body", fontsLoaded),
+            },
+          ]}
+        >
+          {subtitle}
         </Text>
-
-        {!!subtitle && (
-          <Text
-            style={[
-              styles.subtitle,
-              { fontSize: s(22), color: theme.mutedText, marginTop: s(10) },
-            ]}
-          >
-            {subtitle}
-          </Text>
-        )}
-
-        {/* important: do NOT flex:1 */}
-        <View style={{ marginTop: s(16) }}>{children}</View>
-      </View>
+      )}
+      <View style={{ marginTop: s(28) }}>{children}</View>
     </ShareCardFrame>
   );
 }
 
-function InfoChip({ icon, label, value, width, theme, tint }) {
+function MetaLine({ label, value, width, theme }) {
   const { s } = useScale(width);
+  const fontsLoaded = useFontsLoaded();
   return (
-    <View
-      style={[
-        styles.infoChip,
-        {
-          borderRadius: s(18),
-          paddingVertical: s(10),
-          paddingHorizontal: s(14),
-          backgroundColor: hexToRgba(theme.card, 0.72),
-          borderColor: hexToRgba(theme.border, 0.6),
-        },
-      ]}
-    >
-      <Ionicons name={icon} size={s(18)} color={tint || theme.primary} />
-      <View style={{ marginLeft: s(8) }}>
-        <Text
-          style={[styles.infoValue, { fontSize: s(18), color: theme.text }]}
-        >
-          {value}
-        </Text>
-        <Text
-          style={[
-            styles.infoLabel,
-            { fontSize: s(14), color: theme.mutedText },
-          ]}
-        >
-          {label}
-        </Text>
-      </View>
+    <View style={[styles.metaRow, { borderBottomColor: theme.border }]}>
+      <Text
+        style={[
+          styles.metaLabel,
+          {
+            fontSize: s(18),
+            color: theme.mutedText,
+            fontFamily: fontFamily("data", fontsLoaded),
+          },
+        ]}
+      >
+        {String(label).toUpperCase()}
+      </Text>
+      <Text
+        style={[
+          styles.metaValue,
+          {
+            fontSize: s(22),
+            color: theme.text,
+            fontFamily: fontFamily("display", fontsLoaded),
+          },
+        ]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
@@ -100,6 +107,7 @@ export { ShareWeeklyRecapCard };
 
 export function ShareGoalProgressCard({ data, width, height, theme }) {
   const { s } = useScale(width);
+  const fontsLoaded = useFontsLoaded();
   const safe = data || {
     title: "Select a goal",
     pct: 0,
@@ -111,221 +119,150 @@ export function ShareGoalProgressCard({ data, width, height, theme }) {
   const pct = Math.max(0, Math.min(100, Math.round(safe.pct || 0)));
   const progressValue =
     safe.type === "count"
-      ? `${safe.progress}/${safe.target}`
+      ? `${safe.progress} / ${safe.target}`
       : safe.isComplete
-        ? "Done"
-        : "Not yet";
-  const statusText = safe.isComplete ? "Complete" : "In progress";
+        ? "Complete"
+        : "Incomplete";
 
   return (
-    <CardShell
-      title="Goal Progress"
-      subtitle={safe.title}
+    <PosterShell
+      title={safe.title}
+      subtitle="Goal progress"
       width={width}
       height={height}
       theme={theme}
+      kicker="Catalogue"
     >
-      <View style={styles.goalHeroRow}>
-        <View>
-          <Text
-            style={[styles.heroValue, { fontSize: s(92), color: theme.text }]}
-          >
-            {pct}%
-          </Text>
-          <Text
-            style={[
-              styles.heroLabel,
-              { fontSize: s(18), color: theme.mutedText },
-            ]}
-          >
-            Goal completion
-          </Text>
-        </View>
-        <View
-          style={[
-            styles.goalBadge,
-            {
-              borderRadius: s(16),
-              paddingVertical: s(8),
-              paddingHorizontal: s(12),
-              backgroundColor: hexToRgba(theme.card, 0.86),
-              borderColor: hexToRgba(theme.border, 0.6),
-              shadowColor: "#000",
-              shadowOpacity: 0.16,
-              shadowRadius: s(10),
-              shadowOffset: { width: 0, height: s(6) },
-              elevation: Platform.OS === "android" ? s(4) : 0,
-            },
-          ]}
-        >
-          <Ionicons
-            name={safe.isComplete ? "trophy" : "trending-up"}
-            size={s(18)}
-            color={theme.primary}
-          />
-          <Text
-            style={[
-              styles.goalBadgeText,
-              { fontSize: s(14), color: theme.text, marginLeft: s(6) },
-            ]}
-          >
-            {statusText}
-          </Text>
-        </View>
-      </View>
-
-      <View
+      <Text
         style={[
-          styles.progressTrack,
+          styles.hero,
           {
-            marginTop: s(16),
-            height: s(16),
-            borderRadius: s(12),
-            backgroundColor: hexToRgba(theme.border, 0.85),
-            borderColor: hexToRgba(theme.border, 0.6),
+            fontSize: s(140),
+            color: theme.text,
+            fontFamily: fontFamily("display", fontsLoaded),
           },
         ]}
       >
-        <View
-          style={[
-            styles.progressFill,
-            {
-              height: "100%",
-              width: `${pct}%`,
-              backgroundColor: theme.primary,
-              borderRadius: s(12),
-            },
-          ]}
-        >
-          <View style={styles.progressHighlight} />
-        </View>
-      </View>
-
-      <View style={[styles.chipRow, { marginTop: s(16), gap: s(10) }]}>
-        <InfoChip
-          icon="analytics"
+        {pct}%
+      </Text>
+      <Text
+        style={[
+          styles.bar,
+          {
+            fontSize: s(22),
+            color: theme.text,
+            fontFamily: fontFamily("data", fontsLoaded),
+            marginTop: s(8),
+          },
+        ]}
+      >
+        {asciiBar(pct, 28, "+", ".")}
+      </Text>
+      <View style={{ marginTop: s(28), gap: s(12) }}>
+        <MetaLine
           label="Progress"
           value={progressValue}
           width={width}
           theme={theme}
-          tint={theme.primary}
         />
-        <InfoChip
-          icon={safe.isComplete ? "checkmark-circle" : "time"}
+        <MetaLine
           label="Status"
-          value={statusText}
+          value={safe.isComplete ? "Complete" : "In progress"}
           width={width}
           theme={theme}
-          tint={hexToRgba(theme.text, 0.7)}
         />
       </View>
-    </CardShell>
+    </PosterShell>
   );
 }
 
 export function ShareHabitStreakCard({ data, width, height, theme }) {
   const { s } = useScale(width);
+  const fontsLoaded = useFontsLoaded();
   const safe = data || { title: "Select a habit", streak: 0, last14: [] };
+  const ledger = (safe.last14 || [])
+    .map((d) => habitStateChar(d.state))
+    .join(" ");
 
   return (
-    <CardShell
-      title="Habit Streak"
-      subtitle={safe.title}
+    <PosterShell
+      title={safe.title}
+      subtitle="Habit streak"
       width={width}
       height={height}
       theme={theme}
+      kicker="Ledger"
     >
-      <View
+      <Text
         style={[
           styles.hero,
           {
-            borderRadius: s(24),
-            backgroundColor: hexToRgba(theme.card, 0.9),
-            borderColor: hexToRgba(theme.border, 0.6),
-            padding: s(20),
-            shadowColor: "#000",
-            shadowOpacity: 0.14,
-            shadowRadius: s(12),
-            shadowOffset: { width: 0, height: s(6) },
-            elevation: Platform.OS === "android" ? s(4) : 0,
+            fontSize: s(140),
+            color: theme.text,
+            fontFamily: fontFamily("display", fontsLoaded),
           },
         ]}
       >
-        <Text
-          style={[styles.heroValue, { fontSize: s(86), color: theme.text }]}
-        >
-          {safe.streak}
-        </Text>
-        <Text
-          style={[
-            styles.heroLabel,
-            { fontSize: s(18), color: theme.mutedText },
-          ]}
-        >
-          Day streak
-        </Text>
-      </View>
-
+        {safe.streak}
+      </Text>
       <Text
         style={[
-          styles.sectionTitle,
-          { fontSize: s(20), color: theme.text, marginTop: s(16) },
+          styles.heroLabel,
+          {
+            fontSize: s(22),
+            color: theme.mutedText,
+            fontFamily: fontFamily("data", fontsLoaded),
+          },
         ]}
       >
-        Last 14 days
+        DAY STREAK
       </Text>
-      <View style={[styles.streakRow, { gap: s(8), marginTop: s(12) }]}>
-        {(safe.last14 || []).map((d) => {
-          const isComplete = d.state === 1 || d.state === 2;
-          const bg = isComplete ? theme.primary : "transparent";
-          const border = isComplete
-            ? hexToRgba(theme.primary, 0.4)
-            : hexToRgba(theme.border, 0.9);
-          return (
-            <View
-              key={d.key}
-              style={{
-                width: s(34),
-                height: s(34),
-                borderRadius: s(10),
-                borderWidth: 2,
-                borderColor: border,
-                backgroundColor: bg,
-              }}
-            />
-          );
-        })}
-      </View>
-      <View style={[styles.legendRow, { marginTop: s(10), gap: s(12) }]}>
-        <View style={styles.legendItem}>
-          <View
-            style={[
-              styles.legendDot,
-              { backgroundColor: theme.primary, borderColor: theme.primary },
-            ]}
-          />
-          <Text style={[styles.legendText, { color: theme.mutedText }]}>
-            Completed
-          </Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View
-            style={[
-              styles.legendDot,
-              { backgroundColor: "transparent", borderColor: theme.border },
-            ]}
-          />
-          <Text style={[styles.legendText, { color: theme.mutedText }]}>
-            Missed
-          </Text>
-        </View>
-      </View>
-    </CardShell>
+      <Text
+        style={[
+          styles.section,
+          {
+            fontSize: s(18),
+            color: theme.mutedText,
+            marginTop: s(36),
+            fontFamily: fontFamily("data", fontsLoaded),
+          },
+        ]}
+      >
+        LAST 14 DAYS
+      </Text>
+      <Text
+        style={[
+          styles.ledger,
+          {
+            fontSize: s(28),
+            color: theme.text,
+            marginTop: s(12),
+            fontFamily: fontFamily("data", fontsLoaded),
+          },
+        ]}
+      >
+        {ledger || ". . . . . . . . . . . . . ."}
+      </Text>
+      <Text
+        style={[
+          styles.legend,
+          {
+            fontSize: s(16),
+            color: theme.mutedText,
+            marginTop: s(16),
+            fontFamily: fontFamily("data", fontsLoaded),
+          },
+        ]}
+      >
+        . empty    + good    × bad
+      </Text>
+    </PosterShell>
   );
 }
 
 export function ShareYearSoFarCard({ data, width, height, theme }) {
   const { s } = useScale(width);
+  const fontsLoaded = useFontsLoaded();
   const safe = data || {
     year: new Date().getFullYear(),
     goalsComplete: 0,
@@ -336,133 +273,82 @@ export function ShareYearSoFarCard({ data, width, height, theme }) {
   };
   const completed = (safe.good || 0) + (safe.bad || 0);
   const missed = safe.missed || 0;
-  const total = completed + missed;
-  const showTotal = total > 0;
+  const pct = Math.max(0, Math.min(100, Math.round(safe.avgProgress || 0)));
 
   return (
-    <CardShell
-      title="Year So Far"
-      subtitle={String(safe.year)}
+    <PosterShell
+      title={String(safe.year)}
+      subtitle="Year so far"
       width={width}
       height={height}
       theme={theme}
+      kicker="Annual"
     >
-      <View
+      <Text
         style={[
           styles.hero,
           {
-            borderRadius: s(24),
-            backgroundColor: hexToRgba(theme.card, 0.9),
-            borderColor: hexToRgba(theme.border, 0.6),
-            padding: s(20),
-            shadowColor: "#000",
-            shadowOpacity: 0.14,
-            shadowRadius: s(12),
-            shadowOffset: { width: 0, height: s(6) },
-            elevation: Platform.OS === "android" ? s(4) : 0,
+            fontSize: s(140),
+            color: theme.text,
+            fontFamily: fontFamily("display", fontsLoaded),
           },
         ]}
       >
-        <Text
-          style={[styles.heroValue, { fontSize: s(86), color: theme.text }]}
-        >
-          {safe.avgProgress}%
-        </Text>
-        <Text
-          style={[
-            styles.heroLabel,
-            { fontSize: s(18), color: theme.mutedText },
-          ]}
-        >
-          Avg progress
-        </Text>
-      </View>
-
-      <View style={[styles.chipRow, { marginTop: s(16), gap: s(10) }]}>
-        <InfoChip
-          icon="trophy"
+        {pct}%
+      </Text>
+      <Text
+        style={[
+          styles.bar,
+          {
+            fontSize: s(22),
+            color: theme.text,
+            fontFamily: fontFamily("data", fontsLoaded),
+            marginTop: s(8),
+          },
+        ]}
+      >
+        {asciiBar(pct, 28, "+", ".")}
+      </Text>
+      <View style={{ marginTop: s(32), gap: s(12) }}>
+        <MetaLine
           label="Goals done"
           value={safe.goalsComplete}
           width={width}
           theme={theme}
-          tint={theme.primary}
         />
-        <InfoChip
-          icon="checkmark-circle"
-          label="Completed"
+        <MetaLine
+          label="Checks"
           value={completed}
           width={width}
           theme={theme}
-          tint={hexToRgba(theme.text, 0.7)}
         />
-        <InfoChip
-          icon="remove-circle"
-          label="Missed"
-          value={missed}
-          width={width}
-          theme={theme}
-          tint={hexToRgba(theme.text, 0.7)}
-        />
-        {showTotal && (
-          <InfoChip
-            icon="analytics"
-            label="Total"
-            value={total}
-            width={width}
-            theme={theme}
-            tint={hexToRgba(theme.text, 0.7)}
-          />
-        )}
+        <MetaLine label="Missed" value={missed} width={width} theme={theme} />
       </View>
-    </CardShell>
+    </PosterShell>
   );
 }
 
 const styles = StyleSheet.create({
-  surface: { borderWidth: 1, alignSelf: "stretch" },
-  title: { fontWeight: "900", letterSpacing: 0.4 },
-  subtitle: { fontWeight: "700" },
-  hero: { borderWidth: 1 },
-  heroValue: { fontWeight: "900", letterSpacing: 0.6 },
-  heroLabel: { fontWeight: "700" },
-  sectionTitle: { fontWeight: "900", letterSpacing: 0.2 },
-  progressTrack: { overflow: "hidden", borderWidth: 1 },
-  progressFill: { justifyContent: "center" },
-  progressHighlight: {
-    height: 2,
-    marginHorizontal: 6,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.5)",
+  title: {
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    fontStyle: "normal",
   },
-  streakRow: { flexDirection: "row", flexWrap: "wrap" },
-  legendRow: { flexDirection: "row", alignItems: "center" },
-  legendItem: { flexDirection: "row", alignItems: "center" },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderWidth: 1,
-    marginRight: 6,
-  },
-  legendText: { fontSize: 12, fontWeight: "700" },
-  goalHeroRow: {
+  subtitle: { fontWeight: "400" },
+  hero: { fontWeight: "700", letterSpacing: 0.4, fontStyle: "normal" },
+  heroLabel: { fontWeight: "600", letterSpacing: 2, marginTop: 4 },
+  bar: { letterSpacing: 2 },
+  section: { fontWeight: "600", letterSpacing: 2 },
+  ledger: { letterSpacing: 4 },
+  legend: { letterSpacing: 1.4 },
+  metaRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "baseline",
     justifyContent: "space-between",
-    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(28,25,22,0.18)",
+    paddingBottom: 8,
   },
-  goalBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-  },
-  goalBadgeText: { fontWeight: "800", letterSpacing: 0.2 },
-  chipRow: { flexDirection: "row", flexWrap: "wrap" },
-  infoChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-  },
-  infoValue: { fontWeight: "800" },
-  infoLabel: { fontWeight: "700" },
+  metaLabel: { fontWeight: "600", letterSpacing: 1.6 },
+  metaValue: { fontWeight: "700", fontStyle: "normal" },
 });

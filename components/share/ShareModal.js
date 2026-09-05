@@ -1,6 +1,7 @@
 // components/share/ShareModal.js
+// Same options, capture, and native share. Visual language only.
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Modal,
   View,
@@ -10,48 +11,42 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import ViewShot from "react-native-view-shot";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "../../utils/tokens";
+import { useFontsLoaded } from "../../utils/fonts";
+import { useReducedMotion } from "../../utils/motion";
+import AtelierSheet, { AtelierActions } from "../atelier/AtelierSheet";
+import PressableInk from "../motion/PressableInk";
 
 const ANDROID = Platform.OS === "android";
 
-function OptionTile({ option, selected, theme, onPress }) {
+function OptionTile({ option, selected, theme, onPress, fontsLoaded }) {
   return (
-    <Pressable
+    <PressableInk
       onPress={onPress}
-      style={({ pressed }) => [
+      haptic="tick"
+      style={[
         styles.optionTile,
         {
-          backgroundColor: selected
-            ? pressed
-              ? theme.primaryPressed
-              : theme.primary
-            : pressed
-              ? theme.border
-              : theme.bg,
-          borderColor: selected ? theme.primary : theme.border,
+          backgroundColor: selected ? theme.text : "transparent",
+          borderColor: selected ? theme.text : theme.border,
         },
       ]}
+      innerStyle={styles.optionInner}
     >
-      {selected && (
-        <View
-          style={[
-            styles.optionCheck,
-            { backgroundColor: theme.primary, borderColor: theme.primary },
-          ]}
-        >
-          <Ionicons name="checkmark" size={12} color={theme.primaryTextOn} />
-        </View>
-      )}
-      <Ionicons
-        name={option.icon}
-        size={22}
-        color={selected ? theme.primaryTextOn : theme.text}
-      />
       <Text
         style={[
           styles.optionLabel,
-          { color: selected ? theme.primaryTextOn : theme.text },
+          {
+            color: selected ? theme.card || "#f6f3ec" : theme.text,
+            fontFamily: fontFamily("data", fontsLoaded),
+          },
         ]}
       >
         {option.label}
@@ -61,14 +56,73 @@ function OptionTile({ option, selected, theme, onPress }) {
           style={[
             styles.optionDesc,
             {
-              color: selected ? theme.primaryTextOn : theme.mutedText,
+              color: selected ? theme.card || "#f6f3ec" : theme.mutedText,
+              fontFamily: fontFamily("body", fontsLoaded),
             },
           ]}
         >
           {option.description}
         </Text>
       )}
-    </Pressable>
+    </PressableInk>
+  );
+}
+
+function PrintReveal({ visible, theme, fontsLoaded }) {
+  const reduced = useReducedMotion();
+  const progress = useSharedValue(visible ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withTiming(visible ? 1 : 0, {
+      duration: reduced ? MOTION.reduced : MOTION.print,
+      easing: reduced ? Easing.linear : Easing.out(Easing.cubic),
+    });
+  }, [visible, reduced, progress]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [
+      { translateY: reduced ? 0 : (1 - progress.value) * 36 },
+    ],
+  }));
+
+  if (!visible && progress.value === 0) return null;
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.printReveal,
+        {
+          borderColor: theme.text,
+          backgroundColor: theme.card || "#fbf8f1",
+        },
+        style,
+      ]}
+    >
+      <Text
+        style={[
+          styles.printKicker,
+          {
+            color: theme.mutedText,
+            fontFamily: fontFamily("data", fontsLoaded),
+          },
+        ]}
+      >
+        [YT]  /  PRINT
+      </Text>
+      <Text
+        style={[
+          styles.printTitle,
+          {
+            color: theme.text,
+            fontFamily: fontFamily("display", fontsLoaded),
+          },
+        ]}
+      >
+        Preparing print
+      </Text>
+    </Animated.View>
   );
 }
 
@@ -93,6 +147,8 @@ export default function ShareModal({
   shareSize,
   shareCard,
 }) {
+  const fontsLoaded = useFontsLoaded();
+
   return (
     <Modal
       visible={visible}
@@ -104,18 +160,21 @@ export default function ShareModal({
     >
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
-        <View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: theme.card,
-              borderColor: theme.border,
-              shadowColor: "#000",
-            },
-          ]}
+        <AtelierSheet
+          theme={theme}
+          kicker="[YT]  /  PRINT"
+          title="Share"
+          style={styles.sheet}
         >
-          <Text style={[styles.title, { color: theme.text }]}>Share</Text>
-          <Text style={[styles.subtext, { color: theme.mutedText }]}>
+          <Text
+            style={[
+              styles.subtext,
+              {
+                color: theme.mutedText,
+                fontFamily: fontFamily("body", fontsLoaded),
+              },
+            ]}
+          >
             Pick a card
           </Text>
 
@@ -126,17 +185,23 @@ export default function ShareModal({
                 option={opt}
                 selected={shareOptionId === opt.id}
                 theme={theme}
+                fontsLoaded={fontsLoaded}
                 onPress={() => onSelectOption(opt.id)}
               />
             ))}
           </View>
-          {/* <Text style={[styles.tipText, { color: theme.mutedText }]}>
-            Tip: Looks best on a solid background.
-          </Text> */}
 
           {shareOption?.kind === "goal" && (
             <View style={styles.pickSection}>
-              <Text style={[styles.pickLabel, { color: theme.mutedText }]}>
+              <Text
+                style={[
+                  styles.pickLabel,
+                  {
+                    color: theme.mutedText,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+              >
                 Goal
               </Text>
               {goals.length ? (
@@ -155,15 +220,12 @@ export default function ShareModal({
                           styles.pickChip,
                           {
                             backgroundColor: selected
-                              ? pressed
-                                ? theme.primaryPressed
-                                : theme.primary
-                              : pressed
-                                ? theme.border
-                                : theme.bg,
+                              ? theme.text
+                              : "transparent",
                             borderColor: selected
-                              ? theme.primary
+                              ? theme.text
                               : theme.border,
+                            opacity: pressed ? 0.7 : 1,
                           },
                         ]}
                       >
@@ -172,8 +234,9 @@ export default function ShareModal({
                             styles.pickText,
                             {
                               color: selected
-                                ? theme.primaryTextOn
+                                ? theme.card || "#f6f3ec"
                                 : theme.text,
+                              fontFamily: fontFamily("data", fontsLoaded),
                             },
                           ]}
                         >
@@ -184,7 +247,15 @@ export default function ShareModal({
                   })}
                 </ScrollView>
               ) : (
-                <Text style={[styles.emptyHint, { color: theme.mutedText }]}>
+                <Text
+                  style={[
+                    styles.emptyHint,
+                    {
+                      color: theme.mutedText,
+                      fontFamily: fontFamily("body", fontsLoaded),
+                    },
+                  ]}
+                >
                   Add a goal to share this card.
                 </Text>
               )}
@@ -193,7 +264,15 @@ export default function ShareModal({
 
           {shareOption?.kind === "habit" && (
             <View style={styles.pickSection}>
-              <Text style={[styles.pickLabel, { color: theme.mutedText }]}>
+              <Text
+                style={[
+                  styles.pickLabel,
+                  {
+                    color: theme.mutedText,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+              >
                 Habit
               </Text>
               {habits.length ? (
@@ -212,15 +291,12 @@ export default function ShareModal({
                           styles.pickChip,
                           {
                             backgroundColor: selected
-                              ? pressed
-                                ? theme.primaryPressed
-                                : theme.primary
-                              : pressed
-                                ? theme.border
-                                : theme.bg,
+                              ? theme.text
+                              : "transparent",
                             borderColor: selected
-                              ? theme.primary
+                              ? theme.text
                               : theme.border,
+                            opacity: pressed ? 0.7 : 1,
                           },
                         ]}
                       >
@@ -229,8 +305,9 @@ export default function ShareModal({
                             styles.pickText,
                             {
                               color: selected
-                                ? theme.primaryTextOn
+                                ? theme.card || "#f6f3ec"
                                 : theme.text,
+                              fontFamily: fontFamily("data", fontsLoaded),
                             },
                           ]}
                         >
@@ -241,50 +318,35 @@ export default function ShareModal({
                   })}
                 </ScrollView>
               ) : (
-                <Text style={[styles.emptyHint, { color: theme.mutedText }]}>
+                <Text
+                  style={[
+                    styles.emptyHint,
+                    {
+                      color: theme.mutedText,
+                      fontFamily: fontFamily("body", fontsLoaded),
+                    },
+                  ]}
+                >
                   Add a habit to share this card.
                 </Text>
               )}
             </View>
           )}
 
-          <View style={styles.actions}>
-            <Pressable
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.secondaryBtn,
-                {
-                  backgroundColor: pressed ? theme.border : theme.bg,
-                  borderColor: theme.border,
-                },
-              ]}
-            >
-              <Text style={[styles.secondaryText, { color: theme.text }]}>
-                Cancel
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={onShare}
-              disabled={shareBusy || shareDisabled}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                {
-                  backgroundColor: pressed
-                    ? theme.primaryPressed
-                    : theme.primary,
-                  borderColor: theme.primary,
-                  opacity: shareBusy || shareDisabled ? 0.6 : 1,
-                },
-              ]}
-            >
-              <Text
-                style={[styles.primaryText, { color: theme.primaryTextOn }]}
-              >
-                {shareBusy ? "Preparing..." : "Share"}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+          <AtelierActions
+            theme={theme}
+            cancelLabel="Back"
+            confirmLabel={shareBusy ? "Preparing" : "Share"}
+            onCancel={onClose}
+            onConfirm={onShare}
+            confirmDisabled={shareBusy || shareDisabled}
+          />
+          <PrintReveal
+            visible={shareBusy}
+            theme={theme}
+            fontsLoaded={fontsLoaded}
+          />
+        </AtelierSheet>
 
         <ViewShot
           ref={shareShotRef}
@@ -312,85 +374,92 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(28,25,22,0.35)",
   },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    padding: 18,
-    paddingBottom: ANDROID ? 18 : 26,
-    marginHorizontal: 10,
-    marginBottom: 10,
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: ANDROID ? 12 : 0,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: SPACE.lg,
+    paddingBottom: ANDROID ? SPACE.lg : SPACE.xl,
+    marginHorizontal: SPACE.sm,
+    marginBottom: SPACE.sm,
   },
-  title: { fontSize: 18, fontWeight: "900", letterSpacing: 0.3 },
-  subtext: { marginTop: 6, fontSize: 13, lineHeight: 18 },
+  title: {
+    fontSize: TYPE_SIZE.title,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+    marginTop: SPACE["2xs"],
+  },
+  subtext: { marginTop: SPACE["2xs"], fontSize: TYPE_SIZE.caption },
   grid: {
-    marginTop: 16,
+    marginTop: SPACE.md,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: SPACE.sm,
   },
   optionTile: {
     width: "48%",
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    alignItems: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: SPACE.md,
+    paddingHorizontal: SPACE.sm,
+    alignItems: "flex-start",
     justifyContent: "center",
-    gap: 6,
-    position: "relative",
+    gap: 4,
   },
-  optionLabel: { fontSize: 12, fontWeight: "800", letterSpacing: 0.2 },
-  optionDesc: { fontSize: 10, fontWeight: "700" },
-  optionCheck: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: "center",
+  optionLabel: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
+  optionDesc: { fontSize: TYPE_SIZE.kicker, fontWeight: "400" },
+  optionInner: {
+    width: "100%",
+    alignItems: "flex-start",
+  },
+  printReveal: {
+    marginTop: SPACE.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: SPACE.md,
+    paddingHorizontal: SPACE.sm,
+    minHeight: 72,
     justifyContent: "center",
-    borderWidth: 1,
   },
-  pickSection: { marginTop: 14 },
-  pickLabel: { fontSize: 12, fontWeight: "800", letterSpacing: 0.2 },
-  pickRow: { paddingTop: 8, gap: 8 },
+  printKicker: {
+    fontSize: TYPE_SIZE.kicker,
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
+  printTitle: {
+    marginTop: SPACE["2xs"],
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+  },
+  pickSection: { marginTop: SPACE.md },
+  pickLabel: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
+  pickRow: { paddingTop: SPACE.xs, gap: SPACE.xs },
   pickChip: {
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: SPACE.xs,
+    paddingHorizontal: SPACE.sm,
   },
-  pickText: { fontSize: 12, fontWeight: "800", letterSpacing: 0.2 },
-  emptyHint: { fontSize: 12, marginTop: 6 },
+  pickText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
+  emptyHint: { fontSize: TYPE_SIZE.caption, marginTop: SPACE["2xs"] },
   actions: {
-    marginTop: 18,
+    marginTop: SPACE.lg,
     flexDirection: "row",
-    gap: 10,
+    gap: SPACE.sm,
   },
-  tipText: { marginTop: 10, fontSize: 11 },
-  secondaryBtn: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  secondaryText: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
-  primaryBtn: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  primaryText: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
   shareShot: { position: "absolute", left: -9999, top: -9999 },
 });

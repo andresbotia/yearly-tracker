@@ -1,4 +1,29 @@
 // utils/storage.js
+//
+// STORAGE INVENTORY (do not rename keys)
+// ---------------------------------------------------------------------------
+// Key                         Purpose                         Schema
+// rt_goals_v1                 Current-year goals              Goal[]
+// rt_hue_v1                   Theme choice                    string id | number hue | "custom:<id>"
+// rt_welcome_seen_v1          Welcome modal seen              "1"
+// rt_year_v1                  Legacy stored year              number string
+// yt_current_year_v1          Current tracked year            number string
+// yt_goal_history_v1          Yearly goal snapshots           HistoryEntry[]
+// yt_custom_themes_v1         User-created palettes           CustomTheme[]
+// yt_habits_v1                Habits + daily checks           Habit[]   (App.js)
+// yt_habits_welcome_seen_v1   Habits intro seen               "1"       (App.js)
+// yt_revamp_intro_seen_v1     Revamp visual intro seen        "1"       (additive)
+// yt_random_art_last_v1       Last Random Art pick            string id (additive)
+// yt_revamp_theme_choice_seen_v1  Existing-user style choice  "1"       (additive)
+// yt_onboarding_seen_v1       New-user catalogue onboarding   "1"       (additive)
+//
+// Goal: { id, title, type: "count"|"boolean", target, progress, createdAt }
+// Habit: { id, title, checks: { "YYYY-MM-DD": 0|1|2 } }  // 0 empty, 1 good, 2 bad
+// HistoryEntry: { year, savedAt, goals: Goal[], summary: { avgPercent, completedCount, totalCount } }
+// CustomTheme: { id, name, palette: { primary, bg, card, border, text, mutedText, primaryTextOn, primaryPressed, ringBg, ... }, createdAt }
+//
+// Readers of new fields must treat them as optional (?? default).
+// Unknown fields on persisted objects must be preserved.
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -16,7 +41,21 @@ const KEYS = {
 
   // ✅ New: custom themes
   customThemes: "yt_custom_themes_v1",
+
+  // Additive presentation flag. Absence is not missing/corrupt user data.
+  revampIntroSeen: "yt_revamp_intro_seen_v1",
+
+  // Last Random Art pick. Presentation only; absence is not corrupt data.
+  randomArtLast: "yt_random_art_last_v1",
+
+  // Existing-user Random Art / keep-theme prompt. Presentation only.
+  revampThemeChoiceSeen: "yt_revamp_theme_choice_seen_v1",
+
+  // New-user contextual onboarding. Presentation only.
+  onboardingSeen: "yt_onboarding_seen_v1",
 };
+
+export const STORAGE_KEYS = KEYS;
 
 // -----------------------------
 // Goals
@@ -76,6 +115,64 @@ export async function loadWelcomeSeen() {
 
 export async function setWelcomeSeen() {
   await AsyncStorage.setItem(KEYS.welcomeSeen, "1");
+}
+
+// -----------------------------
+// Revamp introduction (additive, presentation only)
+// -----------------------------
+
+export async function loadRevampIntroSeen() {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.revampIntroSeen);
+    return raw === "1";
+  } catch {
+    return true; // fail safe: don't block the user with a modal
+  }
+}
+
+export async function setRevampIntroSeen() {
+  await AsyncStorage.setItem(KEYS.revampIntroSeen, "1");
+}
+
+export async function loadRandomArtLast() {
+  try {
+    return (await AsyncStorage.getItem(KEYS.randomArtLast)) || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveRandomArtLast(id) {
+  if (!id) return;
+  try {
+    await AsyncStorage.setItem(KEYS.randomArtLast, String(id));
+  } catch {}
+}
+
+export async function loadRevampThemeChoiceSeen() {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.revampThemeChoiceSeen);
+    return raw === "1";
+  } catch {
+    return true; // fail safe: don't block the user with a modal
+  }
+}
+
+export async function setRevampThemeChoiceSeen() {
+  await AsyncStorage.setItem(KEYS.revampThemeChoiceSeen, "1");
+}
+
+export async function loadOnboardingSeen() {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.onboardingSeen);
+    return raw === "1";
+  } catch {
+    return true; // fail safe: don't block the user with a tour
+  }
+}
+
+export async function setOnboardingSeen() {
+  await AsyncStorage.setItem(KEYS.onboardingSeen, "1");
 }
 
 // -----------------------------
@@ -175,7 +272,7 @@ function normHex(hex) {
 function ensurePaletteShape(palette) {
   const p = { ...(palette || {}) };
 
-  const safe = {
+  const required = {
     primary: isHex6(p.primary) ? normHex(p.primary) : "#2b6dff",
     bg: isHex6(p.bg) ? normHex(p.bg) : "#f5f7fa",
     card: isHex6(p.card) ? normHex(p.card) : "#ffffff",
@@ -191,10 +288,17 @@ function ensurePaletteShape(palette) {
     ringBg: isHex6(p.ringBg) ? normHex(p.ringBg) : "#e1e8ff",
   };
 
-  return safe;
+  // Keep unknown palette keys (e.g. danger, future art fields).
+  const extra = {};
+  for (const [k, v] of Object.entries(p)) {
+    if (k in required) continue;
+    extra[k] = v;
+  }
+
+  return { ...required, ...extra };
 }
 
-function sanitizeCustomThemeRecord(rec) {
+export function sanitizeCustomThemeRecord(rec) {
   const id = rec?.id ? String(rec.id) : uid();
   const name =
     String(rec?.name || "")
@@ -202,12 +306,23 @@ function sanitizeCustomThemeRecord(rec) {
       .slice(0, 32) || "Custom Theme";
   const palette = ensurePaletteShape(rec?.palette);
 
-  return {
+  const base = {
     id,
     name,
     palette,
     createdAt: Number(rec?.createdAt) || Date.now(),
   };
+
+  // Preserve unknown top-level fields so future optional metadata survives.
+  const extra = {};
+  if (rec && typeof rec === "object") {
+    for (const [k, v] of Object.entries(rec)) {
+      if (k in base) continue;
+      extra[k] = v;
+    }
+  }
+
+  return { ...extra, ...base };
 }
 
 export async function loadCustomThemes() {

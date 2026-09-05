@@ -2,20 +2,20 @@
   "expo": {
     "name": "Yearly Tracker",
     "slug": "ResolutionTracker",
-    "version": "1.0.3",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "splash": {
-      "image": "./assets/icon.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F5F7FA"
+      "backgroundColor": "#F6F3EC"
     },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.andresbotia.ResolutionTracker",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -24,8 +24,8 @@
       "package": "com.andresbotia.yearlytracker",
       "versionCode": 18,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#F5F7FA"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1C1916"
       }
     },
     "web": {
@@ -35,6 +35,9 @@
       "eas": {
         "projectId": "bf908a4e-0a56-49b5-b997-04c44ffa4666"
       }
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

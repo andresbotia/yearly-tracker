@@ -1,0 +1,237 @@
+import React from "react";
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Platform,
+  ScrollView,
+  useWindowDimensions,
+} from "react-native";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
+import { useFontsLoaded } from "../../utils/fonts";
+import MetadataLabel from "../editorial/MetadataLabel";
+import SectionRule from "../editorial/SectionRule";
+import ArtHero from "./ArtHero";
+import BrandMark from "../brand/BrandMark";
+
+const EXISTING = {
+  kicker: "New edition",
+  title: "A new edition of Yearly Tracker",
+  body: [
+    "Your goals, habits, and history are exactly where you left them.",
+    "Yearly Tracker has been redesigned around art, typography, and the idea of your year as a personal archive.",
+    "Your data remains private and stored on your device.",
+  ],
+};
+
+const FRESH = {
+  kicker: "Personal yearly archive",
+  title: "Welcome to Yearly Tracker",
+  quote:
+    "“Success is the product of daily habits—not once-in-a-lifetime transformations.”",
+  attribution: "— James Clear",
+  body: [
+    "Track your habits, goals, and year through a quiet, art-led interface.",
+    "No account. No tracking. Your data stays on your device.",
+  ],
+};
+
+export default function RevampIntroModal({
+  visible,
+  theme,
+  onClose,
+  existingUser = false,
+}) {
+  const fontsLoaded = useFontsLoaded();
+  const { height: windowHeight } = useWindowDimensions();
+  const ink = theme?.text || "#1c1916";
+  const muted = theme?.mutedText || "#6b645c";
+  const previewId = theme?.artwork?.id || "cypresses";
+  const copy = existingUser ? EXISTING : FRESH;
+  const maxCardH = Math.max(280, windowHeight - SPACE.md * 2);
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent
+      onRequestClose={onClose}
+    >
+      <View style={styles.backdrop}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: theme?.card || "#fbf8f1",
+              borderColor: theme?.text || "#1c1916",
+              maxHeight: maxCardH,
+            },
+          ]}
+        >
+          <ScrollView
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+            style={styles.cardScroll}
+            contentContainerStyle={styles.cardContent}
+          >
+            <BrandMark size={48} />
+            <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
+              {copy.kicker}
+            </MetadataLabel>
+
+            <ArtHero
+              theme={theme}
+              artworkId={previewId}
+              fontsLoaded={fontsLoaded}
+              showCredit={false}
+              height={96}
+            />
+
+            <Text
+              style={[
+                styles.title,
+                { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
+              ]}
+            >
+              {copy.title}
+            </Text>
+
+            <SectionRule theme={theme} style={styles.rule} />
+
+            {copy.quote ? (
+              <>
+                <Text
+                  style={[
+                    styles.quote,
+                    { color: ink, fontFamily: fontFamily("body", fontsLoaded) },
+                  ]}
+                >
+                  {copy.quote}
+                </Text>
+                <Text
+                  style={[
+                    styles.attribution,
+                    { color: muted, fontFamily: fontFamily("data", fontsLoaded) },
+                  ]}
+                >
+                  {copy.attribution}
+                </Text>
+              </>
+            ) : null}
+
+            {copy.body.map((paragraph) => (
+              <Text
+                key={paragraph}
+                style={[
+                  styles.body,
+                  { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
+                ]}
+              >
+                {paragraph}
+              </Text>
+            ))}
+          </ScrollView>
+
+          <Pressable
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Enter Yearly"
+            style={({ pressed }) => [
+              styles.cta,
+              {
+                backgroundColor: pressed
+                  ? theme?.primaryPressed || ink
+                  : theme?.primary || ink,
+                borderColor: theme?.primary || ink,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.ctaLabel,
+                {
+                  color: theme?.primaryTextOn || "#f6f3ec",
+                  fontFamily: fontFamily("data", fontsLoaded),
+                },
+              ]}
+            >
+              Enter Yearly
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(28,25,22,0.42)",
+    padding: SPACE.md,
+    justifyContent: "center",
+  },
+  card: {
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: SPACE.lg,
+    gap: SPACE.sm,
+    flexShrink: 1,
+    ...Platform.select({
+      android: { elevation: 0 },
+    }),
+  },
+  cardScroll: {
+    flexGrow: 0,
+    flexShrink: 1,
+  },
+  cardContent: {
+    gap: SPACE.sm,
+    flexGrow: 0,
+  },
+  title: {
+    marginTop: SPACE.xs,
+    fontSize: TYPE_SIZE.title,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+  },
+  rule: {
+    marginTop: SPACE.xs,
+    marginBottom: SPACE.xs,
+  },
+  quote: {
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "400",
+    lineHeight: 22,
+  },
+  attribution: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "400",
+    letterSpacing: TYPE_TRACK.data,
+    marginBottom: SPACE.xs,
+  },
+  body: {
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "400",
+    lineHeight: 22,
+  },
+  cta: {
+    marginTop: SPACE.md,
+    minHeight: 44,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: SPACE.md,
+    paddingVertical: SPACE.sm,
+  },
+  ctaLabel: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+    textAlign: "center",
+  },
+});

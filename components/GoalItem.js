@@ -1,11 +1,15 @@
 // components/GoalItem.js
+// Presentation-only redesign. Props and callbacks are unchanged.
 
 import React, { useMemo } from "react";
-import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
-import * as Haptics from "expo-haptics";
-import { Ionicons } from "@expo/vector-icons";
-
-const ANDROID = Platform.OS === "android";
+import { View, Text, Pressable, StyleSheet } from "react-native";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "../utils/tokens";
+import { useFontsLoaded } from "../utils/fonts";
+import EditorialSurface from "./editorial/EditorialSurface";
+import AnimatedAsciiBar from "./motion/AnimatedAsciiBar";
+import AnimatedNumber from "./motion/AnimatedNumber";
+import PressableInk from "./motion/PressableInk";
+import { hexToRgba } from "../utils/color";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -17,26 +21,6 @@ function goalPercent(goal) {
   return clamp((goal.progress / goal.target) * 100, 0, 100);
 }
 
-// Convert "#RRGGBB" to rgba(r,g,b,a). (Works with your theme hex colors.)
-function hexToRgba(hex, alpha = 1) {
-  if (!hex || typeof hex !== "string") return `rgba(0,0,0,${alpha})`;
-  const clean = hex.replace("#", "").trim();
-  const full =
-    clean.length === 3
-      ? clean
-          .split("")
-          .map((c) => c + c)
-          .join("")
-      : clean;
-
-  const r = parseInt(full.slice(0, 2), 16);
-  const g = parseInt(full.slice(2, 4), 16);
-  const b = parseInt(full.slice(4, 6), 16);
-
-  if ([r, g, b].some((v) => Number.isNaN(v))) return `rgba(0,0,0,${alpha})`;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 export default function GoalItem({
   goal,
   theme,
@@ -45,63 +29,28 @@ export default function GoalItem({
   onDelete,
   onDrag,
   dragging = false,
+  removing = false,
+  index,
 }) {
+  const fontsLoaded = useFontsLoaded();
   const percent = useMemo(() => goalPercent(goal), [goal]);
   const pct = Math.round(percent);
   const isComplete = pct >= 100;
+  const indexLabel =
+    typeof index === "number" && index > 0
+      ? String(index).padStart(2, "0")
+      : null;
 
-  const typeLabel = goal.type === "count" ? "Count" : "Milestone";
   const meta =
     goal.type === "count" && goal.target
-      ? `${goal.progress}/${goal.target}`
-      : goal.progress === 1
-        ? "Completed"
-        : "Not yet";
+      ? `${goal.progress} / ${goal.target}`
+      : isComplete
+        ? "Complete"
+        : "Incomplete";
 
-  async function hapticLight() {
-    try {
-      await Haptics.selectionAsync();
-    } catch {}
-  }
-
-  const IconBtn = ({ name, label, variant = "neutral", onPress }) => {
-    const baseColor =
-      variant === "danger"
-        ? theme.danger
-        : variant === "primary"
-          ? theme.primary
-          : theme.text;
-
-    const bg = hexToRgba(baseColor, 0.1);
-    const bgPressed = hexToRgba(baseColor, 0.18);
-    const border = hexToRgba(baseColor, 0.18);
-
-    return (
-      <Pressable
-        onPress={onPress}
-        hitSlop={10}
-        style={({ pressed }) => [
-          styles.iconBtn,
-          {
-            backgroundColor: pressed ? bgPressed : bg,
-            borderColor: border,
-          },
-          pressed && { transform: [{ scale: 0.96 }] },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-      >
-        <Ionicons name={name} size={20} color={baseColor} />
-      </Pressable>
-    );
-  };
-
-  // iOS can keep the nice border treatment.
-  // Android: border strokes can look “off” (mismatched) — so we remove border and use a subtle overlay for completed.
-  const cardBgIOS = isComplete ? hexToRgba(theme.primary, 0.06) : theme.card;
-  const cardBorderIOS = isComplete
-    ? hexToRgba(theme.primary, 0.45)
-    : theme.border;
+  const ink = theme.text;
+  const muted = theme.mutedText;
+  const rule = theme.border;
 
   return (
     <Pressable
@@ -109,324 +58,234 @@ export default function GoalItem({
       delayLongPress={120}
       disabled={!onDrag}
       style={({ pressed }) => [
-        styles.card,
-        ANDROID
-          ? {
-              // ✅ Android: no border stroke
-              borderWidth: 0,
-              borderColor: "transparent",
-              // ✅ Android: keep the surface color consistent
-              backgroundColor: theme.card,
-              // keep your lift
-              elevation: dragging ? 6 : 2,
-              // ✅ make sure overlay is clipped to rounded corners
-              overflow: "hidden",
-            }
-          : {
-              backgroundColor: cardBgIOS,
-              borderColor: cardBorderIOS,
-              borderWidth: 1,
-            },
-        (pressed || dragging) && {
-          opacity: 0.97,
-          transform: [{ scale: 0.99 }],
+        styles.row,
+        {
+          borderBottomColor: removing ? theme.danger || "#9b2c2c" : rule,
+          backgroundColor: dragging
+            ? hexToRgba(theme.text, 0.06)
+            : removing
+              ? hexToRgba(theme.danger || "#9b2c2c", 0.08)
+              : "transparent",
+          opacity: removing ? 0.55 : pressed ? 0.8 : 1,
+          transform: [{ scale: dragging ? MOTION.dragScale : 1 }],
         },
       ]}
       accessibilityRole="button"
       accessibilityLabel={`Goal: ${goal.title}. Long press to reorder.`}
     >
-      {/* ✅ Android-only: completed state shown via a subtle tinted overlay (no border) */}
-      {ANDROID && isComplete ? (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.completedOverlayAndroid,
-            { backgroundColor: theme.primary },
-          ]}
-        />
-      ) : null}
+      <View style={styles.top}>
+        {indexLabel ? (
+          <Text
+            style={[
+              styles.index,
+              {
+                color: muted,
+                fontFamily: fontFamily("data", fontsLoaded),
+              },
+            ]}
+          >
+            {indexLabel}
+          </Text>
+        ) : null}
 
-      <View style={styles.rowTop}>
-        {/* Invisible drag hotspot (still keeps reordering), no circle/icon */}
-        <Pressable
-          onLongPress={onDrag}
-          delayLongPress={120}
-          disabled={!onDrag}
-          hitSlop={12}
-          style={styles.dragHotspot}
-          accessibilityRole="button"
-          accessibilityLabel={`Drag to reorder ${goal.title}`}
-        />
-
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
-            {goal.title}
+        <View style={styles.body}>
+          <Text
+            style={[
+              styles.title,
+              {
+                color: ink,
+                fontFamily: fontFamily("display", fontsLoaded),
+              },
+            ]}
+            numberOfLines={2}
+          >
+            {String(goal.title || "").toUpperCase()}
           </Text>
 
           <View style={styles.metaRow}>
-            <View
-              style={[
-                styles.badge,
-                { borderColor: theme.border, backgroundColor: theme.bg },
-              ]}
-            >
-              <Text style={[styles.badgeText, { color: theme.mutedText }]}>
-                {typeLabel}
-              </Text>
-            </View>
-
-            <Text style={[styles.metaText, { color: theme.mutedText }]}>
-              {meta}
-            </Text>
-          </View>
-
-          {/* Premium: slim progress bar */}
-          <View
-            style={[styles.progressTrack, { backgroundColor: theme.border }]}
-            accessible
-            accessibilityRole="progressbar"
-            accessibilityValue={{ min: 0, max: 100, now: pct }}
-          >
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${pct}%`, backgroundColor: theme.primary },
-              ]}
-            />
-          </View>
-        </View>
-
-        <View style={styles.rightCol}>
-          <View style={styles.pctRow}>
-            <Text style={[styles.pctText, { color: theme.text }]}>{pct}%</Text>
-
-            {isComplete ? (
-              <View
-                style={[
-                  styles.completeChip,
-                  {
-                    borderColor: hexToRgba(theme.primary, 0.35),
-                    backgroundColor: hexToRgba(theme.primary, 0.12),
-                  },
-                ]}
-              >
-                <Ionicons name="checkmark" size={14} color={theme.primary} />
-                <Text style={[styles.completeText, { color: theme.primary }]}>
-                  Done
-                </Text>
-              </View>
-            ) : null}
-          </View>
-
-          <Text style={[styles.pctSub, { color: theme.mutedText }]}>
-            complete
-          </Text>
-        </View>
-      </View>
-
-      {/* Actions */}
-      <View style={styles.actions}>
-        <IconBtn
-          name="create-outline"
-          variant="primary"
-          label={`Edit goal details for ${goal.title}`}
-          onPress={async () => {
-            await hapticLight();
-            onEditDetails?.(goal);
-          }}
-        />
-
-        <Pressable
-          onPress={async () => {
-            await hapticLight();
-            onProgress?.(goal);
-          }}
-          android_ripple={
-            ANDROID
-              ? { color: hexToRgba(theme.primaryTextOn, 0.18) }
-              : undefined
-          }
-          style={({ pressed }) => [
-            styles.primaryBtn,
-            {
-              backgroundColor: pressed ? theme.primaryPressed : theme.primary,
-              borderColor: hexToRgba(theme.primary, 0.35),
-              opacity: pressed ? 0.95 : 1,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={`Update progress for ${goal.title}`}
-        >
-          <View style={styles.primaryBtnInner}>
-            <Ionicons
-              name={isComplete ? "create-outline" : "add-circle-outline"}
-              size={18}
-              color={theme.primaryTextOn}
-            />
             <Text
-              style={[styles.primaryBtnText, { color: theme.primaryTextOn }]}
+              style={[
+                styles.meta,
+                {
+                  color: muted,
+                  fontFamily: fontFamily("data", fontsLoaded),
+                },
+              ]}
             >
-              {isComplete ? "Adjust" : "Update"}
+              {meta}
+              {isComplete ? "   ·   DONE" : ""}
             </Text>
+            <AnimatedNumber
+              value={pct}
+              theme={theme}
+              role="data"
+              format={(v) => `${v}%`}
+              style={[styles.pct, { color: muted }]}
+            />
           </View>
-        </Pressable>
 
-        <IconBtn
-          name="trash-outline"
-          variant="danger"
-          label={`Delete ${goal.title}`}
-          onPress={async () => {
-            await hapticLight();
-            onDelete?.(goal.id);
-          }}
-        />
+          <AnimatedAsciiBar
+            percent={pct}
+            width={22}
+            theme={theme}
+            fontsLoaded={fontsLoaded}
+            style={styles.bar}
+          />
+        </View>
       </View>
+
+      <EditorialSurface theme={theme} padded={false} style={styles.actions}>
+        <View style={styles.rail}>
+          <PressableInk
+            onPress={() => onProgress?.(goal)}
+            haptic="none"
+            style={[styles.railPrimary, { borderColor: ink }]}
+            innerStyle={styles.railPrimaryInner}
+            accessibilityRole="button"
+            accessibilityLabel={`Update progress for ${goal.title}`}
+          >
+            <Text
+              style={[
+                styles.railPrimaryText,
+                { color: ink, fontFamily: fontFamily("data", fontsLoaded) },
+              ]}
+            >
+              {isComplete ? "Adjust" : "Progress"}
+            </Text>
+          </PressableInk>
+          <PressableInk
+            onPress={() => onEditDetails?.(goal)}
+            haptic="none"
+            hitSlop={6}
+            style={styles.railGhost}
+            accessibilityRole="button"
+            accessibilityLabel={`Edit goal details for ${goal.title}`}
+          >
+            <Text
+              style={[
+                styles.railGhostText,
+                { color: ink, fontFamily: fontFamily("data", fontsLoaded) },
+              ]}
+            >
+              Edit
+            </Text>
+          </PressableInk>
+          <PressableInk
+            onPress={() => onDelete?.(goal.id)}
+            haptic="none"
+            hitSlop={6}
+            style={styles.railGhost}
+            accessibilityRole="button"
+            accessibilityLabel={`Delete ${goal.title}`}
+          >
+            <Text
+              style={[
+                styles.railGhostText,
+                {
+                  color: theme.danger || "#9b2c2c",
+                  fontFamily: fontFamily("data", fontsLoaded),
+                },
+              ]}
+            >
+              Delete
+            </Text>
+          </PressableInk>
+        </View>
+      </EditorialSurface>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    position: "relative",
-    borderWidth: 1,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 8 },
-      },
-    }),
+  row: {
+    paddingTop: SPACE.md,
+    paddingBottom: SPACE.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-
-  // Android-only completed overlay (clipped by card overflow:hidden on Android)
-  completedOverlayAndroid: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.06, // tweak: 0.05–0.10
-    borderRadius: 20,
-  },
-
-  rowTop: {
+  top: {
     flexDirection: "row",
-    gap: 12,
     alignItems: "flex-start",
+    gap: SPACE.sm,
   },
-
-  // Invisible but stable drag hit area (no visuals)
-  dragHotspot: {
-    width: 10,
-    height: 52,
-    borderRadius: 8,
+  index: {
+    width: 28,
+    marginTop: 4,
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.data,
   },
-
-  title: {
-    fontSize: 16,
-    fontWeight: "900",
-    letterSpacing: 0.2,
-  },
-
-  metaRow: {
-    marginTop: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  badge: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.2,
-  },
-  metaText: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
-  progressTrack: {
-    marginTop: 10,
-    height: 6,
-    borderRadius: 999,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
-  },
-
-  rightCol: {
-    alignItems: "flex-end",
-    minWidth: 96,
-  },
-  pctRow: {
-    alignItems: "flex-end",
-    gap: 8,
-  },
-  pctText: {
-    fontSize: 18,
-    fontWeight: "950",
-    letterSpacing: 0.2,
-  },
-  completeChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  completeText: {
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 0.2,
-    marginTop: -1,
-  },
-  pctSub: {
-    marginTop: 6,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-
-  actions: {
-    marginTop: 14,
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "center",
-  },
-
-  iconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  primaryBtn: {
+  body: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 12,
+    minWidth: 0,
+    gap: SPACE["2xs"],
+  },
+  title: {
+    fontSize: TYPE_SIZE.bodyLg,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+  },
+  metaRow: {
+    marginTop: SPACE["3xs"],
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: SPACE.sm,
+  },
+  meta: {
+    fontSize: TYPE_SIZE.caption,
+    letterSpacing: TYPE_TRACK.data,
+    textTransform: "uppercase",
+    flex: 1,
+  },
+  pct: {
+    fontSize: TYPE_SIZE.caption,
+    letterSpacing: TYPE_TRACK.data,
+  },
+  bar: {
+    marginTop: SPACE.xs,
+    fontSize: TYPE_SIZE.caption,
+    letterSpacing: 0.8,
+  },
+  actions: {
+    marginTop: SPACE.sm,
+    marginLeft: 28 + SPACE.sm,
+  },
+  rail: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACE.xs,
+  },
+  railPrimary: {
+    flex: 1,
+    minHeight: 44,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    alignItems: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: SPACE["2xs"],
+  },
+  railPrimaryInner: {
+    minHeight: 44,
+    width: "100%",
+    alignItems: "flex-start",
+    justifyContent: "center",
+  },
+  railPrimaryText: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
+  railGhost: {
+    minHeight: 44,
+    minWidth: 44,
+    paddingHorizontal: SPACE.sm,
     alignItems: "center",
     justifyContent: "center",
   },
-  primaryBtnInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  primaryBtnText: {
-    fontSize: 13,
-    fontWeight: "900",
-    letterSpacing: 0.2,
+  railGhostText: {
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
   },
 });

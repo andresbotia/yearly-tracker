@@ -44,8 +44,6 @@ class HabitsWidgetProvider : AppWidgetProvider() {
       }
 
       val payloadObj = SharedWidgetStore.parsePayload(payloadJson)
-      val theme = payloadObj?.optString("theme", null)
-
       val habits: JSONArray = payloadObj?.optJSONArray("habits") ?: JSONArray()
 
       for (id in ids) {
@@ -58,10 +56,25 @@ class HabitsWidgetProvider : AppWidgetProvider() {
 
         val views = RemoteViews(context.packageName, layoutId)
 
-        views.safeSetInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme))
+        SharedWidgetStore.applySurface(views, context, payloadObj)
+        SharedWidgetStore.applyInk(
+          views,
+          payloadObj,
+          R.id.kicker,
+          R.id.title,
+          R.id.line1,
+          R.id.line2,
+          R.id.line3,
+          R.id.line4,
+          R.id.line5,
+          R.id.line6,
+          R.id.line7,
+          R.id.line8,
+          R.id.moreLine
+        )
 
-        // Title: always default (do NOT override with debug text)
-        views.safeSetText(R.id.title, "Habits")
+        views.safeSetText(R.id.kicker, "/ TODAY")
+        views.safeSetText(R.id.title, "HABITS")
 
         val visibleLines =
           if (layoutId == R.layout.widget_habits_large) LARGE_VISIBLE_LINES else SMALL_VISIBLE_LINES
@@ -142,12 +155,8 @@ class HabitsWidgetProvider : AppWidgetProvider() {
       if (h == null) return "—"
       val title = h.optString("title", "").ifBlank { "—" }
       val state = h.optInt("todayState", 0)
-      val badge = when (state) {
-        1 -> "✅"
-        2 -> "⚠️"
-        else -> "⬜"
-      }
-      return "$badge $title"
+      val badge = SharedWidgetStore.habitSymbol(state)
+      return "$title  $badge"
     }
 
     // ---- RemoteViews safe helpers ----

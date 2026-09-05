@@ -14,6 +14,7 @@ import {
   AppState,
   NativeModules,
   ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ColorPicker, {
@@ -36,11 +37,40 @@ import {
   pushWidgetPayloadAndroid,
   setDebugWidgetTextAndroid,
 } from "./native/widgetBridge.android";
+import {
+  prepareWidgetArtwork,
+  widgetArtworkIdFromTheme,
+  WIDGET_ARTWORK_FILENAME,
+} from "./native/widgetArtwork";
 
-import ProgressRing from "./components/ProgressRing";
+import { useFonts } from "expo-font";
+import { Fraunces_700Bold } from "@expo-google-fonts/fraunces";
+import { SourceSerif4_400Regular } from "@expo-google-fonts/source-serif-4";
+import { IBMPlexMono_400Regular } from "@expo-google-fonts/ibm-plex-mono";
+
 import GoalItem from "./components/GoalItem";
 import HabitRow from "./components/HabitRow";
 import HabitHistory from "./components/HabitHistory";
+import ArtBackdrop from "./components/art/ArtBackdrop";
+
+import RevampIntroModal from "./components/art/RevampIntroModal";
+import RevampThemeChoiceModal from "./components/art/RevampThemeChoiceModal";
+import BrandSplash from "./components/brand/BrandSplash";
+import EditorialProgress from "./components/editorial/EditorialProgress";
+import MetadataLabel from "./components/editorial/MetadataLabel";
+import SectionRule from "./components/editorial/SectionRule";
+import EditorialButton from "./components/editorial/EditorialButton";
+import EditorialToolbar from "./components/editorial/EditorialToolbar";
+import EditorialSurface from "./components/editorial/EditorialSurface";
+import EditorialEmpty from "./components/editorial/EditorialEmpty";
+import ThemeGallery from "./components/theme/ThemeGallery";
+import YearArchive from "./components/YearArchive";
+import AtelierTabs from "./components/editorial/AtelierTabs";
+import {
+  CollapsingKicker,
+  CollapsingIdentity,
+  HEADER_ANIM_RANGE,
+} from "./components/editorial/CollapsingHeader";
 import {
   THEMES,
   makeTheme,
@@ -48,6 +78,31 @@ import {
   buildPaletteFromPrimary,
   ensurePaletteComplete,
 } from "./utils/theme";
+import { FontsProvider } from "./utils/fonts";
+import { SPACE, TYPE_SIZE, TYPE_TRACK, MOTION, fontFamily } from "./utils/tokens";
+import { useReducedMotion } from "./utils/motion";
+import AtelierDrawer from "./components/atelier/AtelierDrawer";
+import CatalogueOnboarding, {
+  ONBOARDING_STEPS,
+  measureNode,
+} from "./components/atelier/CatalogueOnboarding";
+import DevFirstRunQa from "./components/atelier/DevFirstRunQa";
+import {
+  simulateFreshInstall,
+  simulateOldYearlyTrackerUser,
+  simulateEarlierRevampUser,
+  replayOnboardingFlags,
+  resetThemeChoicePrompt,
+  reloadForQa,
+} from "./utils/devFirstRunQa";
+import AtelierCounter from "./components/atelier/AtelierCounter";
+import AtelierSheet, {
+  AtelierActions,
+  AtelierToggle,
+  AtelierField,
+} from "./components/atelier/AtelierSheet";
+import MilestoneMark from "./components/atelier/MilestoneMark";
+import CompletionMark from "./components/atelier/CompletionMark";
 import {
   loadGoalsWithMeta,
   saveGoals,
@@ -60,9 +115,21 @@ import {
   appendGoalHistory,
   loadCustomThemes,
   saveCustomThemes,
+  loadRevampIntroSeen,
+  setRevampIntroSeen,
+  loadRandomArtLast,
+  saveRandomArtLast,
+  loadRevampThemeChoiceSeen,
+  setRevampThemeChoiceSeen,
+  loadOnboardingSeen,
+  setOnboardingSeen,
 } from "./utils/storage";
-import { Ionicons } from "@expo/vector-icons";
-import Constants from "expo-constants";
+import {
+  ART_THEMES,
+  RANDOM_ART_ID,
+  pickRandomArtId,
+} from "./themes/artThemes";
+
 import {
   getWeeklyRecap,
   getGoalProgress,
@@ -165,55 +232,6 @@ function sortGoals(goals) {
   return [...inProgress, ...completed];
 }
 
-function NativeDebugPanel() {
-  const info = useMemo(() => {
-    console.log("RN bridgeless flags", {
-      hasBatchedBridge: !!global.__fbBatchedBridge,
-      hasTurboModuleProxy: !!global.__turboModuleProxy,
-      bridgeless: global.RN$Bridgeless,
-    });
-    const keys = Object.keys(NativeModules || {});
-    return {
-      platform: Platform.OS,
-      appOwnership: Constants.appOwnership,
-      executionEnvironment: Constants.executionEnvironment,
-      androidPackage: Constants.expoConfig?.android?.package,
-      nativeModulesCount: keys.length,
-      nativeModulesSample: keys.slice(0, 30),
-      widgetBridge: NativeModules?.WidgetBridgeAndroid ? "FOUND" : "MISSING",
-      widgetBridgeKeys: NativeModules?.WidgetBridgeAndroid
-        ? Object.keys(NativeModules.WidgetBridgeAndroid)
-        : [],
-    };
-  }, []);
-
-  return (
-    <ScrollView style={{ padding: 12 }}>
-      <Text style={{ fontWeight: "700", fontSize: 18 }}>
-        Native Bridge Debug
-      </Text>
-      <Text>Platform: {info.platform}</Text>
-      <Text>appOwnership: {String(info.appOwnership)}</Text>
-      <Text>executionEnvironment: {String(info.executionEnvironment)}</Text>
-      <Text>expoConfig.android.package: {String(info.androidPackage)}</Text>
-      <Text>NativeModules count: {info.nativeModulesCount}</Text>
-      <Text>WidgetBridgeAndroid: {info.widgetBridge}</Text>
-
-      <Text style={{ marginTop: 10, fontWeight: "700" }}>
-        NativeModules sample:
-      </Text>
-      <Text selectable>
-        {JSON.stringify(info.nativeModulesSample, null, 2)}
-      </Text>
-
-      <Text style={{ marginTop: 10, fontWeight: "700" }}>
-        WidgetBridgeAndroid keys:
-      </Text>
-      <Text selectable>{JSON.stringify(info.widgetBridgeKeys, null, 2)}</Text>
-    </ScrollView>
-  );
-}
-
 function makeStarterGoals() {
   const now = Date.now();
   return [
@@ -270,6 +288,14 @@ function dateKey(d) {
 
 function monthName(d) {
   return d.toLocaleString(undefined, { month: "long" });
+}
+
+function dayOfYear(d) {
+  const start = new Date(d.getFullYear(), 0, 1);
+  start.setHours(12, 0, 0, 0);
+  const cur = new Date(d);
+  cur.setHours(12, 0, 0, 0);
+  return Math.floor((cur - start) / 86400000) + 1;
 }
 
 function lastNDays(n, baseDate = new Date()) {
@@ -383,6 +409,11 @@ function normalizeHex6(input) {
 
 export default function App() {
   const year = new Date().getFullYear();
+  const [fontsLoaded] = useFonts({
+    Fraunces_700Bold,
+    SourceSerif4_400Regular,
+    IBMPlexMono_400Regular,
+  });
 
   const [ready, setReady] = useState(false);
   const [activeTab, setActiveTab] = useState("habits");
@@ -394,6 +425,14 @@ export default function App() {
   // - legacy hue number/string
   // - "custom:<id>"
   const [themeChoice, setThemeChoice] = useState("bright-blue");
+  const [sessionArtId, setSessionArtId] = useState(null);
+  const [artReveal, setArtReveal] = useState(false);
+  const [themeExpand, setThemeExpand] = useState(false);
+  const [removingGoalId, setRemovingGoalId] = useState(null);
+  const [removingHabitId, setRemovingHabitId] = useState(null);
+  const headerScrollY = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
+  const counterRef = useRef(null);
 
   const pickerShared = useSharedValue("#ffffff");
 
@@ -484,7 +523,6 @@ export default function App() {
     }
   }
 
-  const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -494,8 +532,27 @@ export default function App() {
   const [shareBusy, setShareBusy] = useState(false);
   const shareShotRef = useRef(null);
 
-  const [habitsWelcomeOpen, setHabitsWelcomeOpen] = useState(false);
   const [habitsWelcomeSeen, setHabitsWelcomeSeen] = useState(true);
+  const [revampIntroSeen, setRevampIntroSeenState] = useState(true);
+  const [revampIntroOpen, setRevampIntroOpen] = useState(false);
+  const [wasExistingUser, setWasExistingUser] = useState(false);
+  const [themeChoiceSeen, setThemeChoiceSeenState] = useState(true);
+  const [themeChoiceOpen, setThemeChoiceOpen] = useState(false);
+  const [onboardingSeen, setOnboardingSeenState] = useState(true);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [onboardingAnchor, setOnboardingAnchor] = useState(null);
+  const [onboardingTargetKind, setOnboardingTargetKind] = useState(null);
+  const [devQaOpen, setDevQaOpen] = useState(false);
+  const habitsListRef = useRef(null);
+  const tabsMeasureRef = useRef(null);
+  const ledgerMeasureRef = useRef(null);
+  const ledgerHeaderRef = useRef(null);
+  const todayCellMeasureRef = useRef(null);
+  const themeMeasureRef = useRef(null);
+  const addHabitMeasureRef = useRef(null);
+  const listViewportH = useRef(0);
+  const listContentH = useRef(0);
 
   const [title, setTitle] = useState("");
   const [type, setType] = useState("count");
@@ -504,6 +561,8 @@ export default function App() {
   const [editOpen, setEditOpen] = useState(false);
   const [editGoal, setEditGoal] = useState(null);
   const [editValue, setEditValue] = useState("0");
+  const [editDraftDone, setEditDraftDone] = useState(false);
+  const [completeFlash, setCompleteFlash] = useState(false);
   const [pickerUIValue, setPickerUIValue] = useState("#ffffff"); // drives the ColorPicker's value prop
   const [pickerRemountKey, setPickerRemountKey] = useState(0); // forces picker to refresh when typing
   const [hexEditing, setHexEditing] = useState(false);
@@ -544,11 +603,27 @@ export default function App() {
   const [habitEditHabit, setHabitEditHabit] = useState(null);
   const [habitEditTitle, setHabitEditTitle] = useState("");
 
+  const resolvedThemeId =
+    themeChoice === RANDOM_ART_ID
+      ? sessionArtId || "cypresses"
+      : themeChoice;
   const theme = useMemo(
-    () => makeTheme(themeChoice, customThemes),
-    [themeChoice, customThemes],
+    () => makeTheme(resolvedThemeId, customThemes),
+    [resolvedThemeId, customThemes],
   );
   const todayDate = useMemo(() => new Date(todayTick), [todayTick]);
+  const { width: windowWidth } = useWindowDimensions();
+  const habitLayout = useMemo(() => {
+    const available = Math.max(280, windowWidth - SPACE.md * 2);
+    const squareSize = SQUARE;
+    const labelGap = LABEL_GAP;
+    const squaresW = squareSize * 5;
+    let labelWidth = LABEL_W;
+    if (labelWidth + labelGap + squaresW > available) {
+      labelWidth = Math.max(96, available - squaresW - labelGap);
+    }
+    return { labelWidth, squareSize, labelGap };
+  }, [windowWidth]);
   const dates = useMemo(
     () => lastNDays(5, new Date(todayTick)),
     [activeTab, todayTick],
@@ -708,10 +783,20 @@ export default function App() {
   function buildWidgetPayload(nextGoals, nextHabits) {
     const yp = yearlyPercentFromGoals(nextGoals);
     const yearlyProgress01 = clamp(yp / 100, 0, 1);
+    const artId = widgetArtworkIdFromTheme(theme);
+    const hasArtwork = artId.length > 0;
 
     return {
       yearlyProgress: yearlyProgress01,
-      theme: String(theme?.hue ?? themeChoice ?? ""),
+      theme: String(theme?.hue ?? resolvedThemeId ?? ""),
+      themeKind: String(theme?.kind || ""),
+      themePrimary: String(theme?.primary || ""),
+      themeBg: String(theme?.bg || ""),
+      themeText: String(theme?.text || ""),
+      year,
+      artworkId: artId,
+      hasArtwork,
+      widgetArtworkFilename: hasArtwork ? WIDGET_ARTWORK_FILENAME : "",
       goals: (nextGoals || []).map((g) => ({
         id: String(g.id),
         title: String(g.title || ""),
@@ -725,8 +810,11 @@ export default function App() {
     };
   }
 
-  function pushWidgets(nextGoals, nextHabits) {
+  async function pushWidgets(nextGoals, nextHabits) {
     try {
+      const artId = widgetArtworkIdFromTheme(theme);
+      await prepareWidgetArtwork(artId || null);
+
       const basePayload = buildWidgetPayload(nextGoals, nextHabits);
 
       // iOS: keep exact shape you already use
@@ -749,11 +837,6 @@ export default function App() {
           ...basePayload,
           widgetType: "goal_highlight",
         });
-
-        // console.log(
-        //   "ANDROID WIDGET PAYLOAD (base)",
-        //   JSON.stringify(basePayload),
-        // );
       }
     } catch (e) {
       console.log("Widget sync failed:", e);
@@ -1110,6 +1193,10 @@ export default function App() {
           habitsSeenFlag,
           storedYear,
           storedCustomThemes,
+          introSeen,
+          lastRandomArt,
+          storedThemeChoiceSeen,
+          storedOnboardingSeen,
         ] = await Promise.all([
           loadGoalsWithMeta(),
           loadHue(),
@@ -1118,6 +1205,10 @@ export default function App() {
           loadHabitsWelcomeSeen(),
           loadCurrentYear(),
           loadCustomThemes(),
+          loadRevampIntroSeen(),
+          loadRandomArtLast(),
+          loadRevampThemeChoiceSeen(),
+          loadOnboardingSeen(),
         ]);
 
         if (!mounted) return;
@@ -1138,8 +1229,23 @@ export default function App() {
           setGoals(finalGoals);
         }
 
-        if (typeof storedHue === "number" || typeof storedHue === "string") {
+        const isExistingUser = !!(welcomeSeen || introSeen);
+
+        if (storedHue === RANDOM_ART_ID) {
+          const picked = pickRandomArtId(lastRandomArt);
+          setThemeChoice(RANDOM_ART_ID);
+          setSessionArtId(picked);
+          setArtReveal(true);
+          await saveRandomArtLast(picked);
+        } else if (typeof storedHue === "number" || typeof storedHue === "string") {
           setThemeChoice(storedHue);
+        } else if (!isExistingUser) {
+          const picked = pickRandomArtId(lastRandomArt);
+          setThemeChoice(RANDOM_ART_ID);
+          setSessionArtId(picked);
+          setArtReveal(true);
+          await saveHue(RANDOM_ART_ID);
+          await saveRandomArtLast(picked);
         }
 
         if (!hasHabitStorage) {
@@ -1154,7 +1260,10 @@ export default function App() {
         }
 
         setHabitsWelcomeSeen(habitsSeenFlag);
-        if (!welcomeSeen) setWelcomeOpen(true);
+        setRevampIntroSeenState(introSeen);
+        setThemeChoiceSeenState(storedThemeChoiceSeen);
+        setOnboardingSeenState(storedOnboardingSeen);
+        setWasExistingUser(isExistingUser);
 
         if (storedYear == null) {
           await saveCurrentYear(year);
@@ -1179,7 +1288,7 @@ export default function App() {
   useEffect(() => {
     if (!ready) return;
     pushWidgets(goals, habits);
-  }, [ready, goals, habits, themeChoice]);
+  }, [ready, goals, habits, themeChoice, sessionArtId, customThemes]);
 
   useEffect(() => {
     return () => {
@@ -1205,7 +1314,7 @@ export default function App() {
     });
 
     return () => sub.remove?.();
-  }, [ready, goals, habits, themeChoice]);
+  }, [ready, goals, habits, themeChoice, sessionArtId, customThemes]);
 
   useEffect(() => {
     if (!ready) return;
@@ -1235,14 +1344,256 @@ export default function App() {
   }, [ready]);
 
   useEffect(() => {
-    if (activeTab !== "habits") return;
-    if (habitsWelcomeSeen) return;
-    if (welcomeOpen) return;
+    if (!ready) return;
+    if (revampIntroSeen) return;
+    if (yearRolloverOpen) return;
+    if (addOpen || habitAddOpen || customizeOpen || shareOpen || editOpen || goalDetailsOpen || habitEditOpen) {
+      return;
+    }
+    if (revampIntroOpen) return;
+    setRevampIntroOpen(true);
+  }, [
+    ready,
+    revampIntroSeen,
+    revampIntroOpen,
+    yearRolloverOpen,
+    addOpen,
+    habitAddOpen,
+    customizeOpen,
+    shareOpen,
+    editOpen,
+    goalDetailsOpen,
+    habitEditOpen,
+  ]);
 
-    setHabitsWelcomeOpen(true);
+  useEffect(() => {
+    if (!ready) return;
+    if (!wasExistingUser) return;
+    if (!revampIntroSeen) return;
+    if (revampIntroOpen) return;
+    if (themeChoiceSeen) return;
+    if (themeChoiceOpen) return;
+    if (yearRolloverOpen) return;
+    if (addOpen || habitAddOpen || customizeOpen || shareOpen || editOpen || goalDetailsOpen || habitEditOpen) {
+      return;
+    }
+    setThemeChoiceOpen(true);
+  }, [
+    ready,
+    wasExistingUser,
+    revampIntroSeen,
+    revampIntroOpen,
+    themeChoiceSeen,
+    themeChoiceOpen,
+    yearRolloverOpen,
+    addOpen,
+    habitAddOpen,
+    customizeOpen,
+    shareOpen,
+    editOpen,
+    goalDetailsOpen,
+    habitEditOpen,
+  ]);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (wasExistingUser) return;
+    if (!revampIntroSeen) return;
+    if (revampIntroOpen) return;
+    if (themeChoiceOpen) return;
+    if (onboardingSeen) return;
+    if (onboardingOpen) return;
+    if (yearRolloverOpen) return;
+    if (addOpen || habitAddOpen || customizeOpen || shareOpen || editOpen || goalDetailsOpen || habitEditOpen) {
+      return;
+    }
+    if (activeTab !== "habits") return;
+    setOnboardingOpen(true);
+  }, [
+    ready,
+    wasExistingUser,
+    revampIntroSeen,
+    revampIntroOpen,
+    themeChoiceOpen,
+    onboardingSeen,
+    onboardingOpen,
+    yearRolloverOpen,
+    addOpen,
+    habitAddOpen,
+    customizeOpen,
+    shareOpen,
+    editOpen,
+    goalDetailsOpen,
+    habitEditOpen,
+    activeTab,
+  ]);
+
+  useEffect(() => {
+    if (!onboardingOpen) {
+      setOnboardingAnchor(null);
+      setOnboardingTargetKind(null);
+      return;
+    }
+    const step = ONBOARDING_STEPS[onboardingStep];
+    if (!step) return;
+
+    const refs = {
+      tabs: tabsMeasureRef,
+      theme: themeMeasureRef,
+      add: addHabitMeasureRef,
+    };
+
+    let cancelled = false;
+    let attempts = 0;
+
+    async function capture() {
+      if (step.id === "theme" || step.id === "add") {
+        try {
+          habitsListRef.current?.scrollToEnd?.({ animated: false });
+        } catch {}
+      } else if (step.id === "ledger") {
+        try {
+          habitsListRef.current?.scrollToOffset?.({ offset: 0, animated: false });
+        } catch {}
+      }
+      await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+      await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+      let rect = null;
+      let kind = null;
+      if (step.id === "ledger") {
+        if (habits.length) {
+          rect = await measureNode(todayCellMeasureRef);
+          if (rect) kind = "today";
+        }
+        if (!rect) {
+          rect = await measureNode(ledgerHeaderRef);
+          kind = null;
+        }
+      } else {
+        rect = await measureNode(refs[step.id]);
+      }
+      if (cancelled) return;
+      if (rect) {
+        setOnboardingAnchor(rect);
+        setOnboardingTargetKind(kind);
+        return;
+      }
+      attempts += 1;
+      if (attempts < 24) {
+        setTimeout(capture, 50);
+      }
+    }
+
+    setOnboardingAnchor(null);
+    setOnboardingTargetKind(null);
+    capture();
+    return () => {
+      cancelled = true;
+    };
+  }, [onboardingOpen, onboardingStep, habits.length]);
+
+  async function markLegacyWelcomesSeen() {
+    try {
+      await setWelcomeSeen();
+    } catch {}
     setHabitsWelcomeSeen(true);
-    setHabitsWelcomeSeenFlag();
-  }, [activeTab, habitsWelcomeSeen, welcomeOpen]);
+    try {
+      await setHabitsWelcomeSeenFlag();
+    } catch {}
+  }
+
+  async function closeRevampIntro() {
+    setRevampIntroOpen(false);
+    setRevampIntroSeenState(true);
+    try {
+      await setRevampIntroSeen();
+    } catch {}
+    await markLegacyWelcomesSeen();
+    if (!wasExistingUser) {
+      setThemeChoiceSeenState(true);
+      try {
+        await setRevampThemeChoiceSeen();
+      } catch {}
+    }
+  }
+
+  async function finishThemeChoice(nextTheme) {
+    setThemeChoiceOpen(false);
+    setThemeChoiceSeenState(true);
+    try {
+      await setRevampThemeChoiceSeen();
+    } catch {}
+    if (nextTheme === RANDOM_ART_ID) {
+      await handlePickTheme(RANDOM_ART_ID);
+    }
+  }
+
+  async function finishOnboarding() {
+    setOnboardingOpen(false);
+    setOnboardingAnchor(null);
+    setOnboardingTargetKind(null);
+    setOnboardingSeenState(true);
+    try {
+      await setOnboardingSeen();
+    } catch {}
+  }
+
+  function handleOnboardingTodayToggle() {
+    const habit = habits[0];
+    const dayKey = dates[dates.length - 1]?.key;
+    if (!habit || !dayKey) return;
+    toggleHabit(habit.id, dayKey);
+  }
+
+  async function replayCatalogueGuide() {
+    await hapticLight();
+    setCustomizeOpen(false);
+    setOnboardingStep(0);
+    setOnboardingAnchor(null);
+    setOnboardingTargetKind(null);
+    selectTab("habits");
+    setOnboardingOpen(true);
+  }
+
+  async function qaSimulateFresh() {
+    if (!__DEV__) return;
+    await simulateFreshInstall();
+    setDevQaOpen(false);
+    reloadForQa();
+  }
+
+  async function qaSimulateOldUser() {
+    if (!__DEV__) return;
+    await simulateOldYearlyTrackerUser();
+    setDevQaOpen(false);
+    reloadForQa();
+  }
+
+  async function qaSimulateEarlierRevamp() {
+    if (!__DEV__) return;
+    await simulateEarlierRevampUser();
+    setDevQaOpen(false);
+    reloadForQa();
+  }
+
+  async function qaReplayOnboarding() {
+    if (!__DEV__) return;
+    await replayOnboardingFlags();
+    setDevQaOpen(false);
+    setOnboardingSeenState(false);
+    setOnboardingStep(0);
+    setOnboardingAnchor(null);
+    setOnboardingTargetKind(null);
+    selectTab("habits");
+    setOnboardingOpen(true);
+  }
+
+  async function qaResetThemeChoice() {
+    if (!__DEV__) return;
+    await resetThemeChoicePrompt();
+    setDevQaOpen(false);
+    reloadForQa();
+  }
 
   useEffect(() => {
     if (!shareOpen) return;
@@ -1258,14 +1609,6 @@ export default function App() {
     const ordered = sortGoals(nextGoals);
     setGoals(ordered);
     await saveGoals(ordered);
-  }
-
-  async function closeWelcome() {
-    setWelcomeOpen(false);
-    await setWelcomeSeen();
-
-    setHabitsWelcomeSeen(true);
-    await setHabitsWelcomeSeenFlag();
   }
 
   function normalizeNewGoal() {
@@ -1341,12 +1684,17 @@ export default function App() {
 
   async function handleDeleteGoal(id) {
     await hapticLight();
+    setRemovingGoalId(id);
+    if (!reducedMotion) {
+      await new Promise((r) => setTimeout(r, 110));
+    }
 
     const idx = goals.findIndex((g) => g.id === id);
     const item = goals.find((g) => g.id === id);
     const next = goals.filter((g) => g.id !== id);
 
     await persistGoals(next);
+    setRemovingGoalId(null);
 
     if (item) showUndo("goal", item, idx);
   }
@@ -1360,6 +1708,8 @@ export default function App() {
     } else {
       setEditValue("0");
     }
+    setEditDraftDone((goal.progress ?? 0) === 1);
+    setCompleteFlash(false);
 
     setEditOpen(true);
     playEditOpenAnim();
@@ -1369,6 +1719,8 @@ export default function App() {
     setEditOpen(false);
     setEditGoal(null);
     setEditValue("0");
+    setEditDraftDone(false);
+    setCompleteFlash(false);
   }
 
   async function bumpEditCount(delta) {
@@ -1386,9 +1738,11 @@ export default function App() {
 
   async function saveEditCount() {
     if (!editGoal || editGoal.type !== "count") return;
+    if (completeFlash) return;
 
     const t = editGoal.target || 0;
-    const n = Number(editValue);
+    const flushed = counterRef.current?.flush?.();
+    const n = Number.isFinite(flushed) ? flushed : Number(editValue);
     if (!Number.isFinite(n)) return;
 
     const nextProgress = clamp(Math.floor(n), 0, t);
@@ -1398,24 +1752,39 @@ export default function App() {
     );
 
     const willBeComplete = t > 0 && nextProgress >= t;
-    if (willBeComplete) await hapticSuccess();
-    else await hapticLight();
-
     await persistGoals(next);
+    if (willBeComplete) {
+      await hapticSuccess();
+      setCompleteFlash(true);
+      await new Promise((r) => setTimeout(r, MOTION.completion));
+    } else {
+      await hapticLight();
+    }
     closeEdit();
   }
 
-  async function setMilestoneComplete(done) {
+  async function applyMilestone() {
     if (!editGoal || editGoal.type !== "boolean") return;
-
-    if (done) await hapticSuccess();
-    else await hapticLight();
+    if (completeFlash) return;
+    const done = !!editDraftDone;
 
     const next = goals.map((g) =>
       g.id === editGoal.id ? { ...g, progress: done ? 1 : 0 } : g,
     );
     await persistGoals(next);
+    if (done) {
+      await hapticSuccess();
+      setCompleteFlash(true);
+      await new Promise((r) => setTimeout(r, MOTION.completion));
+    } else {
+      await hapticLight();
+    }
     closeEdit();
+  }
+
+  async function setMilestoneComplete(done) {
+    if (!editGoal || editGoal.type !== "boolean") return;
+    setEditDraftDone(!!done);
   }
 
   async function openGoalDetails(goal) {
@@ -1485,10 +1854,33 @@ export default function App() {
     await hapticSuccess();
   }
 
+  function clearThemeMotion() {
+    setTimeout(() => {
+      setArtReveal(false);
+      setThemeExpand(false);
+    }, MOTION.reveal);
+  }
+
   async function handlePickTheme(nextTheme) {
-    setThemeChoice(nextTheme);
-    await saveHue(nextTheme);
+    const artPick = ART_THEMES.some((t) => t.id === nextTheme && t.artwork);
+    if (nextTheme === RANDOM_ART_ID) {
+      const picked = pickRandomArtId(sessionArtId);
+      setThemeChoice(RANDOM_ART_ID);
+      setSessionArtId(picked);
+      setArtReveal(true);
+      setThemeExpand(false);
+      await saveHue(RANDOM_ART_ID);
+      await saveRandomArtLast(picked);
+    } else {
+      setThemeChoice(nextTheme);
+      setSessionArtId(null);
+      setArtReveal(false);
+      setThemeExpand(artPick);
+      await saveHue(nextTheme);
+    }
     await hapticSuccess();
+    setCustomizeOpen(false);
+    clearThemeMotion();
   }
 
   async function addHabit() {
@@ -1536,12 +1928,17 @@ export default function App() {
 
   async function deleteHabit(habitId) {
     await hapticLight();
+    setRemovingHabitId(habitId);
+    if (!reducedMotion) {
+      await new Promise((r) => setTimeout(r, 110));
+    }
 
     const idx = habits.findIndex((h) => h.id === habitId);
     const item = habits.find((h) => h.id === habitId);
     const next = habits.filter((h) => h.id !== habitId);
 
     await saveHabits(next);
+    setRemovingHabitId(null);
 
     if (item) showUndo("habit", item, idx);
   }
@@ -1635,272 +2032,157 @@ export default function App() {
     ? `Next goal: ${goalsSummary.nextGoal.title} (${goalsSummary.nextPct}%)`
     : `Next goal: ${goals.length ? "All complete" : "Add a goal"}`;
 
+  const openThemePicker = () => {
+    setCustomizeOpen(true);
+    setThemePage("pick");
+  };
+
+  function selectTab(next) {
+    closeOpenHabitSwipe();
+    headerScrollY.value = 0;
+    setActiveTab(next);
+  }
+
+  function rememberListViewport(info) {
+    const height = info?.layout?.height;
+    if (typeof height === "number" && Number.isFinite(height)) {
+      listViewportH.current = height;
+    }
+  }
+
+  function rememberListContentSize(_w, h) {
+    if (typeof h === "number" && Number.isFinite(h)) {
+      listContentH.current = h;
+    }
+  }
+
+  function onListScrollOffset(offset) {
+    const y = typeof offset === "number" && Number.isFinite(offset) ? offset : 0;
+    if (y <= 0) {
+      headerScrollY.value = 0;
+      return;
+    }
+    const maxScroll = Math.max(0, listContentH.current - listViewportH.current);
+    if (maxScroll <= 0) {
+      // Short list: bottom rubber-band is not real scroll. Keep header still.
+      headerScrollY.value = 0;
+      return;
+    }
+    const real = y > maxScroll ? maxScroll : y;
+    headerScrollY.value = real > HEADER_ANIM_RANGE ? HEADER_ANIM_RANGE : real;
+  }
+
+  const canvasPaused =
+    customizeOpen ||
+    editOpen ||
+    addOpen ||
+    habitAddOpen ||
+    shareOpen ||
+    goalDetailsOpen ||
+    habitEditOpen ||
+    revampIntroOpen ||
+    themeChoiceOpen ||
+    onboardingOpen ||
+    (__DEV__ && devQaOpen) ||
+    artReveal ||
+    themeExpand;
+
+  const stickyChrome = (
+    <View style={styles.stickyChrome}>
+      <CollapsingKicker
+        theme={theme}
+        year={year}
+        fontsLoaded={fontsLoaded}
+        onMarkLongPress={
+          __DEV__
+            ? async () => {
+                await hapticLight();
+                setDevQaOpen(true);
+              }
+            : undefined
+        }
+      />
+      {activeTab === "habits" || activeTab === "goals" ? (
+        <>
+          <CollapsingIdentity
+            theme={theme}
+            scrollY={headerScrollY}
+            artwork={theme?.artwork}
+            fontsLoaded={fontsLoaded}
+          />
+          <View ref={tabsMeasureRef} collapsable={false}>
+            <AtelierTabs theme={theme} active={activeTab} onChange={selectTab} />
+          </View>
+        </>
+      ) : null}
+    </View>
+  );
+
   const topHeader = (
     <View style={styles.header}>
-      <Text style={[styles.appTitle, { color: theme.text }]}>
-        Yearly Tracker
-      </Text>
-      <Text style={[styles.yearText, { color: theme.mutedText }]}>{year}</Text>
-
-      {activeTab !== "history" && (
-        <View style={[styles.tabRow, ANDROID && styles.noGap]}>
-          <Pressable
-            onPress={() => {
-              closeOpenHabitSwipe();
-              setActiveTab("habits");
-            }}
-            style={[
-              styles.tabPill,
-              {
-                backgroundColor:
-                  activeTab === "habits" ? theme.primary : theme.card,
-                borderColor:
-                  activeTab === "habits" ? theme.primary : theme.border,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                {
-                  color:
-                    activeTab === "habits" ? theme.primaryTextOn : theme.text,
-                },
-              ]}
-            >
-              Habits
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => {
-              closeOpenHabitSwipe();
-              setActiveTab("goals");
-            }}
-            style={[
-              styles.tabPill,
-              ANDROID && styles.ml10,
-              {
-                backgroundColor:
-                  activeTab === "goals" ? theme.primary : theme.card,
-                borderColor:
-                  activeTab === "goals" ? theme.primary : theme.border,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                {
-                  color:
-                    activeTab === "goals" ? theme.primaryTextOn : theme.text,
-                },
-              ]}
-            >
-              Goals
-            </Text>
-          </Pressable>
-        </View>
-      )}
-
-      {activeTab !== "history" && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipScroll}
-          contentContainerStyle={[styles.chipRow, ANDROID && styles.noGap]}
-        >
-          {activeTab === "habits" ? (
-            <>
-              <View
-                style={[
-                  styles.chip,
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                ]}
-              >
-                <Ionicons
-                  name="calendar-outline"
-                  size={16}
-                  color={theme.primary}
-                  style={styles.chipIcon}
-                />
-                <Text
-                  style={[styles.chipText, { color: theme.text }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {todaySummaryText}
-                </Text>
-              </View>
-              {/* <View
-                style={[
-                  styles.chip,
-                  ANDROID && styles.ml10,
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                ]}
-              >
-                <Ionicons
-                  name="flame-outline"
-                  size={16}
-                  color={theme.primary}
-                  style={styles.chipIcon}
-                />
-                <Text
-                  style={[styles.chipText, { color: theme.text }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {streakSummaryText}
-                </Text>
-              </View> */}
-            </>
-          ) : (
-            <>
-              {/* <View
-                style={[
-                  styles.chip,
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                ]}
-              >
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={16}
-                  color={theme.primary}
-                  style={styles.chipIcon}
-                />
-                <Text
-                  style={[styles.chipText, { color: theme.text }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {goalsSummaryText}
-                </Text>
-              </View> */}
-              {/* <View
-                style={[
-                  styles.chip,
-                  ANDROID && styles.ml10,
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                ]}
-              >
-                <Ionicons
-                  name="flag-outline"
-                  size={16}
-                  color={theme.primary}
-                  style={styles.chipIcon}
-                />
-                <Text
-                  style={[styles.chipText, { color: theme.text }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {nextGoalText}
-                </Text>
-              </View> */}
-            </>
-          )}
-        </ScrollView>
-      )}
-
       {activeTab === "goals" ? (
         <>
-          <View style={styles.ringCard(theme)}>
-            <ProgressRing
-              size={176}
-              strokeWidth={14}
+          <View>
+            <MetadataLabel theme={theme}>
+              {`YEARLY  /  ${year}  DAY ${dayOfYear(todayDate)}`}
+            </MetadataLabel>
+          </View>
+
+          <EditorialSurface theme={theme} style={{ marginTop: SPACE.md }}>
+            <EditorialProgress
               percent={yearlyPercent}
               theme={theme}
-              label="Year completion"
+              label="Year progress"
+              fontsLoaded={fontsLoaded}
             />
-
-            <View style={{ marginTop: 12, alignItems: "center" }}>
-              {/* <Text style={[styles.bigPct, { color: theme.text }]}>
-                {Math.round(yearlyPercent)}%
-              </Text>
-              <Text style={[styles.bigPctSub, { color: theme.mutedText }]}>
-                average across goals
-              </Text> */}
-              <View
-                style={[
-                  styles.chip,
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                ]}
-              >
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={16}
-                  color={theme.primary}
-                  style={styles.chipIcon}
-                />
-                <Text
-                  style={[styles.chipText, { color: theme.text }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {goalsSummaryText}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={[styles.actionsRow, ANDROID && styles.noGap]}>
-            <Pressable
-              onPress={() => setAddOpen(true)}
-              style={({ pressed }) => [
-                styles.primaryBtn,
+            <Text
+              style={[
+                styles.bigPctSub,
                 {
-                  backgroundColor: pressed
-                    ? theme.primaryPressed
-                    : theme.primary,
+                  color: theme.mutedText,
+                  marginTop: SPACE.xs,
+                  fontFamily: fontFamily("data", fontsLoaded),
                 },
               ]}
             >
-              <Text
-                style={[styles.primaryBtnText, { color: theme.primaryTextOn }]}
-              >
-                Add Goal
-              </Text>
-            </Pressable>
-            {/* <Pressable
-              onPress={() => setShareOpen(true)}
-              style={({ pressed }) => [
-                styles.shareIconBtn,
-                ANDROID && styles.ml10,
-                {
-                  backgroundColor: pressed ? theme.border : theme.card,
-                  borderColor: theme.border,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Share"
-            >
-              <Ionicons name="share-outline" size={18} color={theme.text} />
-            </Pressable> */}
-          </View>
-
-          <View style={styles.divider(theme)} />
-
-          <View style={[styles.sectionHeaderRow, ANDROID && styles.noGap]}>
-            <Text style={[styles.sectionTitle, { color: theme.mutedText }]}>
-              Goals
+              {goalsSummaryText}
             </Text>
+          </EditorialSurface>
+
+          <EditorialSurface theme={theme} padded={false} style={styles.actionsRow}>
+            <EditorialToolbar
+              theme={theme}
+              items={[
+                { label: "Add goal", onPress: () => setAddOpen(true) },
+                { label: "Share", onPress: () => setShareOpen(true) },
+                { label: "Theme", onPress: openThemePicker },
+              ]}
+            />
+          </EditorialSurface>
+
+          <SectionRule theme={theme} />
+
+          <View style={styles.sectionHeaderRow}>
+            <MetadataLabel theme={theme}>Goals</MetadataLabel>
 
             <Pressable
               onPress={async () => {
                 await hapticLight();
                 setHideCompleted((v) => !v);
               }}
-              style={({ pressed }) => [
-                styles.togglePill,
-                {
-                  borderColor: theme.border,
-                  backgroundColor: pressed ? theme.border : theme.card,
-                },
-              ]}
+              style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel="Toggle hide completed goals"
             >
-              <Text style={[styles.toggleText, { color: theme.text }]}>
+              <Text
+                style={[
+                  styles.editorialToggle,
+                  {
+                    color: theme.text,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+              >
                 {hideCompleted ? "Show completed" : "Hide completed"}
               </Text>
             </Pressable>
@@ -1908,70 +2190,116 @@ export default function App() {
         </>
       ) : activeTab === "habits" ? (
         <>
-          <View style={styles.habitsHeaderGrid}>
-            <View style={{ width: LABEL_W, paddingRight: LABEL_GAP }}>
-              <Pressable
-                onPress={() => {
-                  setHistoryYear(todayDate.getFullYear());
-                  setActiveTab("history");
-                }}
-                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                accessibilityRole="button"
-                accessibilityLabel="View habit history for this month"
-              >
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={[styles.monthTitle, { color: theme.text }]}
-                >
-                  {monthName(new Date(todayTick))}
-                </Text>
-              </Pressable>
+          <View>
+            <MetadataLabel theme={theme}>
+              {`LEDGER  /  ${monthName(new Date(todayTick)).toUpperCase()}  DAY ${dayOfYear(todayDate)}`}
+            </MetadataLabel>
+          </View>
 
-              <View style={[styles.legendRow, ANDROID && styles.noGap]}>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[
-                      styles.legendDot,
-                      {
-                        backgroundColor: theme.primary,
-                        borderColor: theme.primary,
-                      },
-                    ]}
-                  />
-                  <Text style={[styles.legendText, { color: theme.mutedText }]}>
-                    Good
-                  </Text>
-                </View>
-                <View style={[styles.legendItem, ANDROID && styles.ml10]}>
-                  <View
-                    style={[
-                      styles.legendDot,
-                      {
-                        backgroundColor: theme.danger,
-                        borderColor: theme.danger,
-                      },
-                    ]}
-                  />
-                  <Text style={[styles.legendText, { color: theme.mutedText }]}>
-                    Bad
-                  </Text>
-                </View>
-              </View>
+          <EditorialSurface theme={theme} style={{ marginTop: SPACE.sm }}>
+          <Pressable
+            onPress={() => {
+              setHistoryYear(todayDate.getFullYear());
+              selectTab("history");
+            }}
+            style={({ pressed }) => [
+              styles.monthHit,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="View habit history for this month"
+          >
+            <Text
+              style={[
+                styles.monthTitle,
+                {
+                  color: theme.text,
+                  fontFamily: fontFamily("display", fontsLoaded),
+                },
+              ]}
+            >
+              {monthName(new Date(todayTick))}
+            </Text>
+          </Pressable>
+
+          <Text
+            style={[
+              styles.legendText,
+              {
+                color: theme.mutedText,
+                fontFamily: fontFamily("data", fontsLoaded),
+              },
+            ]}
+          >
+            . empty   + good   × bad
+          </Text>
+          <Text
+            style={[
+              styles.legendText,
+              {
+                color: theme.mutedText,
+                marginTop: SPACE["2xs"],
+                fontFamily: fontFamily("data", fontsLoaded),
+              },
+            ]}
+          >
+            {todaySummaryText}
+          </Text>
+          </EditorialSurface>
+
+          <View
+            ref={ledgerHeaderRef}
+            collapsable={false}
+            style={styles.habitsHeaderGrid}
+          >
+            <View
+              style={{
+                width: habitLayout.labelWidth,
+                paddingRight: habitLayout.labelGap,
+                justifyContent: "flex-end",
+              }}
+            >
+              <Text
+                style={[
+                  styles.legendText,
+                  {
+                    color: theme.mutedText,
+                    fontFamily: fontFamily("data", fontsLoaded),
+                  },
+                ]}
+              >
+                Habits
+              </Text>
             </View>
 
-            <View style={styles.daysRow}>
+            <View
+              style={[
+                styles.daysRow,
+                { width: habitLayout.squareSize * dates.length },
+              ]}
+            >
               {dates.map((d) => (
-                <View key={d.key} style={styles.dayCell}>
-                  <Text style={[styles.dayNum, { color: theme.mutedText }]}>
-                    {d.num}
+                <View
+                  key={d.key}
+                  style={[styles.dayCell, { width: habitLayout.squareSize }]}
+                >
+                  <Text
+                    style={[
+                      styles.dayNum,
+                      {
+                        color: theme.mutedText,
+                        fontFamily: fontFamily("data", fontsLoaded),
+                      },
+                    ]}
+                  >
+                    {String(d.num).padStart(2, "0")}
                   </Text>
                 </View>
               ))}
             </View>
           </View>
 
-          <View style={styles.divider(theme)} />
+          <SectionRule theme={theme} />
         </>
       ) : null}
     </View>
@@ -1979,9 +2307,11 @@ export default function App() {
 
   if (!ready) {
     return (
-      <GestureHandlerRootView style={styles.safe}>
-        <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]} />
-      </GestureHandlerRootView>
+      <FontsProvider loaded={fontsLoaded}>
+        <GestureHandlerRootView style={styles.safe}>
+          <BrandSplash />
+        </GestureHandlerRootView>
+      </FontsProvider>
     );
   }
 
@@ -1994,19 +2324,42 @@ export default function App() {
     _isCustom: true,
   }));
 
-  const allThemeCards = [...customThemeCards, ...THEMES];
   const createPreview = currentCreatePaletteDraft();
 
   return (
-    <GestureHandlerRootView style={styles.safe}>
-      <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
+    <FontsProvider loaded={fontsLoaded}>
+    <GestureHandlerRootView
+      style={[styles.safe, { backgroundColor: theme.bg }]}
+    >
+      <ArtBackdrop
+        theme={theme}
+        fontsLoaded={fontsLoaded}
+        paused={canvasPaused}
+        reveal={artReveal}
+        expand={themeExpand}
+      />
+      <SafeAreaView style={[styles.safe, styles.transparent]}>
+        {stickyChrome}
+        <View style={styles.tabPane}>
         {activeTab === "goals" ? (
           <DraggableFlatList
             activationDistance={12}
             data={visibleGoals}
             keyExtractor={(item) => item.id}
+            style={styles.transparentList}
+            containerStyle={styles.transparentList}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={topHeader}
+            ListFooterComponent={<View style={styles.listBottomSpacer} />}
+            onScrollOffsetChange={onListScrollOffset}
+            onContainerLayout={rememberListViewport}
+            onContentSizeChange={rememberListContentSize}
+            bounces
+            alwaysBounceVertical
+            overScrollMode="always"
+            contentInsetAdjustmentBehavior="never"
+            automaticallyAdjustContentInsets={false}
+            automaticallyAdjustsScrollIndicatorInsets={false}
             onDragBegin={() => {
               if (!goalDragging) {
                 setGoalDragging(true);
@@ -2024,36 +2377,74 @@ export default function App() {
                 persistGoals(data);
               }
             }}
-            renderItem={({ item, drag, isActive }) => (
+            renderItem={({ item, drag, isActive, getIndex }) => (
               <GoalItem
                 goal={item}
                 theme={theme}
+                index={(typeof getIndex === "function" ? getIndex() : 0) + 1}
                 onProgress={openEdit}
                 onEditDetails={openGoalDetails}
                 onDelete={handleDeleteGoal}
                 onDrag={drag}
                 dragging={isActive}
+                removing={removingGoalId === item.id}
               />
             )}
+            ListEmptyComponent={
+              <EditorialEmpty
+                theme={theme}
+                kicker="Catalogue"
+                title="No goals yet"
+                body="Add a goal to start this year's index."
+              />
+            }
           />
         ) : activeTab === "history" ? (
-          <ScrollView contentContainerStyle={styles.listContent}>
-            {topHeader}
+          <ScrollView
+            style={styles.transparentList}
+            contentContainerStyle={styles.listContent}
+          >
             <HabitHistory
               theme={theme}
               habits={habits}
               historyYear={historyYear}
-              onBack={() => setActiveTab("habits")}
+              onBack={() => selectTab("habits")}
+              onOpenArchive={() => selectTab("archive")}
               todayDate={todayDate}
+            />
+          </ScrollView>
+        ) : activeTab === "archive" ? (
+          <ScrollView
+            style={styles.transparentList}
+            contentContainerStyle={styles.listContent}
+          >
+            <YearArchive
+              theme={theme}
+              habits={habits}
+              year={historyYear}
+              todayDate={todayDate}
+              onBack={() => selectTab("history")}
             />
           </ScrollView>
         ) : (
           <DraggableFlatList
+            ref={habitsListRef}
             activationDistance={12}
             data={habits}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
+            style={styles.transparentList}
+            containerStyle={styles.transparentList}
+            contentContainerStyle={styles.habitsListContent}
             ListHeaderComponent={topHeader}
+            onScrollOffsetChange={onListScrollOffset}
+            onContainerLayout={rememberListViewport}
+            onContentSizeChange={rememberListContentSize}
+            bounces
+            alwaysBounceVertical
+            overScrollMode="always"
+            contentInsetAdjustmentBehavior="never"
+            automaticallyAdjustContentInsets={false}
+            automaticallyAdjustsScrollIndicatorInsets={false}
             onDragBegin={() => {
               closeOpenHabitSwipe();
               if (!habitDragging) {
@@ -2075,93 +2466,79 @@ export default function App() {
                 onEdit={openHabitEdit}
                 onDrag={drag}
                 dragging={isActive}
-                labelWidth={LABEL_W}
-                squareSize={SQUARE}
-                labelGap={LABEL_GAP}
+                removing={removingHabitId === item.id}
+                labelWidth={habitLayout.labelWidth}
+                squareSize={habitLayout.squareSize}
+                labelGap={habitLayout.labelGap}
                 onSwipeOpen={handleHabitSwipeOpen}
                 onSwipeClose={handleHabitSwipeClose}
+                measureRef={
+                  item.id === habits[0]?.id ? ledgerMeasureRef : undefined
+                }
+                todayCellRef={
+                  item.id === habits[0]?.id ? todayCellMeasureRef : undefined
+                }
               />
             )}
+            ListEmptyComponent={
+              <EditorialEmpty
+                theme={theme}
+                kicker="Ledger"
+                title="No habits yet"
+                body="Add a habit. Tap cycles . → + → × → ."
+              />
+            }
             ListFooterComponent={
-              <View style={{ marginTop: 14 }}>
-                <View style={[styles.actionsRow, ANDROID && styles.noGap]}>
-                  <Pressable
-                    onPress={() => setHabitAddOpen(true)}
-                    style={({ pressed }) => [
-                      styles.primaryBtn,
+              <View>
+                <EditorialSurface theme={theme} padded={false} style={styles.actionsRow}>
+                  <EditorialToolbar
+                    theme={theme}
+                    items={[
                       {
-                        backgroundColor: pressed
-                          ? theme.primaryPressed
-                          : theme.primary,
+                        label: "Add habit",
+                        onPress: () => setHabitAddOpen(true),
+                        measureRef: addHabitMeasureRef,
+                      },
+                      { label: "Share", onPress: () => setShareOpen(true) },
+                      {
+                        label: "Theme",
+                        onPress: openThemePicker,
+                        measureRef: themeMeasureRef,
                       },
                     ]}
-                  >
-                    <Text
-                      style={[
-                        styles.primaryBtnText,
-                        { color: theme.primaryTextOn },
-                      ]}
-                    >
-                      Add Habit
-                    </Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => {
-                      setCustomizeOpen(true);
-                      setThemePage("pick");
-                    }}
-                    style={({ pressed }) => [
-                      styles.secondaryBtn,
-                      ANDROID && styles.ml10,
-                      {
-                        backgroundColor: pressed ? theme.border : theme.card,
-                        borderColor: theme.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.secondaryBtnText, { color: theme.text }]}
-                    >
-                      Theme
-                    </Text>
-                  </Pressable>
-                </View>
+                  />
+                </EditorialSurface>
+                <View style={styles.listBottomSpacer} />
               </View>
             }
           />
         )}
+        </View>
         {!!undo && (
           <View
             style={[
               styles.undoWrap,
-              { borderColor: theme.border, backgroundColor: theme.card },
+              { borderColor: theme.text, backgroundColor: theme.card },
             ]}
           >
             <Text
-              style={[styles.undoText, { color: theme.text }]}
+              style={[
+                styles.undoText,
+                {
+                  color: theme.text,
+                  fontFamily: fontFamily("body", fontsLoaded),
+                },
+              ]}
               numberOfLines={1}
             >
               {undo.kind === "goal" ? "Goal deleted" : "Habit deleted"}
             </Text>
-
-            <Pressable
+            <EditorialButton
+              label="Undo"
+              theme={theme}
+              variant="primary"
               onPress={performUndo}
-              style={({ pressed }) => [
-                styles.undoBtn,
-                {
-                  backgroundColor: pressed
-                    ? theme.primaryPressed
-                    : theme.primary,
-                },
-              ]}
-            >
-              <Text
-                style={[styles.undoBtnText, { color: theme.primaryTextOn }]}
-              >
-                Undo
-              </Text>
-            </Pressable>
+            />
           </View>
         )}
         {!!toast && (
@@ -2169,14 +2546,20 @@ export default function App() {
             style={[
               styles.toastWrap,
               {
-                borderColor: theme.border,
+                borderColor: theme.text,
                 backgroundColor: theme.card,
                 bottom: undo ? 84 : 16,
               },
             ]}
           >
             <Text
-              style={[styles.toastText, { color: theme.text }]}
+              style={[
+                styles.toastText,
+                {
+                  color: theme.text,
+                  fontFamily: fontFamily("body", fontsLoaded),
+                },
+              ]}
               numberOfLines={2}
             >
               {toast.message}
@@ -2317,692 +2700,248 @@ export default function App() {
             </View>
           </View>
         </Modal>
-        {/* Habits welcome */}
-        <Modal
-          visible={habitsWelcomeOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={() => setHabitsWelcomeOpen(false)}
-        >
-          <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Habits
-              </Text>
-
-              <Text
-                style={[
-                  styles.modalSub,
-                  { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
-                ]}
-              >
-                Tap a square to track that day. Tap cycles: Off → Good → Bad →
-                Off.
-              </Text>
-
-              <View style={{ marginTop: 10 }}>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Simple habits (like reading) are basically On/Off.
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Working out can be marked “good” or “bad”.
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Swipe a habit left to edit or delete it.
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Tap the month name to view your habit history.
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Press and hold a habit to reorder it.
-                </Text>
-              </View>
-
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={() => setHabitsWelcomeOpen(false)}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Got it
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-        {/* Main welcome */}
-        <Modal
-          visible={welcomeOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={closeWelcome}
-        >
-          <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Welcome to Yearly Tracker
-              </Text>
-
-              <Text
-                style={[
-                  styles.modalSub,
-                  { color: theme.mutedText, marginTop: 10, lineHeight: 18 },
-                ]}
-              >
-                “Success is the product of daily habits—not once-in-a-lifetime
-                transformations.”
-              </Text>
-              <Text
-                style={[
-                  styles.modalSub,
-                  { color: theme.mutedText, marginTop: 6 },
-                ]}
-              >
-                — James Clear
-              </Text>
-
-              <View style={{ marginTop: 14 }}>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • No accounts
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • No tracking or analytics
-                </Text>
-                <Text style={[styles.bullet, { color: theme.text }]}>
-                  • Everything is stored locally on your phone
-                </Text>
-              </View>
-
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={closeWelcome}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Get Started
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-        {/* Edit Habit */}
-        <Modal
+        <RevampIntroModal
+          visible={revampIntroOpen}
+          theme={theme}
+          onClose={closeRevampIntro}
+          existingUser={wasExistingUser}
+        />
+        <RevampThemeChoiceModal
+          visible={themeChoiceOpen}
+          theme={theme}
+          onTryRandomArt={() => finishThemeChoice(RANDOM_ART_ID)}
+          onKeepCurrent={() => finishThemeChoice(null)}
+        />
+        {__DEV__ ? (
+          <DevFirstRunQa
+            visible={devQaOpen}
+            theme={theme}
+            onClose={() => setDevQaOpen(false)}
+            onSimulateFresh={qaSimulateFresh}
+            onSimulateOldUser={qaSimulateOldUser}
+            onSimulateEarlierRevamp={qaSimulateEarlierRevamp}
+            onReplayOnboarding={qaReplayOnboarding}
+            onResetThemeChoice={qaResetThemeChoice}
+          />
+        ) : null}
+        <AtelierDrawer
           visible={habitEditOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={closeHabitEdit}
+          onClose={closeHabitEdit}
+          theme={theme}
+          kicker="[YT]  /  HABIT"
+          title="Edit Habit"
+          footer={
+            <AtelierActions
+              theme={theme}
+              onCancel={closeHabitEdit}
+              onConfirm={saveHabitEdit}
+              confirmDisabled={!habitEditTitle.trim()}
+            />
+          }
         >
-          <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Edit Habit
-              </Text>
-
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Habit name
-              </Text>
-              <TextInput
-                value={habitEditTitle}
-                onChangeText={setHabitEditTitle}
-                placeholder="e.g., Workout"
-                placeholderTextColor={theme.mutedText}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: theme.border,
-                    color: theme.text,
-                    backgroundColor: theme.bg,
-                  },
-                ]}
-                autoCorrect={false}
-                autoCapitalize="words"
-                maxLength={24}
-              />
-
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={closeHabitEdit}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed ? theme.border : theme.bg,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Cancel
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={saveHabitEdit}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Save
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-        {/* Add Habit */}
-        <Modal
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Habit name
+          </Text>
+          <AtelierField
+            theme={theme}
+            value={habitEditTitle}
+            onChangeText={setHabitEditTitle}
+            placeholder="e.g., Workout"
+            autoCorrect={false}
+            autoCapitalize="words"
+            maxLength={24}
+          />
+        </AtelierDrawer>
+        <AtelierDrawer
           visible={habitAddOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={() => setHabitAddOpen(false)}
+          onClose={() => setHabitAddOpen(false)}
+          theme={theme}
+          kicker="[YT]  /  HABIT"
+          title="Add Habit"
+          footer={
+            <AtelierActions
+              theme={theme}
+              onCancel={() => setHabitAddOpen(false)}
+              onConfirm={addHabit}
+              confirmDisabled={!habitTitle.trim()}
+            />
+          }
         >
-          <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Add Habit
-              </Text>
-
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Habit name
-              </Text>
-              <TextInput
-                value={habitTitle}
-                onChangeText={setHabitTitle}
-                placeholder="e.g., Workout"
-                placeholderTextColor={theme.mutedText}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: theme.border,
-                    color: theme.text,
-                    backgroundColor: theme.bg,
-                  },
-                ]}
-                autoCorrect={false}
-                autoCapitalize="words"
-                maxLength={24}
-              />
-
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={() => setHabitAddOpen(false)}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed ? theme.border : theme.bg,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Cancel
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={addHabit}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Save
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-        {/* Edit Goal Details */}
-        <Modal
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Habit name
+          </Text>
+          <AtelierField
+            theme={theme}
+            value={habitTitle}
+            onChangeText={setHabitTitle}
+            placeholder="e.g., Workout"
+            autoCorrect={false}
+            autoCapitalize="words"
+            maxLength={24}
+          />
+        </AtelierDrawer>
+        <AtelierDrawer
           visible={goalDetailsOpen}
-          animationType="slide"
-          transparent
-          onRequestClose={closeGoalDetails}
+          onClose={closeGoalDetails}
+          theme={theme}
+          kicker="[YT]  /  GOAL"
+          title="Edit Goal"
+          footer={
+            <AtelierActions
+              theme={theme}
+              onCancel={closeGoalDetails}
+              onConfirm={saveGoalDetails}
+              confirmDisabled={!goalDetailsTitle.trim()}
+            />
+          }
         >
-          <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Edit Goal
-              </Text>
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Title
+          </Text>
+          <AtelierField
+            theme={theme}
+            value={goalDetailsTitle}
+            onChangeText={setGoalDetailsTitle}
+            placeholder="e.g., Read 30 books"
+            autoCorrect={false}
+            autoCapitalize="sentences"
+            maxLength={60}
+          />
 
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Type
+          </Text>
+          <AtelierToggle
+            theme={theme}
+            value={goalDetailsType}
+            onChange={setGoalDetailsType}
+            options={[
+              { value: "count", label: "Count" },
+              { value: "boolean", label: "Milestone" },
+            ]}
+          />
+
+          {goalDetailsType === "count" && (
+            <>
               <Text style={[styles.label, { color: theme.mutedText }]}>
-                Title
+                Goal
               </Text>
-              <TextInput
-                value={goalDetailsTitle}
-                onChangeText={setGoalDetailsTitle}
-                placeholder="e.g., Read 30 books"
-                placeholderTextColor={theme.mutedText}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: theme.border,
-                    color: theme.text,
-                    backgroundColor: theme.bg,
-                  },
-                ]}
-                autoCorrect={false}
-                autoCapitalize="sentences"
-                maxLength={60}
+              <AtelierField
+                theme={theme}
+                value={goalDetailsTargetText}
+                onChangeText={setGoalDetailsTargetText}
+                keyboardType={
+                  Platform.OS === "ios" ? "number-pad" : "numeric"
+                }
+                placeholder="e.g., 30"
+                maxLength={6}
               />
-
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Type
-              </Text>
-              <View style={[styles.typeRow, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={() => setGoalDetailsType("count")}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    {
-                      backgroundColor:
-                        goalDetailsType === "count" ? theme.primary : theme.bg,
-                      borderColor:
-                        goalDetailsType === "count"
-                          ? theme.primary
-                          : theme.border,
-                      opacity: pressed ? 0.9 : 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.pillText,
-                      {
-                        color:
-                          goalDetailsType === "count"
-                            ? theme.primaryTextOn
-                            : theme.text,
-                      },
-                    ]}
-                  >
-                    Count
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setGoalDetailsType("boolean")}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor:
-                        goalDetailsType === "boolean"
-                          ? theme.primary
-                          : theme.bg,
-                      borderColor:
-                        goalDetailsType === "boolean"
-                          ? theme.primary
-                          : theme.border,
-                      opacity: pressed ? 0.9 : 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.pillText,
-                      {
-                        color:
-                          goalDetailsType === "boolean"
-                            ? theme.primaryTextOn
-                            : theme.text,
-                      },
-                    ]}
-                  >
-                    Milestone
-                  </Text>
-                </Pressable>
-              </View>
-
-              {goalDetailsType === "count" && (
-                <>
-                  <Text style={[styles.label, { color: theme.mutedText }]}>
-                    Goal
-                  </Text>
-                  <TextInput
-                    value={goalDetailsTargetText}
-                    onChangeText={setGoalDetailsTargetText}
-                    keyboardType={
-                      Platform.OS === "ios" ? "number-pad" : "numeric"
-                    }
-                    placeholder="e.g., 30"
-                    placeholderTextColor={theme.mutedText}
-                    style={[
-                      styles.input,
-                      {
-                        borderColor: theme.border,
-                        color: theme.text,
-                        backgroundColor: theme.bg,
-                      },
-                    ]}
-                    maxLength={6}
-                  />
-                </>
-              )}
-
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={closeGoalDetails}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed ? theme.border : theme.bg,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Cancel
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={saveGoalDetails}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Save
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
-        {/* Add Goal */}
-        <Modal
+            </>
+          )}
+        </AtelierDrawer>
+        <AtelierDrawer
           visible={addOpen}
-          animationType="slide"
-          transparent
-          onRequestClose={() => setAddOpen(false)}
+          onClose={() => setAddOpen(false)}
+          theme={theme}
+          kicker="[YT]  /  GOAL"
+          title="Add Goal"
+          footer={
+            <AtelierActions
+              theme={theme}
+              onCancel={() => setAddOpen(false)}
+              onConfirm={handleAddGoal}
+              confirmDisabled={!title.trim()}
+            />
+          }
         >
-          <View style={styles.modalBackdrop}>
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Add Goal
-              </Text>
-
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Templates
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={{ marginTop: 8 }}
-                contentContainerStyle={[
-                  styles.templateRow,
-                  ANDROID && styles.noGap,
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Templates
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 8 }}
+            contentContainerStyle={[
+              styles.templateRow,
+              ANDROID && styles.noGap,
+            ]}
+          >
+            {GOAL_TEMPLATES.map((t) => (
+              <Pressable
+                key={t.label}
+                onPress={async () => {
+                  await hapticLight();
+                  setTitle(t.title);
+                  setType(t.type);
+                  if (t.type === "count") setTargetText(t.target);
+                }}
+                style={({ pressed }) => [
+                  styles.templateChip,
+                  {
+                    borderColor: theme.text,
+                    opacity: pressed ? 0.7 : 1,
+                  },
                 ]}
               >
-                {GOAL_TEMPLATES.map((t) => (
-                  <Pressable
-                    key={t.label}
-                    onPress={async () => {
-                      await hapticLight();
-                      setTitle(t.title);
-                      setType(t.type);
-                      if (t.type === "count") setTargetText(t.target);
-                    }}
-                    style={({ pressed }) => [
-                      styles.templateChip,
-                      {
-                        borderColor: theme.border,
-                        backgroundColor: pressed ? theme.border : theme.bg,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.templateChipText, { color: theme.text }]}
-                    >
-                      {t.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
+                <Text
+                  style={[
+                    styles.templateChipText,
+                    {
+                      color: theme.text,
+                      fontFamily: fontFamily("data", fontsLoaded),
+                    },
+                  ]}
+                >
+                  {t.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
 
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Title
+          </Text>
+          <AtelierField
+            theme={theme}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="e.g., Read 20 books"
+            autoCorrect={false}
+            autoCapitalize="sentences"
+            maxLength={60}
+          />
+
+          <Text style={[styles.label, { color: theme.mutedText }]}>
+            Type
+          </Text>
+          <AtelierToggle
+            theme={theme}
+            value={type}
+            onChange={setType}
+            options={[
+              { value: "count", label: "Count" },
+              { value: "boolean", label: "Milestone" },
+            ]}
+          />
+
+          {type === "count" && (
+            <>
               <Text style={[styles.label, { color: theme.mutedText }]}>
-                Title
+                Goal
               </Text>
-              <TextInput
-                value={title}
-                onChangeText={setTitle}
-                placeholder="e.g., Read 20 books"
-                placeholderTextColor={theme.mutedText}
-                style={[
-                  styles.input,
-                  {
-                    borderColor: theme.border,
-                    color: theme.text,
-                    backgroundColor: theme.bg,
-                  },
-                ]}
-                autoCorrect={false}
-                autoCapitalize="sentences"
-                maxLength={60}
+              <AtelierField
+                theme={theme}
+                value={targetText}
+                onChangeText={setTargetText}
+                keyboardType={
+                  Platform.OS === "ios" ? "number-pad" : "numeric"
+                }
+                placeholder="e.g., 10"
+                maxLength={6}
               />
-
-              <Text style={[styles.label, { color: theme.mutedText }]}>
-                Type
-              </Text>
-              <View style={[styles.typeRow, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={() => setType("count")}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    {
-                      backgroundColor:
-                        type === "count" ? theme.primary : theme.bg,
-                      borderColor:
-                        type === "count" ? theme.primary : theme.border,
-                      opacity: pressed ? 0.9 : 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.pillText,
-                      {
-                        color:
-                          type === "count" ? theme.primaryTextOn : theme.text,
-                      },
-                    ]}
-                  >
-                    Count
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setType("boolean")}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor:
-                        type === "boolean" ? theme.primary : theme.bg,
-                      borderColor:
-                        type === "boolean" ? theme.primary : theme.border,
-                      opacity: pressed ? 0.9 : 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.pillText,
-                      {
-                        color:
-                          type === "boolean" ? theme.primaryTextOn : theme.text,
-                      },
-                    ]}
-                  >
-                    Milestone
-                  </Text>
-                </Pressable>
-              </View>
-
-              {type === "count" && (
-                <>
-                  <Text style={[styles.label, { color: theme.mutedText }]}>
-                    Goal
-                  </Text>
-                  <TextInput
-                    value={targetText}
-                    onChangeText={setTargetText}
-                    keyboardType={
-                      Platform.OS === "ios" ? "number-pad" : "numeric"
-                    }
-                    placeholder="e.g., 10"
-                    placeholderTextColor={theme.mutedText}
-                    style={[
-                      styles.input,
-                      {
-                        borderColor: theme.border,
-                        color: theme.text,
-                        backgroundColor: theme.bg,
-                      },
-                    ]}
-                    maxLength={6}
-                  />
-                </>
-              )}
-
-              <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                <Pressable
-                  onPress={() => setAddOpen(false)}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    {
-                      backgroundColor: pressed ? theme.border : theme.bg,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.modalBtnText, { color: theme.text }]}>
-                    Cancel
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={handleAddGoal}
-                  style={({ pressed }) => [
-                    styles.modalBtn,
-                    ANDROID && styles.ml10,
-                    {
-                      backgroundColor: pressed
-                        ? theme.primaryPressed
-                        : theme.primary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalBtnText,
-                      { color: theme.primaryTextOn },
-                    ]}
-                  >
-                    Save
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
+            </>
+          )}
+        </AtelierDrawer>
         <ShareModal
           visible={shareOpen}
           theme={theme}
@@ -3024,8 +2963,7 @@ export default function App() {
           shareSize={shareSize}
           shareCard={shareCard}
         />
-        {/* ✅ Theme modal */}
-        {/* ✅ Theme modal */}
+        {/* Theme modal */}
         <Modal
           visible={customizeOpen}
           animationType="fade"
@@ -3037,16 +2975,18 @@ export default function App() {
           }}
         >
           <View style={styles.modalBackdrop}>
-            {/* theme card */}
-            <View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
+            <AtelierSheet theme={theme} kicker="[YT]  /  COLLECTION">
               <View style={[styles.themeTopRow, ANDROID && styles.noGap]}>
-                <Text style={[styles.modalTitle, { color: theme.text }]}>
-                  Theme
+                <Text
+                  style={[
+                    styles.modalTitle,
+                    {
+                      color: theme.text,
+                      fontFamily: fontFamily("display", fontsLoaded),
+                    },
+                  ]}
+                >
+                  {themePage === "pick" ? "Art gallery" : "Custom theme"}
                 </Text>
 
                 {themePage === "pick" ? (
@@ -3092,144 +3032,23 @@ export default function App() {
               {themePage === "pick" ? (
                 <>
                   <Text style={[styles.modalSub, { color: theme.mutedText }]}>
-                    Pick a theme
+                    Art gallery
                   </Text>
+                  <ThemeGallery
+                    theme={theme}
+                    themeChoice={themeChoice}
+                    classicThemes={THEMES}
+                    customThemes={customThemeCards}
+                    onPick={handlePickTheme}
+                    onDeleteCustom={deleteCustomTheme}
+                    onReplayGuide={replayCatalogueGuide}
+                  />
 
-                  <ScrollView
-                    style={styles.themeScroll}
-                    contentContainerStyle={[
-                      styles.themeGrid,
-                      ANDROID && styles.noGap,
-                      ANDROID && styles.themeGridAndroid,
-                    ]}
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {allThemeCards.map((t) => {
-                      const selected = t.id === themeChoice;
-                      const isCustom = !!t._isCustom;
-
-                      return (
-                        <Pressable
-                          key={t.id}
-                          onPress={() => handlePickTheme(t.id)}
-                          style={({ pressed }) => [
-                            styles.themeCard,
-                            ANDROID && styles.themeCardAndroid,
-                            {
-                              borderColor: selected
-                                ? theme.primary
-                                : theme.border,
-                              borderWidth: selected ? 2 : 1,
-                              backgroundColor: "#FFFFFF",
-                              opacity: pressed ? 0.92 : 1,
-                            },
-                          ]}
-                        >
-                          <View
-                            style={[
-                              styles.themeHeader,
-                              ANDROID && styles.noGap,
-                            ]}
-                          >
-                            <View style={styles.themeNameWrap}>
-                              <Text
-                                numberOfLines={1}
-                                ellipsizeMode="tail"
-                                style={[styles.themeName, { color: "#000" }]}
-                              >
-                                {t.name}
-                              </Text>
-                            </View>
-
-                            {isCustom && (
-                              <Pressable
-                                onPress={(e) => {
-                                  e?.stopPropagation?.();
-                                  deleteCustomTheme(t._customId);
-                                }}
-                                style={({ pressed }) => [
-                                  styles.trashIconBtn,
-                                  {
-                                    backgroundColor: pressed ? "#eee" : "#fff",
-                                  },
-                                ]}
-                                hitSlop={10}
-                                accessibilityRole="button"
-                                accessibilityLabel={`Delete theme ${t.name}`}
-                              >
-                                <Ionicons
-                                  name="trash-outline"
-                                  size={18}
-                                  color="#111"
-                                />
-                              </Pressable>
-                            )}
-                          </View>
-
-                          <View
-                            style={[
-                              styles.swatchRow,
-                              ANDROID && styles.noGap,
-                              ANDROID && styles.swatchRowAndroid,
-                            ]}
-                          >
-                            <View
-                              style={[
-                                styles.themeSwatch,
-                                { backgroundColor: t.palette.primary },
-                              ]}
-                            />
-                            <View
-                              style={[
-                                styles.themeSwatch,
-                                { backgroundColor: t.palette.card },
-                              ]}
-                            />
-                            <View
-                              style={[
-                                styles.themeSwatch,
-                                { backgroundColor: t.palette.bg },
-                              ]}
-                            />
-                          </View>
-
-                          <Text
-                            style={[
-                              styles.themeHint,
-                              ANDROID && styles.themeHintAndroid,
-                              { color: selected ? "#000" : "#555" },
-                            ]}
-                          >
-                            {selected ? "Selected" : "Tap to apply"}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
-
-                  <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                    <Pressable
-                      onPress={() => setCustomizeOpen(false)}
-                      style={({ pressed }) => [
-                        styles.modalBtn,
-                        {
-                          backgroundColor: pressed
-                            ? theme.primaryPressed
-                            : theme.primary,
-                          borderColor: theme.primary,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.modalBtnText,
-                          { color: theme.primaryTextOn },
-                        ]}
-                      >
-                        Done
-                      </Text>
-                    </Pressable>
-                  </View>
+                  <AtelierActions
+                    theme={theme}
+                    confirmLabel="Done"
+                    onConfirm={() => setCustomizeOpen(false)}
+                  />
                 </>
               ) : (
                 <>
@@ -3246,19 +3065,11 @@ export default function App() {
                       <Text style={[styles.label, { color: theme.mutedText }]}>
                         Name
                       </Text>
-                      <TextInput
+                      <AtelierField
+                        theme={theme}
                         value={customName}
                         onChangeText={setCustomName}
                         placeholder="e.g., Ocean Breeze"
-                        placeholderTextColor={theme.mutedText}
-                        style={[
-                          styles.input,
-                          {
-                            borderColor: theme.border,
-                            color: theme.text,
-                            backgroundColor: theme.bg,
-                          },
-                        ]}
                         autoCorrect={false}
                         autoCapitalize="words"
                         maxLength={28}
@@ -3267,92 +3078,25 @@ export default function App() {
                       <Text style={[styles.label, { color: theme.mutedText }]}>
                         Mode
                       </Text>
-                      <View style={[styles.typeRow, ANDROID && styles.noGap]}>
-                        <Pressable
-                          onPress={async () => {
-                            await hapticLight();
-                            setCustomMode("light");
-                            const p = isHex6(ctPrimary)
-                              ? normalizeHex(ctPrimary)
-                              : "#2b6dff";
-                            const base = buildPaletteFromPrimary(p, "light");
-                            setCtPrimary(base.primary);
-                            setCtBg(base.bg);
-                            setCtText(base.text);
-                          }}
-                          style={({ pressed }) => [
-                            styles.pill,
-                            {
-                              backgroundColor:
-                                customMode === "light"
-                                  ? theme.primary
-                                  : theme.bg,
-                              borderColor:
-                                customMode === "light"
-                                  ? theme.primary
-                                  : theme.border,
-                              opacity: pressed ? 0.9 : 1,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.pillText,
-                              {
-                                color:
-                                  customMode === "light"
-                                    ? theme.primaryTextOn
-                                    : theme.text,
-                              },
-                            ]}
-                          >
-                            Light
-                          </Text>
-                        </Pressable>
-
-                        <Pressable
-                          onPress={async () => {
-                            await hapticLight();
-                            setCustomMode("dark");
-                            const p = isHex6(ctPrimary)
-                              ? normalizeHex(ctPrimary)
-                              : "#2b6dff";
-                            const base = buildPaletteFromPrimary(p, "dark");
-                            setCtPrimary(base.primary);
-                            setCtBg(base.bg);
-                            setCtText(base.text);
-                          }}
-                          style={({ pressed }) => [
-                            styles.pill,
-                            ANDROID && styles.ml10,
-                            {
-                              backgroundColor:
-                                customMode === "dark"
-                                  ? theme.primary
-                                  : theme.bg,
-                              borderColor:
-                                customMode === "dark"
-                                  ? theme.primary
-                                  : theme.border,
-                              opacity: pressed ? 0.9 : 1,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.pillText,
-                              {
-                                color:
-                                  customMode === "dark"
-                                    ? theme.primaryTextOn
-                                    : theme.text,
-                              },
-                            ]}
-                          >
-                            Dark
-                          </Text>
-                        </Pressable>
-                      </View>
+                      <AtelierToggle
+                        theme={theme}
+                        value={customMode}
+                        options={[
+                          { value: "light", label: "Light" },
+                          { value: "dark", label: "Dark" },
+                        ]}
+                        onChange={async (mode) => {
+                          await hapticLight();
+                          setCustomMode(mode);
+                          const p = isHex6(ctPrimary)
+                            ? normalizeHex(ctPrimary)
+                            : "#2b6dff";
+                          const base = buildPaletteFromPrimary(p, mode);
+                          setCtPrimary(base.primary);
+                          setCtBg(base.bg);
+                          setCtText(base.text);
+                        }}
+                      />
 
                       <View
                         style={[styles.previewRow, ANDROID && styles.noGap]}
@@ -3540,56 +3284,21 @@ export default function App() {
                     </ScrollView>
                   </View>
 
-                  <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                    <Pressable
-                      onPress={async () => {
-                        await hapticLight();
-                        setThemePage("pick");
-                        resetCreateFormToDefaults();
-                      }}
-                      style={({ pressed }) => [
-                        styles.modalBtn,
-                        {
-                          backgroundColor: pressed ? theme.border : theme.bg,
-                          borderColor: theme.border,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[styles.modalBtnText, { color: theme.text }]}
-                      >
-                        Cancel
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={createCustomThemeAndSelect}
-                      style={({ pressed }) => [
-                        styles.modalBtn,
-                        ANDROID && styles.ml10,
-                        {
-                          backgroundColor: pressed
-                            ? theme.primaryPressed
-                            : theme.primary,
-                          borderColor: theme.primary,
-                          opacity: sanitizeName(customName) ? 1 : 0.5,
-                        },
-                      ]}
-                      disabled={!sanitizeName(customName)}
-                    >
-                      <Text
-                        style={[
-                          styles.modalBtnText,
-                          { color: theme.primaryTextOn },
-                        ]}
-                      >
-                        Save Theme
-                      </Text>
-                    </Pressable>
-                  </View>
+                  <AtelierActions
+                    theme={theme}
+                    cancelLabel="Back"
+                    confirmLabel="Save theme"
+                    onCancel={async () => {
+                      await hapticLight();
+                      setThemePage("pick");
+                      resetCreateFormToDefaults();
+                    }}
+                    onConfirm={createCustomThemeAndSelect}
+                    confirmDisabled={!sanitizeName(customName)}
+                  />
                 </>
               )}
-            </View>
+            </AtelierSheet>
 
             {/* ✅ Picker overlay (no hex typing) */}
             {colorPickerOpen && (
@@ -3599,19 +3308,18 @@ export default function App() {
                   onPress={cancelColorPicker}
                 />
 
-                <View
-                  style={[
-                    styles.pickerSheet,
-                    { backgroundColor: theme.card, borderColor: theme.border },
-                  ]}
-                >
-                  <Text style={[styles.pickerTitle, { color: theme.text }]}>
-                    {colorPickerTarget === "primary"
-                      ? "Pick Primary"
+                <AtelierSheet
+                  theme={theme}
+                  kicker="[YT]  /  PALETTE"
+                  title={
+                    colorPickerTarget === "primary"
+                      ? "Pick primary"
                       : colorPickerTarget === "bg"
-                        ? "Pick Background"
-                        : "Pick Text"}
-                  </Text>
+                        ? "Pick background"
+                        : "Pick text"
+                  }
+                  style={styles.pickerSheet}
+                >
 
                   <Text style={[styles.pickerSub, { color: theme.mutedText }]}>
                     Drag to choose a color
@@ -3666,405 +3374,153 @@ export default function App() {
                     </ColorPicker>
                   </ScrollView>
 
-                  <View style={[styles.modalActions, ANDROID && styles.noGap]}>
-                    <Pressable
-                      onPress={cancelColorPicker}
-                      style={({ pressed }) => [
-                        styles.modalBtn,
-                        {
-                          backgroundColor: pressed ? theme.border : theme.bg,
-                          borderColor: theme.border,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[styles.modalBtnText, { color: theme.text }]}
-                      >
-                        Cancel
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={doneColorPicker}
-                      style={({ pressed }) => [
-                        styles.modalBtn,
-                        ANDROID && styles.ml10,
-                        {
-                          backgroundColor: pressed
-                            ? theme.primaryPressed
-                            : theme.primary,
-                          borderColor: theme.primary,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.modalBtnText,
-                          { color: theme.primaryTextOn },
-                        ]}
-                      >
-                        Done
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
+                  <AtelierActions
+                    theme={theme}
+                    confirmLabel="Done"
+                    onCancel={cancelColorPicker}
+                    onConfirm={doneColorPicker}
+                  />
+                </AtelierSheet>
               </View>
             )}
           </View>
         </Modal>
 
-        {/* Edit Progress */}
-        <Modal
+        <AtelierDrawer
           visible={editOpen}
-          animationType="fade"
-          transparent
-          onRequestClose={closeEdit}
+          onClose={closeEdit}
+          theme={theme}
+          kicker="[YT]  /  CURRENT PROGRESS"
+          title={editGoal?.title}
+          footer={
+            <AtelierActions
+              theme={theme}
+              confirmLabel="Apply"
+              onCancel={closeEdit}
+              onConfirm={
+                editGoal?.type === "count" ? saveEditCount : applyMilestone
+              }
+            />
+          }
         >
-          <View style={styles.modalBackdrop}>
-            <Animated.View
-              style={[
-                styles.modalCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-                {
-                  opacity: editAnim,
-                  transform: [
-                    {
-                      scale: editAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.97, 1],
-                      }),
-                    },
-                    {
-                      translateY: editAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [10, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              {/* keep the rest of your Edit Progress modal exactly as you already have it */}
-              {!!editGoal && (
-                <>
-                  <Text
-                    style={[styles.editTitle, { color: theme.text }]}
-                    numberOfLines={2}
-                  >
-                    {editGoal.title}
-                  </Text>
-
-                  {editGoal.type === "count" ? (
-                    <>
-                      {(() => {
-                        const cur = Number(editValue);
-                        const curSafe = Number.isFinite(cur)
-                          ? Math.max(0, Math.floor(cur))
-                          : 0;
-                        const target = Math.max(
-                          0,
-                          Number(editGoal.target || 0),
-                        );
-                        const pct =
-                          target > 0 ? Math.round((curSafe / target) * 100) : 0;
-
-                        return (
-                          <>
-                            <View style={styles.editMetaRow}>
-                              <Text
-                                style={[
-                                  styles.editHint,
-                                  { color: theme.mutedText },
-                                ]}
-                              >
-                                {`${curSafe} / ${target}`}
-                              </Text>
-                              <Text
-                                style={[
-                                  styles.editHint,
-                                  { color: theme.mutedText },
-                                ]}
-                              >
-                                {`${pct}%`}
-                              </Text>
-                            </View>
-
-                            <View
-                              style={[
-                                styles.progressTrack,
-                                {
-                                  backgroundColor: theme.bg,
-                                  borderColor: theme.border,
-                                },
-                              ]}
-                            >
-                              <View
-                                style={[
-                                  styles.progressFill,
-                                  {
-                                    width: `${Math.max(
-                                      0,
-                                      Math.min(100, pct),
-                                    )}%`,
-                                    backgroundColor: theme.primary,
-                                  },
-                                ]}
-                              />
-                            </View>
-                          </>
-                        );
-                      })()}
-
-                      <View
-                        style={[styles.stepperRow, ANDROID && styles.noGap]}
-                      >
-                        <Pressable
-                          onPress={() => bumpEditCount(-1)}
-                          style={({ pressed }) => [
-                            styles.stepperBtn,
-                            {
-                              backgroundColor: pressed
-                                ? theme.border
-                                : theme.bg,
-                              borderColor: theme.border,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.stepperBtnText,
-                              { color: theme.text },
-                            ]}
-                          >
-                            −
-                          </Text>
-                        </Pressable>
-
-                        <TextInput
-                          value={editValue}
-                          onChangeText={setEditValue}
-                          keyboardType={
-                            Platform.OS === "ios" ? "number-pad" : "numeric"
-                          }
-                          style={[
-                            styles.stepperValue,
-                            {
-                              borderColor: theme.border,
-                              color: theme.text,
-                              backgroundColor: theme.bg,
-                            },
-                          ]}
-                          maxLength={8}
-                        />
-
-                        <Pressable
-                          onPress={() => bumpEditCount(1)}
-                          style={({ pressed }) => [
-                            styles.stepperBtn,
-                            ANDROID && styles.ml10,
-                            {
-                              backgroundColor: pressed
-                                ? theme.border
-                                : theme.bg,
-                              borderColor: theme.border,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.stepperBtnText,
-                              { color: theme.text },
-                            ]}
-                          >
-                            +
-                          </Text>
-                        </Pressable>
-                      </View>
-
-                      <View
-                        style={[styles.modalActions, ANDROID && styles.noGap]}
-                      >
-                        <Pressable
-                          onPress={closeEdit}
-                          style={({ pressed }) => [
-                            styles.modalBtn,
-                            {
-                              backgroundColor: pressed
-                                ? theme.border
-                                : theme.bg,
-                              borderColor: theme.border,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[styles.modalBtnText, { color: theme.text }]}
-                          >
-                            Cancel
-                          </Text>
-                        </Pressable>
-
-                        <Pressable
-                          onPress={saveEditCount}
-                          style={({ pressed }) => [
-                            styles.modalBtn,
-                            ANDROID && styles.ml10,
-                            {
-                              backgroundColor: pressed
-                                ? theme.primaryPressed
-                                : theme.primary,
-                              borderColor: theme.primary,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.modalBtnText,
-                              { color: theme.primaryTextOn },
-                            ]}
-                          >
-                            Done
-                          </Text>
-                        </Pressable>
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      {(() => {
-                        const isDone = (editGoal?.progress ?? 0) === 1;
-
-                        return (
-                          <View
-                            style={[
-                              styles.milestoneMiniRow,
-                              ANDROID && styles.noGap,
-                            ]}
-                          >
-                            <Pressable
-                              onPress={() => setMilestoneComplete(false)}
-                              style={({ pressed }) => {
-                                const selected = !isDone;
-                                return [
-                                  styles.miniPill,
-                                  {
-                                    backgroundColor: selected
-                                      ? pressed
-                                        ? theme.primaryPressed
-                                        : theme.primary
-                                      : pressed
-                                        ? theme.border
-                                        : theme.bg,
-                                    borderColor: selected
-                                      ? theme.primary
-                                      : theme.border,
-                                  },
-                                ];
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.miniPillText,
-                                  {
-                                    color: !isDone
-                                      ? theme.primaryTextOn
-                                      : theme.text,
-                                  },
-                                ]}
-                              >
-                                Not yet
-                              </Text>
-                            </Pressable>
-
-                            <Pressable
-                              onPress={() => setMilestoneComplete(true)}
-                              style={({ pressed }) => {
-                                const selected = isDone;
-                                return [
-                                  styles.miniPill,
-                                  ANDROID && styles.ml10,
-                                  {
-                                    backgroundColor: selected
-                                      ? pressed
-                                        ? theme.primaryPressed
-                                        : theme.primary
-                                      : pressed
-                                        ? theme.border
-                                        : theme.bg,
-                                    borderColor: selected
-                                      ? theme.primary
-                                      : theme.border,
-                                  },
-                                ];
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.miniPillText,
-                                  {
-                                    color: isDone
-                                      ? theme.primaryTextOn
-                                      : theme.text,
-                                  },
-                                ]}
-                              >
-                                Done
-                              </Text>
-                            </Pressable>
-                          </View>
-                        );
-                      })()}
-
-                      <View
-                        style={[styles.modalActions, ANDROID && styles.noGap]}
-                      >
-                        <Pressable
-                          onPress={closeEdit}
-                          style={({ pressed }) => [
-                            styles.modalBtn,
-                            {
-                              backgroundColor: pressed
-                                ? theme.border
-                                : theme.bg,
-                              borderColor: theme.border,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[styles.modalBtnText, { color: theme.text }]}
-                          >
-                            Close
-                          </Text>
-                        </Pressable>
-                      </View>
-                    </>
-                  )}
-                </>
-              )}
-            </Animated.View>
-          </View>
-        </Modal>
+          {!!editGoal && editGoal.type === "count" ? (
+            <AtelierCounter
+              ref={counterRef}
+              value={Number(editValue) || 0}
+              target={editGoal.target || 0}
+              theme={theme}
+              onChange={(n) => setEditValue(String(n))}
+            />
+          ) : null}
+          {!!editGoal && editGoal.type === "boolean" ? (
+            <MilestoneMark
+              complete={editDraftDone}
+              theme={theme}
+              onChange={setEditDraftDone}
+            />
+          ) : null}
+          <CompletionMark
+            visible={completeFlash}
+            theme={theme}
+            index={
+              editGoal
+                ? goals.findIndex((g) => g.id === editGoal.id) + 1
+                : 0
+            }
+          />
+        </AtelierDrawer>
       </SafeAreaView>
+      <CatalogueOnboarding
+        visible={onboardingOpen}
+        theme={theme}
+        stepIndex={onboardingStep}
+        anchor={onboardingAnchor}
+        onTargetPress={
+          onboardingStep === 0 && onboardingTargetKind === "today"
+            ? handleOnboardingTodayToggle
+            : undefined
+        }
+        onSkip={finishOnboarding}
+        onNext={() => {
+          if (onboardingStep >= ONBOARDING_STEPS.length - 1) {
+            finishOnboarding();
+            return;
+          }
+          setOnboardingStep((n) => n + 1);
+        }}
+      />
     </GestureHandlerRootView>
+    </FontsProvider>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  listContent: { paddingHorizontal: 16, paddingBottom: 24 },
+  transparent: { backgroundColor: "transparent" },
+  transparentList: { flex: 1, backgroundColor: "transparent" },
+  listContent: {
+    paddingHorizontal: SPACE.md,
+    paddingBottom: SPACE["2xl"] + SPACE.xl,
+  },
+  habitsListContent: {
+    paddingHorizontal: SPACE.md,
+  },
+  listBottomSpacer: {
+    height: SPACE["2xl"],
+  },
 
-  header: { paddingTop: 8, paddingBottom: 10 },
-  appTitle: { fontSize: 30, fontWeight: "900", letterSpacing: 0.2 },
+  stickyChrome: {
+    paddingHorizontal: SPACE.md,
+    paddingTop: SPACE.xs,
+    zIndex: 2,
+  },
+  tabPane: { flex: 1 },
+  header: { paddingTop: SPACE.xs, paddingBottom: SPACE.sm },
+  appTitle: {
+    fontSize: TYPE_SIZE.display,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+    marginTop: SPACE["2xs"],
+  },
   yearText: { marginTop: 4, fontSize: 13, fontWeight: "800" },
+  loadingWrap: {
+    paddingHorizontal: SPACE.md,
+    paddingTop: SPACE["2xl"],
+    gap: SPACE.xs,
+  },
+  loadingTitle: {
+    fontSize: TYPE_SIZE.title,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+  },
 
-  tabRow: { marginTop: 14, flexDirection: "row", gap: 10 },
+  tabRow: {
+    marginTop: SPACE.md,
+    flexDirection: "row",
+    gap: SPACE.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(28,25,22,0.18)",
+  },
+  tabItem: {
+    paddingVertical: SPACE.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: "transparent",
+  },
   tabPill: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  tabText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
+  tabText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
 
   chipScroll: { marginTop: 10 },
   chipRow: {
@@ -4110,30 +3566,38 @@ const styles = StyleSheet.create({
   bigPct: { fontSize: 22, fontWeight: "900", letterSpacing: 0.2 },
   bigPctSub: { marginTop: 4, fontSize: 12, fontWeight: "700" },
 
-  actionsRow: { marginTop: 14, flexDirection: "row", gap: 10 },
+  actionsRow: { marginTop: SPACE.md },
   primaryBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  primaryBtnText: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
+  primaryBtnText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
   secondaryBtn: {
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: "center",
     justifyContent: "center",
     minWidth: 110,
   },
-  secondaryBtnText: { fontSize: 14, fontWeight: "900", letterSpacing: 0.2 },
+  secondaryBtnText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
   shareIconBtn: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -4182,16 +3646,41 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 0.2,
   },
+  editorialAction: {
+    flex: 1,
+    minHeight: 44,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+  },
+  editorialActionText: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  editorialToggle: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
   habitsHeaderGrid: {
-    marginTop: 12,
+    marginTop: SPACE.md,
     flexDirection: "row",
     alignItems: "flex-end",
   },
+  monthHit: {
+    marginTop: SPACE.sm,
+    minHeight: 44,
+    justifyContent: "center",
+  },
   monthTitle: {
-    fontSize: 28,
-    fontWeight: "950",
-    letterSpacing: 0.2,
-    flexShrink: 1,
+    fontSize: TYPE_SIZE.title,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
   },
 
   legendRow: {
@@ -4208,11 +3697,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginRight: 6,
   },
-  legendText: { fontSize: 11, fontWeight: "800", letterSpacing: 0.2 },
+  legendText: {
+    marginTop: SPACE["2xs"],
+    fontSize: TYPE_SIZE.kicker,
+    fontWeight: "600",
+    letterSpacing: TYPE_TRACK.data,
+    textTransform: "uppercase",
+  },
 
-  daysRow: { flexDirection: "row", width: SQUARE * 5 },
-  dayCell: { width: SQUARE, alignItems: "center", justifyContent: "center" },
-  dayNum: { fontSize: 14, fontWeight: "800", letterSpacing: 0.2 },
+  daysRow: { flexDirection: "row" },
+  dayCell: { alignItems: "center", justifyContent: "center" },
+  dayNum: { fontSize: TYPE_SIZE.caption, fontWeight: "600", letterSpacing: TYPE_TRACK.data },
 
   bullet: { marginTop: 6, fontSize: 13, fontWeight: "800" },
 
@@ -4221,8 +3716,8 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     bottom: 16,
-    borderWidth: 1,
-    borderRadius: 18,
+    zIndex: 20,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 12,
     flexDirection: "row",
@@ -4231,51 +3726,63 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   undoText: {
-    fontSize: 13,
-    fontWeight: "900",
-    letterSpacing: 0.2,
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "400",
     flex: 1,
   },
   undoBtn: {
-    borderRadius: 14,
     paddingVertical: 10,
     paddingHorizontal: 14,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   undoBtnText: {
-    fontSize: 13,
-    fontWeight: "900",
-    letterSpacing: 0.2,
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
   },
   toastWrap: {
     position: "absolute",
     left: 16,
     right: 16,
-    borderWidth: 1,
-    borderRadius: 16,
+    zIndex: 20,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  toastText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
+  toastText: { fontSize: TYPE_SIZE.body, fontWeight: "400" },
 
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(28,25,22,0.42)",
     padding: 16,
     justifyContent: "center",
   },
-  modalCard: { borderWidth: 1, borderRadius: 22, padding: 16 },
-  modalTitle: { fontSize: 18, fontWeight: "900" },
-  modalSub: { marginTop: 6, fontSize: 13, fontWeight: "600" },
+  modalCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: SPACE.lg,
+  },
+  modalTitle: {
+    fontSize: TYPE_SIZE.title,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.display,
+    fontStyle: "normal",
+  },
+  modalSub: { marginTop: 6, fontSize: TYPE_SIZE.caption, fontWeight: "400" },
 
   rolloverStack: { marginTop: 14, gap: 10 },
   rolloverBtn: {
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     paddingHorizontal: 12,
   },
-  rolloverBtnTitle: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
-  rolloverBtnSub: { marginTop: 4, fontSize: 12, fontWeight: "700" },
+  rolloverBtnTitle: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
+  rolloverBtnSub: { marginTop: 4, fontSize: TYPE_SIZE.caption, fontWeight: "400" },
 
   label: {
     marginTop: 12,
@@ -4287,12 +3794,11 @@ const styles = StyleSheet.create({
 
   input: {
     marginTop: 8,
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 14,
-    fontWeight: "800",
+    fontSize: TYPE_SIZE.body,
+    fontWeight: "400",
   },
 
   templateRow: {
@@ -4300,8 +3806,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   templateChip: {
-    borderWidth: 1,
-    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginRight: 10,
@@ -4315,13 +3820,17 @@ const styles = StyleSheet.create({
   typeRow: { marginTop: 10, flexDirection: "row", gap: 10 },
   pill: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  pillText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
+  pillText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
 
   themeTopRow: {
     flexDirection: "row",
@@ -4330,8 +3839,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   smallBtn: {
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 8,
     paddingHorizontal: 10,
     alignItems: "center",
@@ -4340,8 +3848,7 @@ const styles = StyleSheet.create({
   smallBtnText: { fontSize: 12, fontWeight: "900", letterSpacing: 0.2 },
 
   smallBtnWide: {
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 12,
     alignItems: "center",
@@ -4354,8 +3861,8 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: "stretch",
   },
-  previewCard: { flex: 1, borderWidth: 1, borderRadius: 16, padding: 12 },
-  previewBtn: { borderRadius: 12, paddingVertical: 10, alignItems: "center" },
+  previewCard: { flex: 1, borderWidth: StyleSheet.hairlineWidth, padding: 12 },
+  previewBtn: { paddingVertical: 10, alignItems: "center" },
 
   trashBtn: {
     borderWidth: 1,
@@ -4374,8 +3881,7 @@ const styles = StyleSheet.create({
 
   themeCard: {
     flexBasis: "48%",
-    borderWidth: 1,
-    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     paddingHorizontal: 12,
   },
@@ -4408,14 +3914,18 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalBtn: {
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     paddingHorizontal: 14,
     minWidth: 92,
     alignItems: "center",
   },
-  modalBtnText: { fontSize: 13, fontWeight: "900", letterSpacing: 0.2 },
+  modalBtnText: {
+    fontSize: TYPE_SIZE.caption,
+    fontWeight: "700",
+    letterSpacing: TYPE_TRACK.kicker,
+    textTransform: "uppercase",
+  },
 
   colorPickRow: {
     marginTop: 10,
@@ -4424,8 +3934,7 @@ const styles = StyleSheet.create({
   },
   colorPickItem: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 10,
     alignItems: "center",
@@ -4434,8 +3943,7 @@ const styles = StyleSheet.create({
   colorSquare: {
     width: 34,
     height: 34,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(0,0,0,0.08)",
   },
   colorPickText: {
@@ -4488,12 +3996,11 @@ const styles = StyleSheet.create({
 
   progressTrack: {
     marginTop: 8,
-    height: 10,
-    borderRadius: 999,
-    borderWidth: 1,
+    height: 8,
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
   },
-  progressFill: { height: "100%", borderRadius: 999 },
+  progressFill: { height: "100%" },
 
   stepperRow: {
     marginTop: 12,
@@ -4504,8 +4011,7 @@ const styles = StyleSheet.create({
   stepperBtn: {
     width: 46,
     height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -4517,12 +4023,11 @@ const styles = StyleSheet.create({
   },
   stepperValue: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
-    fontWeight: "900",
+    fontSize: TYPE_SIZE.bodyLg,
+    fontWeight: "700",
     textAlign: "center",
   },
 
@@ -4533,8 +4038,7 @@ const styles = StyleSheet.create({
   },
   miniPill: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -4638,8 +4142,7 @@ const styles = StyleSheet.create({
 
   pickerSheet: {
     width: "92%",
-    borderWidth: 1,
-    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: 14,
   },
 
@@ -4657,8 +4160,7 @@ const styles = StyleSheet.create({
 
   pickerPreviewRow: {
     marginTop: 12,
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 10,
     paddingHorizontal: 12,
     flexDirection: "row",

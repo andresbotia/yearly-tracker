@@ -63,25 +63,23 @@ class YearlyProgressWidgetProvider : AppWidgetProvider() {
         Log.d(TAG, "yearlyProgress raw=${payloadObj?.optDouble("yearlyProgress", -1.0)}")
       }
 
-      val theme = payloadObj?.optString("theme", null)
-      val pct = SharedWidgetStore.pctInt01(payloadObj?.optDouble("yearlyProgress", 0.0) ?: 0.0)
-      val debugText = SharedWidgetStore.loadDebugText(context)
+      val pct01 = payloadObj?.optDouble("yearlyProgress", 0.0) ?: 0.0
+      val year = SharedWidgetStore.payloadYear(payloadObj)
 
       for (id in ids) {
         val views = RemoteViews(context.packageName, R.layout.widget_yearly_progress)
 
-        views.setInt(R.id.root, "setBackgroundColor", SharedWidgetStore.themeBgColor(theme))
-
-        // Title: ignore DBG* debug text; otherwise use it; else default label
-        val title = if (!debugText.isNullOrBlank() && !debugText.startsWith("DBG")) {
-          debugText
-        } else {
-          "Yearly Progress"
+        SharedWidgetStore.applySurface(views, context, payloadObj)
+        SharedWidgetStore.applyInk(views, payloadObj, R.id.kicker, R.id.title, R.id.pct)
+        try {
+          views.setTextColor(R.id.bar, SharedWidgetStore.accentColor(payloadObj))
+        } catch (_: Exception) {
         }
-        views.setTextViewText(R.id.title, title)
 
-        views.setTextViewText(R.id.pct, "${pct}%")
-        views.setProgressBar(R.id.progress, 100, pct, false)
+        views.setTextViewText(R.id.kicker, "/ $year")
+        views.setTextViewText(R.id.title, "$year PROGRESS")
+        views.setTextViewText(R.id.pct, SharedWidgetStore.pctLabel(pct01))
+        views.setTextViewText(R.id.bar, SharedWidgetStore.asciiBar(pct01, 22))
 
         // Tap widget -> open app via deep link
         views.setOnClickPendingIntent(

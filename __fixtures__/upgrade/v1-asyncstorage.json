@@ -1,0 +1,141 @@
+{
+  "_comment": "Simulated production AsyncStorage snapshot from v1 before the redesign. Load this exact state into the redesigned app — zero data loss expected.",
+  "rt_goals_v1": [
+    {
+      "id": "g_run_miles",
+      "title": "Run 500 miles",
+      "type": "count",
+      "target": 500,
+      "progress": 288,
+      "createdAt": 1735689600000
+    },
+    {
+      "id": "g_read_books",
+      "title": "Read 20 books",
+      "type": "count",
+      "target": 20,
+      "progress": 14,
+      "createdAt": 1735776000000
+    },
+    {
+      "id": "g_save",
+      "title": "Save $1000",
+      "type": "count",
+      "target": 1000,
+      "progress": 420,
+      "createdAt": 1735862400000
+    },
+    {
+      "id": "g_10k",
+      "title": "Run a 10K",
+      "type": "boolean",
+      "target": null,
+      "progress": 0,
+      "createdAt": 1735948800000
+    },
+    {
+      "id": "g_meditate",
+      "title": "Meditate 100 sessions",
+      "type": "count",
+      "target": 100,
+      "progress": 100,
+      "createdAt": 1736035200000
+    }
+  ],
+  "yt_habits_v1": [
+    {
+      "id": "h_workout",
+      "title": "Workout",
+      "checks": {
+        "2026-08-27": 1,
+        "2026-08-28": 1,
+        "2026-08-29": 0,
+        "2026-08-30": 1,
+        "2026-08-31": 2,
+        "2026-09-01": 1,
+        "2026-09-02": 1
+      }
+    },
+    {
+      "id": "h_cardio",
+      "title": "Cardio",
+      "checks": {
+        "2026-08-27": 0,
+        "2026-08-28": 1,
+        "2026-08-30": 1,
+        "2026-09-01": 1,
+        "2026-09-02": 1
+      }
+    },
+    {
+      "id": "h_water",
+      "title": "Drink Water",
+      "checks": {
+        "2026-08-27": 1,
+        "2026-08-28": 1,
+        "2026-08-29": 1,
+        "2026-08-30": 1,
+        "2026-08-31": 1,
+        "2026-09-01": 1
+      }
+    },
+    {
+      "id": "h_read",
+      "title": "Read",
+      "checks": {
+        "2026-08-27": 1,
+        "2026-08-29": 1,
+        "2026-08-30": 1,
+        "2026-08-31": 1,
+        "2026-09-01": 1,
+        "2026-09-02": 1
+      }
+    }
+  ],
+  "rt_hue_v1": "evergreen",
+  "yt_custom_themes_v1": [
+    {
+      "id": "ct_user_ink",
+      "name": "Ink Study",
+      "createdAt": 1740000000000,
+      "palette": {
+        "primary": "#1f2937",
+        "bg": "#f5f7fa",
+        "card": "#ffffff",
+        "border": "#e3e7ef",
+        "text": "#0b1220",
+        "mutedText": "#5b6472",
+        "primaryTextOn": "#ffffff",
+        "primaryPressed": "#111827",
+        "ringBg": "#e5e7eb",
+        "danger": "#ef4444"
+      },
+      "futureFieldShouldSurvive": true
+    }
+  ],
+  "yt_current_year_v1": "2026",
+  "rt_year_v1": "2026",
+  "yt_goal_history_v1": [
+    {
+      "year": 2025,
+      "savedAt": 1735686000000,
+      "goals": [
+        {
+          "id": "g_old_run",
+          "title": "Run 200 miles",
+          "type": "count",
+          "target": 200,
+          "progress": 200,
+          "createdAt": 1704067200000
+        }
+      ],
+      "summary": {
+        "avgPercent": 100,
+        "completedCount": 1,
+        "totalCount": 1
+      }
+    }
+  ],
+  "rt_welcome_seen_v1": "1",
+  "yt_habits_welcome_seen_v1": "1"
+}

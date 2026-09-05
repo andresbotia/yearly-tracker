@@ -1,17 +1,14 @@
-// components/share/ShareCardFrame.js
+// Museum-poster frame for share captures.
+// Dimensions and capture contract stay with the caller.
 
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import Svg, {
-  Defs,
-  LinearGradient,
-  Stop,
-  Rect,
-  Circle,
-} from "react-native-svg";
+import { View, Text, StyleSheet } from "react-native";
+import { TYPE_SIZE, TYPE_TRACK, fontFamily } from "../../utils/tokens";
+import { useFontsLoaded } from "../../utils/fonts";
+import BrandMark from "../brand/BrandMark";
 
 export function useScale(width) {
-  const scale = width / 540;
+  const scale = width / 1080;
   const s = (n) => Math.round(n * scale);
   return { scale, s };
 }
@@ -41,9 +38,14 @@ export function ShareCardFrame({
   theme,
   children,
   contentStyle,
+  kicker = "Yearly Tracker",
+  credit,
 }) {
   const { s } = useScale(width);
-  const gradId = `share-bg-${width}-${height}`;
+  const fontsLoaded = useFontsLoaded();
+  const inset = s(48);
+  const art = theme?.artwork;
+
   return (
     <View
       style={[
@@ -51,42 +53,72 @@ export function ShareCardFrame({
         {
           width,
           height,
-          borderRadius: s(48),
           backgroundColor: theme.bg,
         },
       ]}
     >
-      <Svg width={width} height={height} style={StyleSheet.absoluteFillObject}>
-        <Defs>
-          <LinearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0%" stopColor={theme.ringBg} stopOpacity="1" />
-            <Stop offset="55%" stopColor={theme.primary} stopOpacity="0.92" />
-            <Stop
-              offset="100%"
-              stopColor={theme.primaryPressed || theme.primary}
-              stopOpacity="1"
-            />
-          </LinearGradient>
-        </Defs>
-        <Rect width={width} height={height} fill={`url(#${gradId})`} />
-        <Circle
-          cx={width * 0.86}
-          cy={height * 0.18}
-          r={width * 0.32}
-          fill={theme.card}
-          opacity={0.16}
-        />
-        <Circle
-          cx={width * 0.12}
-          cy={height * 0.9}
-          r={width * 0.4}
-          fill={theme.card}
-          opacity={0.12}
-        />
-      </Svg>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.rule,
+          {
+            top: inset,
+            left: inset,
+            right: inset,
+            bottom: inset,
+            borderColor: theme.text,
+            borderWidth: Math.max(1, s(2)),
+          },
+        ]}
+      />
 
-      <View style={[styles.content, { padding: s(56) }, contentStyle]}>
+      <View
+        style={[
+          styles.content,
+          { padding: s(72) },
+          contentStyle,
+        ]}
+      >
+        <View style={[styles.brandRow, { marginBottom: s(10) }]}>
+          <BrandMark size={Math.max(24, s(32))} />
+          {kicker &&
+          !["atelier tracker", "yearly tracker"].includes(
+            String(kicker).toLowerCase(),
+          ) ? (
+            <Text
+              style={[
+                styles.kicker,
+                {
+                  color: theme.mutedText,
+                  fontFamily: fontFamily("data", fontsLoaded),
+                  fontSize: s(18),
+                  letterSpacing: s(4),
+                  marginLeft: s(16),
+                },
+              ]}
+            >
+              {String(kicker).toUpperCase()}
+            </Text>
+          ) : null}
+        </View>
         {children}
+        <View style={{ flex: 1 }} />
+        <Text
+          style={[
+            styles.credit,
+            {
+              color: theme.mutedText,
+              fontFamily: fontFamily("data", fontsLoaded),
+              fontSize: s(16),
+              letterSpacing: s(2),
+            },
+          ]}
+        >
+          {credit ||
+            (art
+              ? `${art.title}  ·  ${art.artist}  ·  ${art.year}`
+              : "Private ledger")}
+        </Text>
       </View>
     </View>
   );
@@ -96,7 +128,24 @@ const styles = StyleSheet.create({
   frame: {
     overflow: "hidden",
   },
+  rule: {
+    position: "absolute",
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   content: {
     flex: 1,
+  },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  kicker: {
+    fontWeight: "600",
+    textTransform: "uppercase",
+    fontStyle: "normal",
+  },
+  credit: {
+    fontWeight: "600",
+    textTransform: "uppercase",
   },
 });
