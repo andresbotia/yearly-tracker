@@ -38,7 +38,7 @@ class ProgressWidgetProvider : AppWidgetProvider() {
     private fun parseFields(json: String): Pair<String, String> {
       // Expect: {"title":"...","subtitle":"..."}
       val title = Regex(""""title"\s*:\s*"([^"]*)"""")
-        .find(json)?.groupValues?.get(1) ?: "Atelier Tracker"
+        .find(json)?.groupValues?.get(1) ?: "Yearly Tracker"
 
       val subtitle = Regex(""""subtitle"\s*:\s*"([^"]*)"""")
         .find(json)?.groupValues?.get(1) ?: "Progress: --%"

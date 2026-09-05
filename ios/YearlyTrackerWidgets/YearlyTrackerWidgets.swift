@@ -172,7 +172,7 @@ private struct EmptyStateView: View {
             Text(title)
                 .font(displayFont(16))
                 .foregroundColor(inkColor(payload))
-            Text("Open Atelier Tracker to refresh")
+            Text("Open Yearly Tracker to refresh")
                 .font(dataFont(11))
                 .foregroundColor(mutedInk(payload))
         }
@@ -181,7 +181,7 @@ private struct EmptyStateView: View {
     }
 }
 
-// MARK: - 1) Atelier Progress
+// MARK: - 1) Yearly Progress
 
 private struct YearlyProgressView: View {
     let entry: Entry
@@ -199,7 +199,7 @@ private struct YearlyProgressView: View {
                 .foregroundColor(inkColor(payload))
 
             if payload == nil {
-                Text("Open Atelier Tracker to refresh")
+                Text("Open Yearly Tracker to refresh")
                     .font(dataFont(11))
                     .foregroundColor(mutedInk(payload))
             } else {
@@ -229,13 +229,13 @@ struct YearlyProgressWidget: Widget {
             YearlyProgressView(entry: entry)
                 .atelierWidgetChrome(entry.payload)
         }
-        .configurationDisplayName("Atelier Progress")
+        .configurationDisplayName("Yearly Progress")
         .description("Overall yearly goal progress.")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
 
-// MARK: - 2) Atelier Habits
+// MARK: - 2) Yearly Habits
 
 private struct HabitsView: View {
     let entry: Entry
@@ -298,7 +298,7 @@ struct HabitsWidget: Widget {
             HabitsView(entry: entry)
                 .atelierWidgetChrome(entry.payload)
         }
-        .configurationDisplayName("Atelier Habits")
+        .configurationDisplayName("Yearly Habits")
         .description("Today’s habit marks.")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
@@ -366,7 +366,7 @@ struct HighlightGoalWidget: Widget {
     }
 }
 
-// MARK: - 4) Atelier Goals
+// MARK: - 4) Yearly Goals
 
 private struct GoalsListView: View {
     let entry: Entry
@@ -422,7 +422,7 @@ struct GoalsListWidget: Widget {
             GoalsListView(entry: entry)
                 .atelierWidgetChrome(entry.payload)
         }
-        .configurationDisplayName("Atelier Goals")
+        .configurationDisplayName("Yearly Goals")
         .description("Your goals and progress.")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
