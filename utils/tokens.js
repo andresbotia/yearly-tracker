@@ -6,7 +6,7 @@
 
 export const ASCII_RAMP = " .:-=+*#%@";
 
-// Final Atelier identity colors (Claude brand spec). Do not use Cypress
+// Final Yearly Tracker identity colors (Claude brand spec). Do not use Cypress
 // as a default control fill or as a replacement for art-theme palettes.
 export const BRAND = {
   ink: "#1C1916",

@@ -1,9 +1,9 @@
-# Atelier Tracker
+# Yearly Tracker
 
 Operating manual for coding agents working in this repository.
 
-User-facing product name: **Atelier Tracker**. Final brand geometry lives in
-`assets/brand/` and `docs/brand/BRAND-SPEC.md`. Do not redraw the `[AT]` mark
+User-facing product name: **Yearly Tracker**. Final brand geometry lives in
+`assets/brand/` and `docs/brand/BRAND-SPEC.md`. Do not redraw the `[YT]` mark
 or recreate it from typed brackets.
 Internal package/bundle identifiers remain `ResolutionTracker` /
 `com.andresbotia.ResolutionTracker` — do not rename them for cosmetics.
@@ -42,7 +42,7 @@ If visual implementation conflicts with `design.md`, inspect and update `design.
 
 **Local AsyncStorage is production user data.**
 
-A user who updates from Yearly Tracker to Atelier Tracker must keep the same goals, habits, history, theme, custom themes, onboarding flags, and current year.
+A user who updates the app must keep the same goals, habits, history, theme, custom themes, onboarding flags, and current year.
 
 ### Current keys
 
@@ -57,7 +57,7 @@ A user who updates from Yearly Tracker to Atelier Tracker must keep the same goa
 | `yt_custom_themes_v1` | User-created palettes | `CustomTheme[]` |
 | `yt_habits_v1` | Habits + daily checks | `Habit[]` (App.js) |
 | `yt_habits_welcome_seen_v1` | Habits intro seen | `"1"` (App.js) |
-| `yt_revamp_intro_seen_v1` | Atelier/revamp intro seen | `"1"` (additive) |
+| `yt_revamp_intro_seen_v1` | Revamp visual intro seen | `"1"` (additive) |
 | `yt_random_art_last_v1` | Last Random Art plate | string art id (additive) |
 | `yt_revamp_theme_choice_seen_v1` | Existing-user style choice | `"1"` (additive) |
 | `yt_onboarding_seen_v1` | New-user catalogue onboarding | `"1"` (additive) |
@@ -128,7 +128,7 @@ High-level identity:
 
 **MUSEUM CATALOGUE × IMPRESSIONISM × PERSONAL ARCHIVE**
 
-- The outlined `[AT]` mark is identity punctuation, not a stamp on every title.
+- The outlined `[YT]` mark is identity punctuation, not a stamp on every title.
 - Art themes: one full-screen artwork backdrop per screen, paper veil, one ASCII texture, faint paper washes/keylines on dense clusters.
 - Do not add large opaque cards, heavy shadows, or pill buttons.
 - Classic / custom / Museum Paper (no artwork): solid palette background.

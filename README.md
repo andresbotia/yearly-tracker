@@ -1,16 +1,16 @@
-# Atelier Tracker
+# Yearly Tracker
 
-![Atelier Tracker](assets/brand/lockups/atelier-lockup-horizontal-ink.png)
+![Yearly Tracker](assets/brand/lockups/yearly-lockup-horizontal-ink.png)
 
 A private, offline-first yearly journal for habits and goals.
 
-Formerly Yearly Tracker. Updating the app keeps the same goals, habits, history, and local data.
+Updating the app keeps the same goals, habits, history, and local data.
 
 ---
 
-## What is Atelier Tracker?
+## What is Yearly Tracker?
 
-**Atelier Tracker** helps you log habits and yearly goals through a quiet, art-led interface — without accounts, ads, or tracking.
+**Yearly Tracker** helps you log habits and yearly goals through a quiet, art-led interface — without accounts, ads, or tracking.
 
 Public-domain museum artwork, editorial typography, and subtle ASCII texture shape the year as a personal archive.
 
@@ -33,7 +33,7 @@ All data is stored locally on your device. Nothing is uploaded or shared.
 - Track progress with counts or milestones
 - Log daily habits (empty / good / bad)
 - Browse habit history
-- Choose an Atelier art theme, Random Art, a classic palette, or a custom theme
+- Choose an art theme, Random Art, a classic palette, or a custom theme
 
 Everything works fully offline. Artwork is bundled; the app never calls museum APIs at runtime.
 
@@ -41,7 +41,7 @@ Everything works fully offline. Artwork is bundled; the app never calls museum A
 
 ## Brand
 
-Final identity assets live in `assets/brand/`. Geometry and usage rules are in `docs/brand/BRAND-SPEC.md`. The mark is outlined artwork, not typed `[AT]`.
+Final identity assets live in `assets/brand/`. Geometry and usage rules are in `docs/brand/BRAND-SPEC.md`. The mark is outlined artwork, not typed `[YT]`.
 
 ---
 
@@ -55,7 +55,7 @@ If you need help, have questions, or want to report an issue:
 
 ## Privacy policy
 
-Atelier Tracker does not collect, store, transmit, or share any personal data.
+Yearly Tracker does not collect, store, transmit, or share any personal data.
 
 - No accounts
 - No analytics
