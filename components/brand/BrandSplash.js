@@ -9,7 +9,7 @@ import Animated, {
 import { BRAND, MOTION } from "../../utils/tokens";
 import { useReducedMotion } from "../../utils/motion";
 
-const SPLASH = require("../../assets/brand/splash/atelier-splash-mark-paper.png");
+const SPLASH = require("../../assets/brand/splash/yearly-splash-mark-paper.png");
 
 export default function BrandSplash() {
   const { width, height } = useWindowDimensions();
@@ -38,7 +38,7 @@ export default function BrandSplash() {
         style={[{ width: shorter, height: shorter }, motionStyle]}
         resizeMode="contain"
         accessibilityRole="image"
-        accessibilityLabel="Atelier Tracker"
+        accessibilityLabel="Yearly Tracker"
       />
     </View>
   );
