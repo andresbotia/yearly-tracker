@@ -1702,7 +1702,7 @@ export default function App() {
     await new Promise((r) => requestAnimationFrame(r));
 
     const ok = await captureAndShare(shareShotRef, {
-      message: "Made with Atelier Tracker",
+      message: "Made with Yearly Tracker",
     });
 
     setShareBusy(false);
@@ -2778,7 +2778,7 @@ export default function App() {
           visible={habitEditOpen}
           onClose={closeHabitEdit}
           theme={theme}
-          kicker="[AT]  /  HABIT"
+          kicker="[YT]  /  HABIT"
           title="Edit Habit"
           footer={
             <AtelierActions
@@ -2806,7 +2806,7 @@ export default function App() {
           visible={habitAddOpen}
           onClose={() => setHabitAddOpen(false)}
           theme={theme}
-          kicker="[AT]  /  HABIT"
+          kicker="[YT]  /  HABIT"
           title="Add Habit"
           footer={
             <AtelierActions
@@ -2834,7 +2834,7 @@ export default function App() {
           visible={goalDetailsOpen}
           onClose={closeGoalDetails}
           theme={theme}
-          kicker="[AT]  /  GOAL"
+          kicker="[YT]  /  GOAL"
           title="Edit Goal"
           footer={
             <AtelierActions
@@ -2893,7 +2893,7 @@ export default function App() {
           visible={addOpen}
           onClose={() => setAddOpen(false)}
           theme={theme}
-          kicker="[AT]  /  GOAL"
+          kicker="[YT]  /  GOAL"
           title="Add Goal"
           footer={
             <AtelierActions
@@ -3025,7 +3025,7 @@ export default function App() {
           }}
         >
           <View style={styles.modalBackdrop}>
-            <AtelierSheet theme={theme} kicker="[AT]  /  COLLECTION">
+            <AtelierSheet theme={theme} kicker="[YT]  /  COLLECTION">
               <View style={[styles.themeTopRow, ANDROID && styles.noGap]}>
                 <Text
                   style={[
@@ -3360,7 +3360,7 @@ export default function App() {
 
                 <AtelierSheet
                   theme={theme}
-                  kicker="[AT]  /  PALETTE"
+                  kicker="[YT]  /  PALETTE"
                   title={
                     colorPickerTarget === "primary"
                       ? "Pick primary"
@@ -3440,7 +3440,7 @@ export default function App() {
           visible={editOpen}
           onClose={closeEdit}
           theme={theme}
-          kicker="[AT]  /  CURRENT PROGRESS"
+          kicker="[YT]  /  CURRENT PROGRESS"
           title={editGoal?.title}
           footer={
             <AtelierActions

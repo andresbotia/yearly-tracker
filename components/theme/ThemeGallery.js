@@ -1,4 +1,4 @@
-// Atelier collection browser. Presentation only.
+// Art collection browser. Presentation only.
 // Existing classic ids, custom ids, and art ids still resolve through makeTheme.
 
 import React, { useMemo, useState } from "react";
@@ -108,7 +108,7 @@ export default function ThemeGallery({
       <View style={styles.brandRow}>
         <BrandMark size={24} />
         <MetadataLabel theme={theme} fontsLoaded={fontsLoaded}>
-          Atelier collection
+          Art collection
         </MetadataLabel>
       </View>
       <Text

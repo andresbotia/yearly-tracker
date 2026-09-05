@@ -176,7 +176,7 @@ export default function YearArchive({
         visible={!!selectedKey}
         onClose={() => setSelectedKey(null)}
         theme={theme}
-        kicker="[AT]  /  DAY"
+        kicker="[YT]  /  DAY"
         title={selectedKey ? formatDayTitle(selectedKey) : ""}
       >
         {selectedLedger.length === 0 ? (

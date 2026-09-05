@@ -38,7 +38,7 @@ export function ShareCardFrame({
   theme,
   children,
   contentStyle,
-  kicker = "Atelier Tracker",
+  kicker = "Yearly Tracker",
   credit,
 }) {
   const { s } = useScale(width);
@@ -81,7 +81,10 @@ export function ShareCardFrame({
       >
         <View style={[styles.brandRow, { marginBottom: s(10) }]}>
           <BrandMark size={Math.max(24, s(32))} />
-          {kicker && String(kicker).toLowerCase() !== "atelier tracker" ? (
+          {kicker &&
+          !["atelier tracker", "yearly tracker"].includes(
+            String(kicker).toLowerCase(),
+          ) ? (
             <Text
               style={[
                 styles.kicker,

@@ -18,17 +18,17 @@ import BrandMark from "../brand/BrandMark";
 
 const EXISTING = {
   kicker: "New edition",
-  title: "Yearly Tracker is now Atelier Tracker",
+  title: "A new edition of Yearly Tracker",
   body: [
     "Your goals, habits, and history are exactly where you left them.",
-    "We’ve reimagined the experience around art, typography, and the idea of your year as a personal archive.",
+    "Yearly Tracker has been redesigned around art, typography, and the idea of your year as a personal archive.",
     "Your data remains private and stored on your device.",
   ],
 };
 
 const FRESH = {
   kicker: "Personal yearly archive",
-  title: "Welcome to Atelier Tracker",
+  title: "Welcome to Yearly Tracker",
   quote:
     "“Success is the product of daily habits—not once-in-a-lifetime transformations.”",
   attribution: "— James Clear",
@@ -138,7 +138,7 @@ export default function RevampIntroModal({
           <Pressable
             onPress={onClose}
             accessibilityRole="button"
-            accessibilityLabel="Enter Atelier"
+            accessibilityLabel="Enter Yearly"
             style={({ pressed }) => [
               styles.cta,
               {
@@ -158,7 +158,7 @@ export default function RevampIntroModal({
                 },
               ]}
             >
-              Enter Atelier
+              Enter Yearly
             </Text>
           </Pressable>
         </View>

@@ -39,8 +39,8 @@ export default function CompletionMark({ visible, theme, index }) {
         ]}
       >
         {typeof index === "number" && index > 0
-          ? `[AT]  /  ${String(index).padStart(2, "0")}  /  COMPLETE`
-          : "[AT]  /  GOAL COMPLETE"}
+          ? `[YT]  /  ${String(index).padStart(2, "0")}  /  COMPLETE`
+          : "[YT]  /  GOAL COMPLETE"}
       </Text>
     </Animated.View>
   );

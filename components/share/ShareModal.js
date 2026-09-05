@@ -109,7 +109,7 @@ function PrintReveal({ visible, theme, fontsLoaded }) {
           },
         ]}
       >
-        [AT]  /  PRINT
+        [YT]  /  PRINT
       </Text>
       <Text
         style={[
@@ -162,7 +162,7 @@ export default function ShareModal({
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
         <AtelierSheet
           theme={theme}
-          kicker="[AT]  /  PRINT"
+          kicker="[YT]  /  PRINT"
           title="Share"
           style={styles.sheet}
         >

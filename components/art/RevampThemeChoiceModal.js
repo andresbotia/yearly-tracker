@@ -45,7 +45,7 @@ export default function RevampThemeChoiceModal({
               { color: ink, fontFamily: fontFamily("display", fontsLoaded) },
             ]}
           >
-            Try the new Atelier canvas?
+            Try the new Yearly canvas?
           </Text>
 
           <SectionRule theme={theme} style={styles.rule} />
@@ -56,7 +56,7 @@ export default function RevampThemeChoiceModal({
               { color: muted, fontFamily: fontFamily("body", fontsLoaded) },
             ]}
           >
-            Atelier Tracker can now rotate artwork from the collection as the
+            Yearly Tracker can now rotate artwork from the collection as the
             background of your yearly journal. You can try it now or keep your
             current theme.
           </Text>

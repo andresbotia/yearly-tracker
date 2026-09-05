@@ -30,7 +30,7 @@ function PosterShell({
       width={width}
       height={height}
       theme={theme}
-      kicker={kicker || "Atelier Tracker"}
+      kicker={kicker || "Yearly Tracker"}
       contentStyle={{
         padding: s(72),
         justifyContent: "flex-start",
