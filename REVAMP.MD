@@ -1,324 +1,301 @@
-Continue Atelier Tracker on `feature/revamp`.
+Continue Yearly Tracker on `feature/revamp`.
 
 Do not merge main.
-Do not run EAS/native builds.
-Widgets are working perfectly — leave native/widget architecture alone.
 
-Read:
+Before changing anything:
 
-- AGENTS.md
-- REVAMP.MD
-- design.md
-- latest commits
+- read `AGENTS.md`
+- read `REVAMP.MD`
+- read `design.md`
+- inspect the latest commits
 
-Implement this focused physical-device QA polish pass.
+IMPORTANT BRAND PACKAGE LOCATION
+
+The NEW finalized Yearly Tracker branding package has already been copied into
+the repository root:
+
+`./Atelier Tracker rebranding (1).zip`
+
+Despite the filename, THIS `(1)` ZIP is the NEW Yearly Tracker / [YT] production
+branding package from Claude Design.
+
+The older:
+
+`./Atelier Tracker rebranding.zip`
+
+is the previous Atelier Tracker / [AT] package.
+
+Use `Atelier Tracker rebranding (1).zip` as the source of truth for the new
+branding.
+
+Extract and inspect it before making changes. Read its:
+
+- README.md
+- BRAND-SPEC.md
+- CONSTRUCTION.md
+
+Inspect all supplied marks, icons, splash assets, wordmarks, lockups, favicons,
+and optical-size variants.
+
+Do not recreate the [YT] logo yourself when supplied production artwork exists.
 
 ==================================================
-
-1. # MAKE ONBOARDING STEP 1 ACTUALLY INTERACTIVE
-
-Current problem:
-
-[01 / 04] DAILY LEDGER says:
-“Tap a mark to record today.”
-
-But CatalogueOnboarding blocks the real habit interaction because the
-full-screen overlay captures pointer events.
-
-Fix this without making the rest of the app interactive during onboarding.
-
-For Step 1 only:
-
-- highlight the ACTUAL today's habit mark/cell, preferably the first starter
-  habit's today cell, not the entire habit row
-- allow that highlighted cell to be tapped while onboarding remains visible
-- it must call the SAME real habit state-change path used normally
-- preserve the exact semantics:
-  . -> + -> × -> .
-- preserve real persistence
-- preserve haptics
-- widget sync can occur naturally through the existing path
-- user may tap it multiple times
-- do NOT auto-advance after one tap
-- NEXT remains the way to continue
-
-Do not simply make the whole onboarding overlay `pointerEvents="box-none"`.
-
-Everything outside the explicitly highlighted interactive target must remain
-blocked so users cannot accidentally:
-
-- switch tabs
-- open Theme
-- open Add Habit
-- Share
-- drag rows
-- trigger unrelated actions
-
-Preferred architecture:
-full blocking overlay
-
-- one transparent/positioned interactive hit target matching the measured real
-  today cell
-- that hit target invokes the real habit toggle handler.
-
-If there are no habits, gracefully fall back to highlighting the ledger header
-and keep Step 1 informational rather than crashing.
-
-================================================== 2. DYNAMIC ONBOARDING CARD MEASUREMENT
+GOAL
 ==================================================
 
-CatalogueOnboarding currently uses an estimated card height (~168px) when
-deciding whether to place the annotation above or below its target.
+Rebrand the current app from:
 
-Remove that assumption.
+Atelier Tracker / [AT]
 
-Measure the actual rendered annotation card height using layout measurement,
-then position/clamp using the true card height.
+back to:
 
-Requirements:
+Yearly Tracker / [YT]
 
-- never run off the top/bottom of screen
-- work around 375x667 devices
-- work on taller devices
-- tolerate longer localized/accessibility text
-- pointer hairline still connects correctly
-- avoid visual jump if possible; initial hidden measurement or stable
-  second-pass positioning is fine
-- reduced-motion behavior remains correct
+while KEEPING the entire current Atelier visual design system.
 
-Also clamp horizontally as today.
-
-================================================== 3. SHORT-SCREEN WELCOME SAFETY
-==================================================
-
-The new Atelier welcome looks good. Do NOT redesign it.
-
-Make it safe for shorter devices / larger text.
+This is a branding/name/asset swap — NOT a redesign.
 
 Keep:
 
-- mark
-- PERSONAL YEARLY ARCHIVE
-- artwork
-- title
-- James Clear quote
-- product copy
-- ENTER ATELIER
-- existing styling
+- museum catalogue aesthetic
+- art-led backgrounds
+- typography
+- layouts
+- motion
+- onboarding design
+- catalogue language
+- archival/journal feeling
+- current functionality
 
-If the content cannot fit vertically:
+The app should feel visually identical in quality, except the product identity
+is now Yearly Tracker.
 
-- allow the CARD CONTENT to scroll
-- keep sensible top/bottom padding
-- CTA must remain reachable
-- do not permanently force scrolling on normal/tall devices
-- preserve modal appearance
-
-Do not shrink typography aggressively just to make it fit.
-
-================================================== 4. DEV-ONLY QA / FIRST-RUN STATE MENU
+==================================================
+BRANDING REPLACEMENTS
 ==================================================
 
-Add a small QA tool for development testing only.
+Replace user-facing:
 
-Suggested trigger:
-LONG PRESS the small `[AT]` brand mark in the main header.
+Atelier Tracker
+→ Yearly Tracker
 
-This QA system MUST NOT work in production.
+[AT]
+→ supplied [YT] artwork
 
-Use React Native's compile-time development flag:
-`__DEV__`
+Examples:
 
-Defense in depth:
+Welcome to Atelier Tracker
+→ Welcome to Yearly Tracker
 
-A. QA trigger only exists/attaches when `__DEV__ === true`
+Atelier Tracker can now...
+→ Yearly Tracker can now...
 
-B. QA UI only renders when `__DEV__ === true`
+Yearly Tracker is now Atelier Tracker
+→ replace with appropriate redesign/migration language such as:
 
-C. EVERY QA mutation/reset function must start with:
-`if (!__DEV__) return;`
+A NEW EDITION OF YEARLY TRACKER
 
-D. Production/TestFlight/App Store behavior must contain:
+Your goals, habits, and history are exactly where you left them.
 
-- no visible QA affordance
-- no long-press QA action
-- no QA modal
-- no QA reset/mutation path that can execute
+Yearly Tracker has been redesigned around art, typography, and the idea of your
+year as a personal archive.
 
-Do not use an environment string that could accidentally be left configured.
-`__DEV__` is the primary hard gate.
+Do not tell existing users the app changed its name, because the shipping name
+is Yearly Tracker again.
 
-QA card should match Atelier styling and say something like:
+Use the supplied [YT] graphical assets everywhere the actual brand mark is
+displayed.
 
-[DEV] / FIRST-RUN STATES
+Do NOT substitute typed "[YT]" when a production graphical mark should be used.
 
-Options:
+Textual catalogue notation may remain textual where appropriate.
 
-1. SIMULATE FRESH INSTALL
-2. SIMULATE OLD YEARLY TRACKER USER
-3. SIMULATE EARLIER REVAMP USER
-4. REPLAY ONBOARDING
-5. RESET THEME-CHOICE PROMPT
-6. CLOSE
-
-IMPORTANT:
-Do NOT wipe real goals/habits/history/custom themes unless an option explicitly
-says it will.
-
-The first-run-state simulations should manipulate PRESENTATION / MIGRATION
-FLAGS only wherever possible.
-
-OLD YEARLY TRACKER USER should produce a state equivalent to:
-
-- rt_welcome_seen_v1 = "1"
-- yt_revamp_intro_seen_v1 absent
-- yt_revamp_theme_choice_seen_v1 absent
-- yt_onboarding_seen_v1 = "1"
-- preserve current rt_hue_v1
-- preserve all goals/habits/history
-
-Then reload/re-evaluate the launch flow so we can test:
-rebrand intro -> visual-edition choice.
-
-EARLIER REVAMP USER:
-
-- rt_welcome_seen_v1 = "1"
-- yt_revamp_intro_seen_v1 = "1"
-- yt_revamp_theme_choice_seen_v1 absent
-- yt_onboarding_seen_v1 = "1"
-- preserve current theme/data
-
-Expected:
-only the visual-edition choice.
-
-REPLAY ONBOARDING:
-
-- only reset yt_onboarding_seen_v1
-- do not reset user data/theme
-- set state so onboarding can appear again appropriately
-
-RESET THEME-CHOICE:
-
-- only reset yt_revamp_theme_choice_seen_v1
-
-For SIMULATE FRESH INSTALL, do NOT silently destroy the developer's real data.
-Either:
-
-- simulate fresh presentation flags in-memory, OR
-- clearly make this a presentation-only fresh-launch simulation.
-
-Do not delete:
-rt_goals_v1
-yt_habits_v1
-yt_goal_history_v1
-yt_custom_themes_v1
-
-unless an explicitly labeled destructive dev action is later added.
-We do not need a destructive action now.
-
-If AsyncStorage.removeItem is needed for additive flags, keep that code inside
-the **DEV** guarded QA helper only.
-
-================================================== 5. OPTIONAL REPLAY GUIDE ENTRY
+==================================================
+APP / NATIVE BRANDING
 ==================================================
 
-Add a very subtle normal-user way to replay the guide later.
+Update the visible application identity to Yearly Tracker.
 
-Good location:
-Theme / collection area, low-priority metadata/action.
+Use the supplied NEW production assets for:
 
-Copy:
-REPLAY GUIDE
-
-This is NOT dev-only.
-
-Behavior:
-
-- reopens the same catalogue onboarding
-- does NOT modify goals/habits/theme
-- may reset/write yt_onboarding_seen_v1 as necessary
-- should not make onboarding automatically appear every launch afterward
-
-Keep this visually quiet.
-
-================================================== 6. DO NOT REGRESS
-==================================================
-
-Preserve:
-
-- production storage keys
-- existing-user migration behavior
-- fresh-user Random Art
+- app icon
+- iOS icon
+- Android adaptive icon
+- splash
+- JS BrandSplash
+- brand marks
+- share branding
+- README/web branding where currently applicable
 - widgets
-- widget sync
-- theme persistence
-- custom themes
-- goals/habits/history
-- drag/reorder
-- swipe
-- share
+- widget marks
+- visible widget names
+
+Widget visible names should become appropriately Yearly-branded, e.g.:
+
+Yearly Progress
+Yearly Habits
+Yearly Goals
+
+Preserve Goal Highlight unless there is a strong naming reason to change it.
+
+==================================================
+DO NOT CHANGE TECHNICAL IDENTITY
+==================================================
+
+ABSOLUTELY preserve:
+
+iOS bundle ID:
+`com.andresbotia.ResolutionTracker`
+
+widget bundle ID:
+`com.andresbotia.ResolutionTracker.widgets`
+
+Android package:
+`com.andresbotia.yearlytracker`
+
+Also preserve:
+
+- App Group
+- widget kind strings/internal widget IDs
+- AsyncStorage key names
+- production data
+- goals
+- habits
+- history
+- themes/custom themes
+- selected theme
+- Random Art
+- year
 - rollover
-- haptics
-- reduced motion
-- accessibility
-- bundle/package IDs
+- widget payload contract
 
-No native changes should be necessary.
+Do NOT perform a storage migration just because the visual brand changes.
 
-================================================== 7. VERIFY
+==================================================
+ASSET INTEGRATION
+==================================================
+
+Move/import the new Yearly production assets into a permanent structure such as:
+
+assets/brand/
+docs/brand/
+
+Replace the existing Atelier brand assets cleanly.
+
+Do not leave runtime code accidentally referencing obsolete [AT] production
+images.
+
+Preserve useful historical docs only if appropriate, but current shipping brand
+documentation should describe Yearly Tracker / [YT].
+
+Do not commit the source ZIP merely because it is in the repo root unless it is
+already intentionally tracked. Treat it as a handoff/source archive.
+
+==================================================
+COPY AUDIT
+==================================================
+
+Search the entire repo for:
+
+Atelier Tracker
+ATELIER TRACKER
+[AT]
+Atelier
+atelier-
+
+Classify every occurrence before replacing it.
+
+Change user-facing brand references.
+
+DO NOT blindly rename internal code/API/storage/native identifiers if doing so
+could create unnecessary migration risk.
+
+Internal filenames/classes can remain Atelier-named where harmless unless they
+are clearly public-facing.
+
+In particular, do not rename storage keys.
+
+==================================================
+DEV QA
+==================================================
+
+Preserve the current DEV-only QA system exactly.
+
+It must remain hard-gated by `__DEV__`.
+
+Production/TestFlight/App Store must continue to have:
+
+- no QA trigger
+- no QA UI
+- no executable QA mutations
+
+Update QA copy only where it displays obsolete Atelier branding.
+
+==================================================
+WIDGETS
+==================================================
+
+The widget functionality and synchronization are already working perfectly.
+
+Do NOT redesign or rewrite widget logic.
+
+Only perform the branding changes necessary:
+
+- supplied [YT] mark
+- Yearly-facing visible names/copy
+- appropriate supplied assets
+
+Preserve all widget synchronization, artwork handling, payload logic and IDs.
+
+Because widget/icon/splash assets are native-facing, this pass may require a new
+EAS build AFTER implementation, but do not run EAS unless instructed.
+
+==================================================
+VERIFY
 ==================================================
 
 Run:
-npm run verify:storage
+`npm run verify:storage`
 
-Run Babel/static parse on touched JS.
+Run Babel/static parse checks on touched JS.
 
-Audit:
+Run the existing Expo checks without performing unrelated dependency upgrades.
 
-A. **DEV** true:
-long-press [AT] opens QA menu
+Search again after implementation for obsolete shipping-brand references.
 
-B. **DEV** false by code inspection:
-no trigger
-no rendered QA UI
-QA mutation functions no-op
+Explicitly report any remaining "Atelier" or "[AT]" occurrences and WHY each one
+was intentionally retained.
 
-C. old-user QA state:
-rebrand -> theme choice
+Verify:
 
-D. earlier-revamp QA state:
-theme choice only
+- Yearly Tracker visible app name
+- [YT] header mark
+- [YT] welcome
+- [YT] splash
+- [YT] app icon wiring
+- Yearly widget visible names
+- [YT] widget marks
+- share branding
+- onboarding copy
+- existing-user migration copy
+- production storage unchanged
+- technical IDs unchanged
+- DEV QA still **DEV** only
 
-E. KEEP CURRENT:
-rt_hue_v1 unchanged
-
-F. TRY RANDOM ART:
-normal random-art persistence path
-
-G. Step 1:
-real today habit mark can be cycled . + × . while popup remains open
-
-H. other controls remain blocked during onboarding
-
-I. annotation cards remain onscreen on short viewport
-
-J. welcome remains usable on short viewport
-
-K. Replay Guide works without creating repeated automatic onboarding
+Stay on `feature/revamp`.
+Do not merge main.
 
 Make focused commits.
-Stay on feature/revamp.
-Do not run EAS.
 
-Report:
+When finished report:
 
-- interactive Step 1 implementation
-- measured-card positioning changes
-- short-screen welcome handling
-- exact **DEV** QA guards
-- QA state simulation behavior
-- Replay Guide placement
-- verification
+- contents discovered in `Atelier Tracker rebranding (1).zip`
+- assets installed/replaced
+- all copy/name changes
+- native-visible changes
+- technical identifiers explicitly preserved
+- remaining intentional Atelier references
+- verification results
 - commit hashes
 
-Stop ready for Metro physical-device QA.
+Stop ready for physical-device / final EAS QA.
