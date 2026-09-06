@@ -1,6 +1,6 @@
 // Presentation-only motion and haptics. No persistence.
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
-import { AccessibilityInfo } from "react-native";
+import { AccessibilityInfo, Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 import { MOTION } from "./tokens";
 
@@ -47,6 +47,7 @@ export function motionDuration(ms, reduced) {
 let lastTickAt = 0;
 
 export async function hapticTick() {
+  if (Platform.OS === "web") return;
   const now = Date.now();
   if (now - lastTickAt < 42) return;
   lastTickAt = now;
@@ -56,12 +57,14 @@ export async function hapticTick() {
 }
 
 export async function hapticSelect() {
+  if (Platform.OS === "web") return;
   try {
     await Haptics.selectionAsync();
   } catch {}
 }
 
 export async function hapticSuccess() {
+  if (Platform.OS === "web") return;
   try {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   } catch {}

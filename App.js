@@ -144,6 +144,7 @@ import {
 } from "./features/share/ShareCards";
 import { captureAndShare } from "./features/share/shareCapture";
 import ShareModal from "./components/share/ShareModal";
+import { useDemoBridge } from "./utils/demoBridge";
 
 const HABITS_KEY = "yt_habits_v1";
 const HABITS_WELCOME_SEEN_KEY = "yt_habits_welcome_seen_v1";
@@ -416,6 +417,7 @@ export default function App() {
   });
 
   const [ready, setReady] = useState(false);
+  useDemoBridge(ready && fontsLoaded);
   const [activeTab, setActiveTab] = useState("habits");
   const [goals, setGoals] = useState([]);
   const [historyYear, setHistoryYear] = useState(year);
@@ -811,6 +813,7 @@ export default function App() {
   }
 
   async function pushWidgets(nextGoals, nextHabits) {
+    if (Platform.OS === "web") return;
     try {
       const artId = widgetArtworkIdFromTheme(theme);
       await prepareWidgetArtwork(artId || null);
@@ -870,18 +873,21 @@ export default function App() {
   }
 
   async function hapticLight() {
+    if (Platform.OS === "web") return;
     try {
       await Haptics.selectionAsync();
     } catch {}
   }
 
   async function hapticSuccess() {
+    if (Platform.OS === "web") return;
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {}
   }
 
   async function hapticDragStart() {
+    if (Platform.OS === "web") return;
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {}
