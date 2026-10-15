@@ -32,7 +32,7 @@ import Reanimated, {
 
 import DraggableFlatList from "react-native-draggable-flatlist";
 import * as Haptics from "expo-haptics";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { appStorage as AsyncStorage } from "./utils/appStorage";
 import {
   pushWidgetPayloadAndroid,
   setDebugWidgetTextAndroid,
@@ -104,6 +104,7 @@ import AtelierSheet, {
 import MilestoneMark from "./components/atelier/MilestoneMark";
 import CompletionMark from "./components/atelier/CompletionMark";
 import {
+  STORAGE_KEYS,
   loadGoalsWithMeta,
   saveGoals,
   loadHue,
@@ -123,6 +124,8 @@ import {
   setRevampThemeChoiceSeen,
   loadOnboardingSeen,
   setOnboardingSeen,
+  loadBackupAnnouncementSeen,
+  setBackupAnnouncementSeen,
 } from "./utils/storage";
 import {
   ART_THEMES,
@@ -144,6 +147,9 @@ import {
 } from "./features/share/ShareCards";
 import { captureAndShare } from "./features/share/shareCapture";
 import ShareModal from "./components/share/ShareModal";
+import BackupModal from "./features/backup/BackupModal";
+import BackupAnnouncementModal from "./features/backup/BackupAnnouncementModal";
+import { recoverInterruptedRestore } from "./utils/backup";
 
 const HABITS_KEY = "yt_habits_v1";
 const HABITS_WELCOME_SEEN_KEY = "yt_habits_welcome_seen_v1";
@@ -407,7 +413,8 @@ function normalizeHex6(input) {
   return `#${s}`;
 }
 
-export default function App() {
+function AppBody({ onRestored, onRecoveryRequired, restored, reloadNotice }) {
+  const [startupError, setStartupError] = useState(null);
   const year = new Date().getFullYear();
   const [fontsLoaded] = useFonts({
     Fraunces_700Bold,
@@ -526,6 +533,10 @@ export default function App() {
   const [addOpen, setAddOpen] = useState(false);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [backupOpen, setBackupOpen] = useState(false);
+  const backupOpenRef = useRef(false);
+  const widgetPushesRef = useRef(new Set());
+  const forceRestoredArtworkRef = useRef(restored);
   const [shareOptionId, setShareOptionId] = useState("weekly");
   const [shareGoalId, setShareGoalId] = useState(null);
   const [shareHabitId, setShareHabitId] = useState(null);
@@ -540,6 +551,8 @@ export default function App() {
   const [themeChoiceOpen, setThemeChoiceOpen] = useState(false);
   const [onboardingSeen, setOnboardingSeenState] = useState(true);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [backupAnnouncementSeen, setBackupAnnouncementSeenState] = useState(true);
+  const [backupAnnouncementOpen, setBackupAnnouncementOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingAnchor, setOnboardingAnchor] = useState(null);
   const [onboardingTargetKind, setOnboardingTargetKind] = useState(null);
@@ -590,6 +603,7 @@ export default function App() {
   // Annual rollover modal + source year
   const [yearRolloverOpen, setYearRolloverOpen] = useState(false);
   const [rolloverFromYear, setRolloverFromYear] = useState(null);
+  const activeYear = rolloverFromYear ?? year;
 
   // Edit goal details modal
   const [goalDetailsOpen, setGoalDetailsOpen] = useState(false);
@@ -793,7 +807,7 @@ export default function App() {
       themePrimary: String(theme?.primary || ""),
       themeBg: String(theme?.bg || ""),
       themeText: String(theme?.text || ""),
-      year,
+      year: activeYear,
       artworkId: artId,
       hasArtwork,
       widgetArtworkFilename: hasArtwork ? WIDGET_ARTWORK_FILENAME : "",
@@ -810,37 +824,49 @@ export default function App() {
     };
   }
 
-  async function pushWidgets(nextGoals, nextHabits) {
-    try {
-      const artId = widgetArtworkIdFromTheme(theme);
-      await prepareWidgetArtwork(artId || null);
+  function pushWidgets(nextGoals, nextHabits) {
+    if (backupOpenRef.current) return Promise.resolve();
+    const task = (async () => {
+      try {
+        const artId = widgetArtworkIdFromTheme(theme);
+        const forceArtwork = forceRestoredArtworkRef.current;
+        const artworkReady = await prepareWidgetArtwork(artId || null, { force: forceArtwork });
+        forceRestoredArtworkRef.current = forceArtwork && !artworkReady;
 
-      const basePayload = buildWidgetPayload(nextGoals, nextHabits);
+        const basePayload = buildWidgetPayload(nextGoals, nextHabits);
+        if (artId && !artworkReady) {
+          basePayload.hasArtwork = false;
+          basePayload.widgetArtworkFilename = "";
+        }
 
-      // iOS: keep exact shape you already use
-      const iosJson = JSON.stringify(basePayload);
+        // iOS: keep exact shape you already use
+        const iosJson = JSON.stringify(basePayload);
 
-      if (Platform.OS === "ios" && WidgetBridge?.setWidgetPayload) {
-        WidgetBridge.setWidgetPayload(iosJson);
-        return;
+        if (Platform.OS === "ios" && WidgetBridge?.setWidgetPayload) {
+          WidgetBridge.setWidgetPayload(iosJson);
+          return;
+        }
+
+        if (Platform.OS === "android") {
+          // ✅ push the SAME payload to each widget key
+          pushWidgetPayloadAndroid({
+            ...basePayload,
+            widgetType: "yearly_progress",
+          });
+          pushWidgetPayloadAndroid({ ...basePayload, widgetType: "goals_list" });
+          pushWidgetPayloadAndroid({ ...basePayload, widgetType: "habits" });
+          pushWidgetPayloadAndroid({
+            ...basePayload,
+            widgetType: "goal_highlight",
+          });
+        }
+      } catch (e) {
+        console.log("Widget sync failed:", e);
       }
-
-      if (Platform.OS === "android") {
-        // ✅ push the SAME payload to each widget key
-        pushWidgetPayloadAndroid({
-          ...basePayload,
-          widgetType: "yearly_progress",
-        });
-        pushWidgetPayloadAndroid({ ...basePayload, widgetType: "goals_list" });
-        pushWidgetPayloadAndroid({ ...basePayload, widgetType: "habits" });
-        pushWidgetPayloadAndroid({
-          ...basePayload,
-          widgetType: "goal_highlight",
-        });
-      }
-    } catch (e) {
-      console.log("Widget sync failed:", e);
-    }
+    })();
+    widgetPushesRef.current.add(task);
+    task.finally(() => widgetPushesRef.current.delete(task)).catch(() => {});
+    return task;
   }
 
   useEffect(() => {
@@ -968,6 +994,10 @@ export default function App() {
       undoTimerRef.current = null;
     }
   }
+
+  useEffect(() => {
+    if (ready && reloadNotice) showToast(reloadNotice);
+  }, [ready, reloadNotice]);
 
   useEffect(() => {
     if (activeTab !== "habits") closeOpenHabitSwipe();
@@ -1184,7 +1214,18 @@ export default function App() {
     let mounted = true;
 
     (async () => {
+      let recoveredInterrupted = false;
       try {
+        recoveredInterrupted = await recoverInterruptedRestore();
+      } catch (error) {
+        if (mounted) {
+          setStartupError(error.message || "Interrupted restore could not be recovered.");
+          setReady(true);
+        }
+        return;
+      }
+      try {
+        const preserveSnapshot = restored || recoveredInterrupted;
         const [
           { goals: storedGoals, hasStoredValue: hasGoalStorage },
           storedHue,
@@ -1197,6 +1238,8 @@ export default function App() {
           lastRandomArt,
           storedThemeChoiceSeen,
           storedOnboardingSeen,
+          storedBackupAnnouncementSeen,
+          restoredEmpty,
         ] = await Promise.all([
           loadGoalsWithMeta(),
           loadHue(),
@@ -1209,6 +1252,8 @@ export default function App() {
           loadRandomArtLast(),
           loadRevampThemeChoiceSeen(),
           loadOnboardingSeen(),
+          loadBackupAnnouncementSeen(),
+          AsyncStorage.getItem(STORAGE_KEYS.restoredEmpty),
         ]);
 
         if (!mounted) return;
@@ -1219,7 +1264,7 @@ export default function App() {
         let finalGoals = [];
         let finalHabits = [];
 
-        if (!hasGoalStorage) {
+        if (!hasGoalStorage && restoredEmpty !== "1") {
           const seeded = makeStarterGoals();
           finalGoals = sortGoals(seeded);
           setGoals(finalGoals);
@@ -1232,11 +1277,12 @@ export default function App() {
         const isExistingUser = !!(welcomeSeen || introSeen);
 
         if (storedHue === RANDOM_ART_ID) {
-          const picked = pickRandomArtId(lastRandomArt);
+          const picked = preserveSnapshot && ART_THEMES.some((item) => item.id === lastRandomArt && item.artwork)
+            ? lastRandomArt : pickRandomArtId(lastRandomArt);
           setThemeChoice(RANDOM_ART_ID);
           setSessionArtId(picked);
           setArtReveal(true);
-          await saveRandomArtLast(picked);
+          if (!preserveSnapshot) await saveRandomArtLast(picked);
         } else if (typeof storedHue === "number" || typeof storedHue === "string") {
           setThemeChoice(storedHue);
         } else if (!isExistingUser) {
@@ -1244,11 +1290,13 @@ export default function App() {
           setThemeChoice(RANDOM_ART_ID);
           setSessionArtId(picked);
           setArtReveal(true);
-          await saveHue(RANDOM_ART_ID);
-          await saveRandomArtLast(picked);
+          if (!preserveSnapshot) {
+            await saveHue(RANDOM_ART_ID);
+            await saveRandomArtLast(picked);
+          }
         }
 
-        if (!hasHabitStorage) {
+        if (!hasHabitStorage && restoredEmpty !== "1") {
           finalHabits = makeStarterHabits();
           setHabits(finalHabits);
           try {
@@ -1263,18 +1311,19 @@ export default function App() {
         setRevampIntroSeenState(introSeen);
         setThemeChoiceSeenState(storedThemeChoiceSeen);
         setOnboardingSeenState(storedOnboardingSeen);
+        setBackupAnnouncementSeenState(storedBackupAnnouncementSeen);
         setWasExistingUser(isExistingUser);
 
         if (storedYear == null) {
-          await saveCurrentYear(year);
+          if (!preserveSnapshot) await saveCurrentYear(year);
         } else if (storedYear !== year) {
           setRolloverFromYear(storedYear);
           setYearRolloverOpen(true);
         } else {
-          await saveCurrentYear(year);
+          if (!preserveSnapshot) await saveCurrentYear(year);
         }
 
-        pushWidgets(finalGoals, finalHabits);
+        if (!preserveSnapshot) pushWidgets(finalGoals, finalHabits);
       } finally {
         if (mounted) setReady(true);
       }
@@ -1288,7 +1337,7 @@ export default function App() {
   useEffect(() => {
     if (!ready) return;
     pushWidgets(goals, habits);
-  }, [ready, goals, habits, themeChoice, sessionArtId, customThemes]);
+  }, [ready, goals, habits, themeChoice, sessionArtId, customThemes, activeYear]);
 
   useEffect(() => {
     return () => {
@@ -1314,7 +1363,7 @@ export default function App() {
     });
 
     return () => sub.remove?.();
-  }, [ready, goals, habits, themeChoice, sessionArtId, customThemes]);
+  }, [ready, goals, habits, themeChoice, sessionArtId, customThemes, activeYear]);
 
   useEffect(() => {
     if (!ready) return;
@@ -1427,6 +1476,26 @@ export default function App() {
     habitEditOpen,
     activeTab,
   ]);
+
+  useEffect(() => {
+    if (!ready || backupAnnouncementSeen || backupAnnouncementOpen || startupError) return;
+    if (yearRolloverOpen || !revampIntroSeen || revampIntroOpen) return;
+    if (wasExistingUser && (!themeChoiceSeen || themeChoiceOpen)) return;
+    if (!wasExistingUser && (!onboardingSeen || onboardingOpen)) return;
+    if (addOpen || habitAddOpen || customizeOpen || shareOpen || backupOpen ||
+        editOpen || goalDetailsOpen || habitEditOpen || completeFlash || (__DEV__ && devQaOpen)) return;
+    setBackupAnnouncementOpen(true);
+  }, [ready, backupAnnouncementSeen, backupAnnouncementOpen, startupError,
+    yearRolloverOpen, revampIntroSeen, revampIntroOpen, wasExistingUser,
+    themeChoiceSeen, themeChoiceOpen, onboardingSeen, onboardingOpen,
+    addOpen, habitAddOpen, customizeOpen, shareOpen, backupOpen,
+    editOpen, goalDetailsOpen, habitEditOpen, completeFlash, devQaOpen]);
+
+  async function dismissBackupAnnouncement() {
+    await setBackupAnnouncementSeen();
+    setBackupAnnouncementSeenState(true);
+    setBackupAnnouncementOpen(false);
+  }
 
   useEffect(() => {
     if (!onboardingOpen) {
@@ -2078,20 +2147,43 @@ export default function App() {
     addOpen ||
     habitAddOpen ||
     shareOpen ||
+    backupOpen ||
     goalDetailsOpen ||
     habitEditOpen ||
     revampIntroOpen ||
     themeChoiceOpen ||
     onboardingOpen ||
+    backupAnnouncementOpen ||
     (__DEV__ && devQaOpen) ||
     artReveal ||
     themeExpand;
+
+  function openBackupSheet() {
+    backupOpenRef.current = true;
+    setBackupOpen(true);
+  }
+
+  function closeBackupSheet() {
+    backupOpenRef.current = false;
+    setBackupOpen(false);
+    pushWidgets(goals, habits);
+  }
+
+  async function finishBackupRestore() {
+    await Promise.allSettled([...widgetPushesRef.current]);
+    onRestored();
+  }
+
+  async function recoverFailedBackupRestore() {
+    await Promise.allSettled([...widgetPushesRef.current]);
+    onRecoveryRequired();
+  }
 
   const stickyChrome = (
     <View style={styles.stickyChrome}>
       <CollapsingKicker
         theme={theme}
-        year={year}
+        year={activeYear}
         fontsLoaded={fontsLoaded}
         onMarkLongPress={
           __DEV__
@@ -2124,7 +2216,7 @@ export default function App() {
         <>
           <View>
             <MetadataLabel theme={theme}>
-              {`YEARLY  /  ${year}  DAY ${dayOfYear(todayDate)}`}
+              {`YEARLY  /  ${activeYear}  DAY ${dayOfYear(todayDate)}`}
             </MetadataLabel>
           </View>
 
@@ -2156,6 +2248,7 @@ export default function App() {
                 { label: "Add goal", onPress: () => setAddOpen(true) },
                 { label: "Share", onPress: () => setShareOpen(true) },
                 { label: "Theme", onPress: openThemePicker },
+                { label: "Data", onPress: openBackupSheet, accessibilityLabel: "Data and Backup" },
               ]}
             />
           </EditorialSurface>
@@ -2304,6 +2397,10 @@ export default function App() {
       ) : null}
     </View>
   );
+
+  if (startupError) {
+    return <SafeAreaView style={styles.safe}><Text style={{ margin: SPACE.lg }}>Data could not be loaded: {startupError}</Text></SafeAreaView>;
+  }
 
   if (!ready) {
     return (
@@ -2505,6 +2602,7 @@ export default function App() {
                         onPress: openThemePicker,
                         measureRef: themeMeasureRef,
                       },
+                      { label: "Data", onPress: openBackupSheet, accessibilityLabel: "Data and Backup" },
                     ]}
                   />
                 </EditorialSurface>
@@ -2942,6 +3040,18 @@ export default function App() {
             </>
           )}
         </AtelierDrawer>
+        <BackupModal
+          visible={backupOpen}
+          theme={theme}
+          onClose={closeBackupSheet}
+          onRestored={finishBackupRestore}
+          onRecoveryRequired={recoverFailedBackupRestore}
+        />
+        <BackupAnnouncementModal
+          visible={backupAnnouncementOpen}
+          theme={theme}
+          onDismiss={dismissBackupAnnouncement}
+        />
         <ShareModal
           visible={shareOpen}
           theme={theme}
@@ -4214,3 +4324,16 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
 });
+
+export default function App() {
+  const [reload, setReload] = useState({ key: 0, restored: false, notice: "" });
+  return (
+    <AppBody
+      key={reload.key}
+      restored={reload.restored}
+      reloadNotice={reload.notice}
+      onRestored={() => setReload((state) => ({ key: state.key + 1, restored: true, notice: "Backup restored." }))}
+      onRecoveryRequired={() => setReload((state) => ({ key: state.key + 1, restored: true, notice: "Import failed; previous data recovered." }))}
+    />
+  );
+}

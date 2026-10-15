@@ -14,11 +14,12 @@ function bridge() {
 }
 
 async function callNative(fn, ...args) {
-  if (typeof fn !== "function") return;
+  if (typeof fn !== "function") return false;
   const result = fn(...args);
   if (result && typeof result.then === "function") {
-    await result;
+    return await result;
   }
+  return result === undefined ? true : result;
 }
 
 export function resolveArtworkUri(artId) {
@@ -36,7 +37,7 @@ export function widgetArtworkIdFromTheme(theme) {
   return String(id);
 }
 
-export async function prepareWidgetArtwork(artId) {
+export async function prepareWidgetArtwork(artId, { force = false } = {}) {
   const native = bridge();
   const id = artId ? String(artId) : "";
 
@@ -46,22 +47,28 @@ export async function prepareWidgetArtwork(artId) {
         await callNative(native?.clearWidgetArtwork?.bind(native));
       }
       lastSharedId = null;
-      return;
+      return true;
     }
 
-    if (id === lastSharedId) return;
+    if (id === lastSharedId && !force) return true;
 
     const uri = resolveArtworkUri(id);
     if (!uri || !native?.setWidgetArtwork) {
       await callNative(native?.clearWidgetArtwork?.bind(native));
       lastSharedId = null;
-      return;
+      return false;
     }
 
-    await callNative(native.setWidgetArtwork.bind(native), uri, id);
+    const updated = await callNative(native.setWidgetArtwork.bind(native), uri, id);
+    if (updated === false) {
+      lastSharedId = null;
+      return false;
+    }
     lastSharedId = id;
+    return true;
   } catch (e) {
     lastSharedId = null;
     console.log("Widget artwork share failed:", e);
+    return false;
   }
 }

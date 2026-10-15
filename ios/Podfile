@@ -56,5 +56,17 @@ target 'YearlyTracker' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # Xcode 27 cannot build Pods that declare an iOS target below 15.0.
+    # Keep the app and widget targets at their existing deployment targets.
+    minimum_pod_ios = Gem::Version.new('15.0')
+    installer.pods_project.targets.each do |pod_target|
+      pod_target.build_configurations.each do |build_configuration|
+        current_ios = build_configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+        next unless current_ios && Gem::Version.new(current_ios) < minimum_pod_ios
+
+        build_configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = minimum_pod_ios.to_s
+      end
+    end
   end
 end

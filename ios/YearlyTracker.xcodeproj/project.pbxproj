@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -14,9 +14,10 @@
 		24221E4F2F0B4360005837CC /* YearlyTrackerWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 24221E402F0B435F005837CC /* YearlyTrackerWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		5821F4A19B68BBCA39C10101 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = FB7AF9BCFAEFEB82BA003E66 /* PrivacyInfo.xcprivacy */; };
-		655541B287FC48B1AC4E6655 /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1192FDBCF75A4876A168E863 /* WidgetBridge.swift */; };
+		655541B287FC48B1AC4E6655 /* YearlyTracker/WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1192FDBCF75A4876A168E863 /* YearlyTracker/WidgetBridge.swift */; };
+		A91B7C012E0F4B0D00A71C21 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91B7C002E0F4B0D00A71C21 /* SceneDelegate.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		EC1D14E9A8CA3C1BC5873BC0 /* WidgetBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E6C3DC5772425E82E6CCCE4 /* WidgetBridge.m */; };
+		EC1D14E9A8CA3C1BC5873BC0 /* YearlyTracker/WidgetBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E6C3DC5772425E82E6CCCE4 /* YearlyTracker/WidgetBridge.m */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F2C71AF5BE5F2F3C221051AC /* libPods-YearlyTracker.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F2C8CD06F613AD70CA6AE2F2 /* libPods-YearlyTracker.a */; };
 /* End PBXBuildFile section */
@@ -46,16 +47,17 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1192FDBCF75A4876A168E863 /* WidgetBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyTracker/WidgetBridge.swift; sourceTree = "<group>"; };
+		1192FDBCF75A4876A168E863 /* YearlyTracker/WidgetBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = YearlyTracker/WidgetBridge.swift; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* YearlyTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YearlyTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = YearlyTracker/Images.xcassets; sourceTree = "<group>"; };
 		24221E402F0B435F005837CC /* YearlyTrackerWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = YearlyTrackerWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		24221E412F0B435F005837CC /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		24221E432F0B435F005837CC /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		24221E552F0B49DD005837CC /* YearlyTrackerWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YearlyTrackerWidgetsExtension.entitlements; sourceTree = "<group>"; };
-		5E6C3DC5772425E82E6CCCE4 /* WidgetBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YearlyTracker/WidgetBridge.m; sourceTree = "<group>"; };
+		5E6C3DC5772425E82E6CCCE4 /* YearlyTracker/WidgetBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YearlyTracker/WidgetBridge.m; sourceTree = "<group>"; };
 		68084CCFC4211C028BCDBC80 /* Pods-YearlyTracker.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YearlyTracker.release.xcconfig"; path = "Target Support Files/Pods-YearlyTracker/Pods-YearlyTracker.release.xcconfig"; sourceTree = "<group>"; };
 		8C26595A0FC457B39F7B37BC /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-YearlyTracker/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		A91B7C002E0F4B0D00A71C21 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = YearlyTracker/SceneDelegate.swift; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = YearlyTracker/SplashScreen.storyboard; sourceTree = "<group>"; };
 		B040F51925CBA0F77BE7C8D0 /* Pods-YearlyTracker.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YearlyTracker.debug.xcconfig"; path = "Target Support Files/Pods-YearlyTracker/Pods-YearlyTracker.debug.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
@@ -67,14 +69,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		24221E532F0B4360005837CC /* Exceptions for "YearlyTrackerWidgets" folder in "YearlyTrackerWidgetsExtension" target */ = {
+		24221E532F0B4360005837CC /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 24221E3F2F0B435F005837CC /* YearlyTrackerWidgetsExtension */;
 		};
-		24221E5B2F0B6FB2005837CC /* Exceptions for "YearlyTrackerWidgets" folder in "YearlyTracker" target */ = {
+		24221E5B2F0B6FB2005837CC /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				SharedStore.swift,
@@ -84,19 +86,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		24221E452F0B435F005837CC /* YearlyTrackerWidgets */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				24221E5B2F0B6FB2005837CC /* Exceptions for "YearlyTrackerWidgets" folder in "YearlyTracker" target */,
-				24221E532F0B4360005837CC /* Exceptions for "YearlyTrackerWidgets" folder in "YearlyTrackerWidgetsExtension" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = YearlyTrackerWidgets;
-			sourceTree = "<group>";
-		};
+		24221E452F0B435F005837CC /* YearlyTrackerWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (24221E5B2F0B6FB2005837CC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 24221E532F0B4360005837CC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = YearlyTrackerWidgets; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
+				A91B7C002E0F4B0D00A71C21 /* SceneDelegate.swift */,
 				F11748442D0722820044C1D9 /* YearlyTracker-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -144,7 +135,8 @@
 		242663322F0C2CF9001F7F99 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
-				1192FDBCF75A4876A168E863 /* WidgetBridge.swift */,
+				1192FDBCF75A4876A168E863 /* YearlyTracker/WidgetBridge.swift */,
+				5E6C3DC5772425E82E6CCCE4 /* YearlyTracker/WidgetBridge.m */,
 			);
 			name = "Recovered References";
 			sourceTree = "<group>";
@@ -351,9 +343,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YearlyTracker/Pods-YearlyTracker-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YearlyTracker/Pods-YearlyTracker-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -414,9 +410,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YearlyTracker/Pods-YearlyTracker-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YearlyTracker/Pods-YearlyTracker-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -431,8 +431,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				655541B287FC48B1AC4E6655 /* WidgetBridge.swift in Sources */,
-				EC1D14E9A8CA3C1BC5873BC0 /* WidgetBridge.m in Sources */,
+				A91B7C012E0F4B0D00A71C21 /* SceneDelegate.swift in Sources */,
+				655541B287FC48B1AC4E6655 /* YearlyTracker/WidgetBridge.swift in Sources */,
+				EC1D14E9A8CA3C1BC5873BC0 /* YearlyTracker/WidgetBridge.m in Sources */,
 				03DB13A4F0B8E6AA1F3F5609 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -462,7 +463,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = YearlyTracker/YearlyTracker.entitlements;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 10;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -474,7 +475,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.1.0;
 				NEW_SETTING = "";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -499,14 +500,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = YearlyTracker/YearlyTracker.entitlements;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 10;
 				INFOPLIST_FILE = YearlyTracker/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.1.0;
 				NEW_SETTING = "";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -538,7 +539,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = YearlyTrackerWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 10;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
@@ -553,7 +554,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
@@ -587,7 +588,7 @@
 				CODE_SIGN_ENTITLEMENTS = YearlyTrackerWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 10;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
@@ -602,7 +603,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 2.0.0;
+				MARKETING_VERSION = 2.1.0;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.andresbotia.ResolutionTracker.widgets;

@@ -8,5 +8,6 @@ struct YearlyTrackerWidgetsBundle: WidgetBundle {
         HabitsWidget()
         HighlightGoalWidget()
         GoalsListWidget()
+        YearAtAGlanceWidget()
     }
 }

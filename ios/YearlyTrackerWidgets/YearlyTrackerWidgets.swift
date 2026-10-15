@@ -29,12 +29,12 @@ struct Entry: TimelineEntry {
 
 // MARK: - Color / type helpers
 
-private let paper = Color(red: 246 / 255, green: 243 / 255, blue: 236 / 255)
-private let inkFallback = Color(red: 28 / 255, green: 25 / 255, blue: 22 / 255)
+let paper = Color(red: 246 / 255, green: 243 / 255, blue: 236 / 255)
+let inkFallback = Color(red: 28 / 255, green: 25 / 255, blue: 22 / 255)
 
 private func clamp01(_ x: Double) -> Double { max(0.0, min(1.0, x)) }
 
-private func colorFromHex(_ hex: String?, opacity: Double = 1.0) -> Color? {
+func colorFromHex(_ hex: String?, opacity: Double = 1.0) -> Color? {
     guard var h = hex?.trimmingCharacters(in: .whitespacesAndNewlines), !h.isEmpty else { return nil }
     if h.hasPrefix("#") { h.removeFirst() }
     guard h.count == 6, let n = UInt32(h, radix: 16) else { return nil }
@@ -128,7 +128,7 @@ private func dataFont(_ size: CGFloat) -> Font {
 
 // MARK: - Backdrop (art + paper veil, or solid palette)
 
-private struct AtelierBackdrop: View {
+struct AtelierBackdrop: View {
     let payload: SharedStore.WidgetPayload?
 
     var body: some View {

@@ -61,8 +61,11 @@ A user who updates the app must keep the same goals, habits, history, theme, cus
 | `yt_random_art_last_v1` | Last Random Art plate | string art id (additive) |
 | `yt_revamp_theme_choice_seen_v1` | Existing-user style choice | `"1"` (additive) |
 | `yt_onboarding_seen_v1` | New-user catalogue onboarding | `"1"` (additive) |
+| `yt_backup_restored_empty_v1` | Keep an imported empty collection empty | `"1"` (additive) |
 
 `yt_revamp_intro_seen_v1`, `yt_random_art_last_v1`, `yt_revamp_theme_choice_seen_v1`, and `yt_onboarding_seen_v1` are presentation-only. Their absence is not missing or corrupt user data. Do not reuse `rt_welcome_seen_v1` for the rebrand intro or the style-choice prompt. Do not reuse `yt_revamp_intro_seen_v1` for the style-choice prompt.
+
+`yt_backup_announcement_2_1_seen_v1` is a device-local presentation flag for the version 2.1 announcement. It is intentionally outside the backup payload so importing an older backup cannot reset its dismissal. Its absence means the announcement has not been dismissed.
 
 `rt_hue_v1` may now also be `random-art`. That stored mode is resolved on launch to one bundled artwork for the session. Widgets receive the resolved plate/palette, not a new random choice on every refresh.
 

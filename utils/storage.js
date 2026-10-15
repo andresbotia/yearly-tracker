@@ -16,6 +16,8 @@
 // yt_random_art_last_v1       Last Random Art pick            string id (additive)
 // yt_revamp_theme_choice_seen_v1  Existing-user style choice  "1"       (additive)
 // yt_onboarding_seen_v1       New-user catalogue onboarding   "1"       (additive)
+// yt_backup_restored_empty_v1   Suppress starter seeding after empty restore  "1" (additive)
+// yt_backup_announcement_2_1_seen_v1   Device-local 2.1 announcement dismissal; excluded from backup
 //
 // Goal: { id, title, type: "count"|"boolean", target, progress, createdAt }
 // Habit: { id, title, checks: { "YYYY-MM-DD": 0|1|2 } }  // 0 empty, 1 good, 2 bad
@@ -25,7 +27,7 @@
 // Readers of new fields must treat them as optional (?? default).
 // Unknown fields on persisted objects must be preserved.
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { appStorage as AsyncStorage } from "./appStorage";
 
 const KEYS = {
   goals: "rt_goals_v1",
@@ -53,9 +55,26 @@ const KEYS = {
 
   // New-user contextual onboarding. Presentation only.
   onboardingSeen: "yt_onboarding_seen_v1",
+  restoredEmpty: "yt_backup_restored_empty_v1",
 };
 
 export const STORAGE_KEYS = KEYS;
+
+// Device-local presentation state. Deliberately outside STORAGE_KEYS so older
+// backup payloads remain valid and an import cannot reset this dismissal.
+export const BACKUP_ANNOUNCEMENT_SEEN_KEY = "yt_backup_announcement_2_1_seen_v1";
+
+export async function loadBackupAnnouncementSeen() {
+  try {
+    return (await AsyncStorage.getItem(BACKUP_ANNOUNCEMENT_SEEN_KEY)) === "1";
+  } catch {
+    return true; // Do not block app startup if this presentation flag cannot be read.
+  }
+}
+
+export async function setBackupAnnouncementSeen() {
+  await AsyncStorage.setItem(BACKUP_ANNOUNCEMENT_SEEN_KEY, "1");
+}
 
 // -----------------------------
 // Goals

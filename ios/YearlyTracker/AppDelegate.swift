@@ -8,6 +8,7 @@ public class AppDelegate: ExpoAppDelegate {
 
   var reactNativeDelegate: ExpoReactNativeFactoryDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
+  var launchOptions: [UIApplication.LaunchOptionsKey: Any]?
 
   public override func application(
     _ application: UIApplication,
@@ -20,13 +21,13 @@ public class AppDelegate: ExpoAppDelegate {
     reactNativeDelegate = delegate
     reactNativeFactory = factory
     bindReactNativeFactory(factory)
+    self.launchOptions = launchOptions
 
-#if os(iOS) || os(tvOS)
+#if DEBUG
+    // Expo 54's dev launcher prepares during React Native startup and expects
+    // the window during didFinishLaunching. Attach it to UIKit's scene below.
     window = UIWindow(frame: UIScreen.main.bounds)
-    factory.startReactNative(
-      withModuleName: "main",
-      in: window,
-      launchOptions: launchOptions)
+    factory.startReactNative(withModuleName: "main", in: window, launchOptions: launchOptions)
 #endif
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
